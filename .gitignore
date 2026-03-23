@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Environment files
+.env*
+!.env.example
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+.claude/settings.local.json
+
+# OS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# Testing
+coverage/
+
+# Misc
+*.tsbuildinfo
+.cache/
+
+# Lock files (keeping pnpm-lock.yaml only)
+package-lock.json
+yarn.lock
