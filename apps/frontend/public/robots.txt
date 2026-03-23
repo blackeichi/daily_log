@@ -1,0 +1,12 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow sensitive pages
+Disallow: /api/
+Disallow: /profile
+Disallow: /login
+Disallow: /signup
+
+# Sitemap location (Update when deploying)
+# Sitemap: https://yourdomain.com/sitemap.xml

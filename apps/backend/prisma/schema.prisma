@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique @db.VarChar(100)
+  name           String   @db.VarChar(100)
+  password       String   @db.VarChar(100)
+  refreshToken   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  defaultLogObj  String[] 
+  goalCalorie   Int @default(1800)
+  maximumCalorie Int @default(2400)
+  todos          Todo[]
+  logs           Log[]
+  calories       Calorie[]
+  routines       Routine[]
+  successDates   SuccessDates[]
+  failDates      FailDates[]
+  overallReviews OverallReview[]
+  useAiCount      UseAiCount?
+}
+
+model UseAiCount {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  count     Int      @default(0)
+  date      String
+  updatedAt DateTime @updatedAt
+}
+
+model SuccessDates {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  date      String[]
+  @@index([userId])
+}
+
+model FailDates {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  date      String[]
+  @@index([userId])
+}
+
+model Todo {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  user           User     @relation(fields: [userId], references: [id])
+  // 오늘 할 일들 루틴리스트에서 가져올 수 있게 하기?
+  // {id, text, isDone}[]
+  todayList         Json    @default("[]")
+  weekList         Json   @default("[]")
+  monthList         Json    @default("[]")
+  yearList         Json   @default("[]")
+  // 한계돌파, 정화의식 리스트 (ex - 배고픔, 지루함, 육체적 고통)
+  breakLimitList  Json    @default("[]")
+  @@index([userId])
+}
+
+model Routine {
+  id        Int      @id @default(autoincrement())
+  userId         Int  @unique
+  user           User     @relation(fields: [userId], references: [id])
+  // {id, text}[]
+  dailyRoutines   Json
+  weeklyRoutines  Json
+  monthlyRoutines Json
+  @@index([userId])
+}
+model Log {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  title     String?  @db.VarChar(100)
+  todayLog   Json?
+  logDate   String
+  createdAt DateTime @default(now())
+  // 동일한 사용자는 하루에 하나만 가능하게 unique 제약
+  @@unique([userId, logDate])
+  // 최근 로그 조회 성능이 좋아짐
+  @@index([userId, createdAt])
+}
+
+model Calorie {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  eatenList Json
+  memo      String   @db.VarChar(200)
+  totalCalorie Int
+  date   String
+  createdAt DateTime @default(now())
+  isSuccess Boolean @default(true)
+  @@unique([userId, date])
+  @@index([userId, createdAt])
+}
+
+model OverallReview{
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  reviewDate String
+  emotion String   @db.VarChar(50)
+  memo String   @db.VarChar(500)
+  isGetAdvice Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@unique([userId, reviewDate])
+  @@index([userId, createdAt])
+}
