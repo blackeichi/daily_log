@@ -1,4 +1,4 @@
-import {
+﻿import {
   Controller,
   Post,
   Body,
@@ -18,14 +18,10 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
-import {
-  SignupDto,
-  LoginDto,
-  AuthResponseDto,
-  RefreshTokenDto,
-} from './dto/auth.dto';
+import { SignupDto, LoginDto } from './dto/auth.dto';
 import type { AuthenticatedRequest } from 'src/common/interfaces/request.interface';
 import type { Response, Request } from 'express';
+import { COOKIE_NAMES } from 'src/common/constants/cookie';
 
 @ApiTags('인증')
 @Controller('auth')
@@ -61,7 +57,15 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: '로그인이 성공적으로 완료되었습니다.',
-    type: AuthResponseDto,
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          example: '로그인이 완료되었습니다.',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 401,
@@ -76,7 +80,18 @@ export class AuthController {
       dto.email,
       isGuestLogin ? process.env.GUEST_PASSWORD || '' : dto.password,
     );
-    res.cookie('daily_log_refresh_token', refreshToken, {
+
+    // accessToken 쿠키 설정
+    res.cookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/',
+      maxAge: 15 * 60 * 1000, // 15분
+    });
+
+    // refreshToken 쿠키 설정
+    res.cookie(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -84,7 +99,7 @@ export class AuthController {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30일
     });
 
-    return { accessToken };
+    return { message: '로그인이 완료되었습니다.' };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -100,7 +115,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.logout(req.user.sub);
-    res.clearCookie('daily_log_refresh_token', { path: '/' });
+    res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, { path: '/' });
+    res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, { path: '/' });
     return { message: '로그아웃 되었습니다.' };
   }
 
@@ -123,13 +139,26 @@ export class AuthController {
     status: 403,
     description: '유효하지 않은 리프레시 토큰입니다.',
   })
-  async refresh(@Req() req: Request) {
-    const refreshToken = req.cookies?.['daily_log_refresh_token'] as string;
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.[COOKIE_NAMES.REFRESH_TOKEN] as string;
     if (!refreshToken) {
       throw new ForbiddenException('리프레시 토큰이 없습니다.');
     }
     const accessToken = await this.authService.refreshToken(refreshToken);
-    return { accessToken };
+
+    // accessToken 쿠키 갱신
+    res.cookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/',
+      maxAge: 15 * 60 * 1000, // 15분
+    });
+
+    return { message: '토큰이 갱신되었습니다.' };
   }
 
   @UseGuards(JwtAuthGuard)

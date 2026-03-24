@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { COOKIE_NAMES } from "./app/constants/cookie";
 
 /**
  * Middleware: 인증 상태에 따른 페이지 접근 제어
@@ -7,7 +8,7 @@ import type { NextRequest } from "next/server";
  * - refreshToken이 없으면 private 페이지 접근 차단
  */
 export function middleware(request: NextRequest) {
-  const refreshToken = request.cookies.get("daily_log_refresh_token");
+  const refreshToken = request.cookies.get(COOKIE_NAMES.REFRESH_TOKEN);
   const { pathname } = request.nextUrl;
 
   const isPublicPath = pathname === "/login" || pathname === "/signup";
