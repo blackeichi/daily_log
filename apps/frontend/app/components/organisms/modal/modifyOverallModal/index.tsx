@@ -1,4 +1,8 @@
-import { GetOverall, ModifyOverall } from "@/app/actions/client/overall";
+import {
+  useOverall,
+  useCreateOverall,
+  useUpdateOverall,
+} from "@/app/libs/hooks/useOverall";
 import Button from "@/app/components/atoms/button";
 import { TextArea } from "@/app/components/atoms/textArea";
 import { OkCancelBtns } from "@/app/components/molecules/okCancelBtns";
@@ -6,7 +10,7 @@ import { MODAL_BOX } from "@/app/constants/styles";
 import { confirmAtom } from "@/app/libs/atom";
 import { GetOverallT, OverallCalendarData } from "@/app/types/data";
 import { useSetAtom } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { GetAiAdvice } from "./getAiAdvice";
 import { COLOR_THEME } from "@/app/constants/system";
 import Title from "@/app/components/atoms/Title";
@@ -24,17 +28,17 @@ const ModifyOverallModal = ({
   onClose: () => void;
   callBack: (val?: OverallCalendarData) => void;
 }) => {
-  const [{ data }, onGetOverall] = GetOverall(date);
-  useEffect(() => {
-    if (date && isEdit) {
-      onGetOverall();
-    }
-  }, [date, isEdit, onGetOverall]);
+  const { data } = useOverall(isEdit ? date : undefined);
   if (isEdit && !data) {
     return <div className="p-4">로딩중...</div>;
   }
   return (
-    <ActualUI data={data} date={date} onClose={onClose} callBack={callBack} />
+    <ActualUI
+      data={data ?? null}
+      date={date}
+      onClose={onClose}
+      callBack={callBack}
+    />
   );
 };
 
@@ -51,31 +55,35 @@ const ActualUI = ({
 }) => {
   const setConfirm = useSetAtom(confirmAtom);
   const [id, setId] = useState<number | undefined>(data?.id);
-  const [{ data: modifyData, loading }, onModifyOverall] = ModifyOverall(id);
+  const createOverallMutation = useCreateOverall();
+  const updateOverallMutation = useUpdateOverall(id ?? 0);
+  const loading =
+    createOverallMutation.isPending || updateOverallMutation.isPending;
+  const onModifyOverall = (
+    overallData: {
+      emotion: string;
+      reviewDate: string;
+      memo?: string;
+      isGetAdvice?: boolean;
+    },
+    shouldClose = false,
+  ) => {
+    const mutation = id ? updateOverallMutation : createOverallMutation;
+    mutation.mutate(overallData, {
+      onSuccess: (res) => {
+        callBack({ [date]: { emotion: overallData.emotion } });
+        if (res?.id) setId(res.id);
+        if (shouldClose) onClose();
+      },
+    });
+  };
   const [emotion, setEmotion] = useState<string>(
-    data?.emotion ?? emotionList[2] ?? ""
+    data?.emotion ?? emotionList[2] ?? "",
   );
   const [memo, setMemo] = useState(data?.memo ?? "");
   const [isGetAdvice, setIsGetAdvice] = useState(data?.isGetAdvice || false);
   const [toggleGetAdvice, setToggleGetAdvice] = useState(false);
-  const [isSave, setIsSave] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  useEffect(() => {
-    if (modifyData?.message) {
-      callBack({
-        [date]: {
-          emotion,
-        },
-      });
-    }
-    if (isSave) {
-      setIsSave(false);
-      onClose();
-    }
-    if (modifyData?.id) {
-      setId(modifyData.id);
-    }
-  }, [modifyData, callBack, date, emotion, isSave, onClose]);
   const onGetAdvice = useCallback(
     (advice?: string) => {
       if (!advice) return;
@@ -103,7 +111,7 @@ const ActualUI = ({
       setIsGetAdvice(true);
       setIsPending(false);
     },
-    [memo, emotion, date, onModifyOverall, setConfirm]
+    [memo, emotion, date, onModifyOverall, setConfirm],
   );
   return (
     <div
@@ -183,25 +191,29 @@ const ActualUI = ({
                 "메모는 500자 이내로 작성해야 해요. 초과된 부분은 삭제 후 저장됩니다.",
               confirmEvent: () => {
                 const trimmedMemo = memo.slice(0, 500);
-                onModifyOverall({
-                  emotion,
-                  ...(trimmedMemo && { memo: trimmedMemo }),
-                  reviewDate: date,
-                  isGetAdvice,
-                });
-                setIsSave(true);
+                onModifyOverall(
+                  {
+                    emotion,
+                    ...(trimmedMemo && { memo: trimmedMemo }),
+                    reviewDate: date,
+                    isGetAdvice,
+                  },
+                  true,
+                );
               },
             });
             return;
           }
           const trimmedMemo = memo.slice(0, 500);
-          onModifyOverall({
-            emotion,
-            ...(trimmedMemo && { memo: trimmedMemo }),
-            reviewDate: date,
-            isGetAdvice,
-          });
-          setIsSave(true);
+          onModifyOverall(
+            {
+              emotion,
+              ...(trimmedMemo && { memo: trimmedMemo }),
+              reviewDate: date,
+              isGetAdvice,
+            },
+            true,
+          );
         }}
         cancelText="닫기"
         onCancel={onClose}

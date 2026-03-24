@@ -1,28 +1,19 @@
-import { useAtomValue, useSetAtom } from "jotai";
-import { accessTokenAtom, modalAtom } from "../../libs/atom";
+import { useSetAtom } from "jotai";
+import { modalAtom } from "../../libs/atom";
 import { useCallback, useEffect, useState } from "react";
-import { GetAllOverall } from "../../actions/client/overall";
+import { useAllOverall } from "../../libs/hooks/useOverall";
 import { OverallCalendarData } from "../../types/data";
 import { MODAL_STATE } from "../../constants/system";
 
 export const useHome = () => {
-  const accessToken = useAtomValue(accessTokenAtom);
   const setModal = useSetAtom(modalAtom);
   const [date, setDate] = useState<[string, string] | null>(null);
-  const [{ data, loading }, onGetAllOverall] = GetAllOverall(
+  const { data, isLoading } = useAllOverall(
     date ? date[0] : "",
     date ? date[1] : "",
   );
   const [localCalendarData, setLocalCalendarData] =
     useState<OverallCalendarData>({});
-
-  // 날짜 변경 시 데이터 가져오기
-  useEffect(() => {
-    if (date && accessToken) {
-      onGetAllOverall();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, accessToken]);
 
   // 서버 데이터를 로컬 캘린더 데이터로 변환
   useEffect(() => {
@@ -60,7 +51,7 @@ export const useHome = () => {
 
   return {
     calendarData: localCalendarData,
-    loading: loading || !accessToken,
+    loading: isLoading,
     setDate,
     handleCalendarClick,
   };

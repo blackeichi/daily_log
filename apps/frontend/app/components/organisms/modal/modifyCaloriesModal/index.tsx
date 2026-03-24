@@ -1,6 +1,10 @@
-import { GetDiet, ModifyDiet } from "@/app/actions/client/diet";
+import {
+  useDiet as useDietQuery,
+  useCreateDiet,
+  useUpdateDiet,
+} from "@/app/libs/hooks/useDiet";
 import { DietCalendarData, Eaten, GetCalorie } from "@/app/types/data";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FcCalendar } from "react-icons/fc";
 import { MODAL_BOX } from "@/app/constants/styles";
 import { TextArea } from "@/app/components/atoms/textArea";
@@ -8,7 +12,6 @@ import { OkCancelBtns } from "@/app/components/molecules/okCancelBtns";
 import TableComponent from "../../table";
 import { AddNewCalorie } from "./AddNewCalorie";
 import { EditCalorie } from "./EditCalorie";
-import { useModalData } from "@/app/libs/hooks/useModalData";
 import { useSetAtom } from "jotai";
 import { errorAtom } from "@/app/libs/atom";
 
@@ -28,14 +31,19 @@ const ModifyCaloriesModal = ({
   onClose: () => void;
   callBack: (val?: DietCalendarData) => void;
 }) => {
-  const [{ data }, onGetDiet] = GetDiet(date);
-  const isLoading = useModalData(isEdit, date, data, onGetDiet);
+  const { data } = useDietQuery(isEdit ? date : undefined);
+  const isLoading = isEdit && !data;
 
   if (isLoading) {
     return <div className="p-4">로딩중...</div>;
   }
   return (
-    <ActualUI data={data} date={date} onClose={onClose} callBack={callBack} />
+    <ActualUI
+      data={data ?? null}
+      date={date}
+      onClose={onClose}
+      callBack={callBack}
+    />
   );
 };
 
@@ -50,25 +58,33 @@ const ActualUI = ({
   onClose: () => void;
   callBack: (val?: DietCalendarData) => void;
 }) => {
-  const [{ data: modifyData, loading }, onModifyDiet] = ModifyDiet(data?.id);
-  const [openEdit, setOpenEdit] = useState<Eaten | null>(null);
-  const [memo, setMemo] = useState(data?.memo || "");
-  const [eatenList, setEatenList] = useState<Eaten[]>(
-    data?.eatenList ||
-      [],
-  );
+  const createDietMutation = useCreateDiet();
+  const updateDietMutation = useUpdateDiet(data?.id ?? 0);
+  const loading = createDietMutation.isPending || updateDietMutation.isPending;
+  const onModifyDiet = (dietData: {
+    eatenList?: { name: string; cal: number }[];
+    memo?: string;
+    date?: string;
+  }) => {
+    const mutation = data?.id ? updateDietMutation : createDietMutation;
+    mutation.mutate(dietData, {
+      onSuccess: (res) => {
+        if (res?.data) {
+          callBack({
+            [date]: {
+              isChecked: res.data.isSuccess,
+              calorie: res.data.totalCalorie,
+            },
+          });
+          onClose();
+        }
+      },
+    });
+  };
   const setError = useSetAtom(errorAtom);
-  useEffect(() => {
-    if (modifyData?.data) {
-      callBack({
-        [date]: {
-          isChecked: modifyData.data.isSuccess,
-          calorie: modifyData.data.totalCalorie,
-        },
-      });
-      onClose();
-    }
-  }, [modifyData, callBack, date, onClose]);
+  const [memo, setMemo] = useState(data?.memo || "");
+  const [eatenList, setEatenList] = useState<Eaten[]>(data?.eatenList || []);
+  const [openEdit, setOpenEdit] = useState<Eaten | null>(null);
   return (
     <div className={MODAL_BOX} style={{ gap: "15px" }}>
       {openEdit && (
@@ -87,7 +103,7 @@ const ActualUI = ({
         </div>
       </span>
       <AddNewCalorie setEatenList={setEatenList} setError={setError} />
-      <div className="w-full my-1" style={{ height: '300px' }}>
+      <div className="w-full my-1" style={{ height: "300px" }}>
         <TableComponent<Eaten>
           data={eatenList}
           isLoading={Boolean(openEdit)}
@@ -95,8 +111,11 @@ const ActualUI = ({
           rowUniqueKey="index"
           noHeader
           onDelete={(_, idx) => {
-            setEatenList((prev) => prev.filter((_, index) => index !== idx)
-            .map((e, i) => ({ ...e, index: i + 1 })));
+            setEatenList((prev) =>
+              prev
+                .filter((_, index) => index !== idx)
+                .map((e, i) => ({ ...e, index: i + 1 })),
+            );
           }}
           onDoubleClick={(row) => {
             setOpenEdit(row);

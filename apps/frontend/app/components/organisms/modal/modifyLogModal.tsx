@@ -1,8 +1,8 @@
 import { RiEdit2Fill } from "react-icons/ri";
 import Title from "../../atoms/Title";
 import { MdOutlineNoteAdd } from "react-icons/md";
-import { CreateLog, GetLog, UpdateLog } from "@/app/actions/client/log";
-import { useEffect, useMemo, useState } from "react";
+import { useLog, useCreateLog, useUpdateLog } from "@/app/libs/hooks/useLog";
+import { useMemo, useState } from "react";
 import { GetLogDetail } from "@/app/types/data";
 import { Input } from "../../atoms/input";
 import DateInput from "../../atoms/dateInput";
@@ -25,12 +25,7 @@ const ModifyLogModal = ({
   onClose: () => void;
   callBack: (title?: string) => void;
 }) => {
-  const [{ data }, onGetLogDetail] = GetLog(id);
-  useEffect(() => {
-    if (isEdit && id) {
-      onGetLogDetail();
-    }
-  }, [id, isEdit, onGetLogDetail]);
+  const { data } = useLog(isEdit ? id : undefined);
   if (isEdit && !data) {
     return <div className="p-4">로딩중...</div>;
   }
@@ -38,7 +33,7 @@ const ModifyLogModal = ({
     <ActualUI
       id={id}
       isEdit={isEdit}
-      data={data}
+      data={data ?? null}
       onClose={onClose}
       callBack={callBack}
     />
@@ -59,22 +54,40 @@ const ActualUI = ({
   callBack: (title?: string) => void;
 }) => {
   const setError = useSetAtom(errorAtom);
-  const [{ data: createData, loading: createLoading }, onCreateLog] =
-    CreateLog();
-  const [{ data: updateData, loading: updateLoading }, onUpdateLog] =
-    UpdateLog(id);
+  const createLogMutation = useCreateLog();
+  const updateLogMutation = useUpdateLog(id);
+  const createLoading = createLogMutation.isPending;
+  const updateLoading = updateLogMutation.isPending;
+  const onCreateLog = (logData: {
+    title: string;
+    todayLog: Record<string, string>;
+    logDate: string;
+  }) => {
+    createLogMutation.mutate(logData, {
+      onSuccess: () => {
+        callBack(logData.title);
+        onClose();
+      },
+    });
+  };
+  const onUpdateLog = (logData: {
+    title: string;
+    todayLog: Record<string, string>;
+    logDate: string;
+  }) => {
+    updateLogMutation.mutate(logData, {
+      onSuccess: () => {
+        callBack(logData.title);
+        onClose();
+      },
+    });
+  };
   const [title, setTitle] = useState(data?.title || "");
   const [logDate, setLogDate] = useState(
     data?.logDate || moment().format("YYYY-MM-DD"),
   );
   const user = useAtomValue(userAtom);
   const [todayLog, setTodayLog] = useState(data?.todayLog || {});
-  useEffect(() => {
-    if (createData?.message || updateData?.message) {
-      callBack(title);
-      onClose();
-    }
-  }, [createData, updateData, callBack, title, onClose]);
   const ObjKeys = useMemo(
     () => [
       ...new Set([...(user?.defaultLogObj || []), ...Object.keys(todayLog)]),

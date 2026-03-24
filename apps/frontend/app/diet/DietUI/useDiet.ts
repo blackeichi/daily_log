@@ -1,30 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAtomValue } from "jotai";
-import { GetAllDiet } from "@/app/actions/client/diet";
+import { useAllDiet } from "@/app/libs/hooks/useDiet";
 import { DietCalendarData } from "@/app/types/data";
 import { isSameMonth } from "date-fns";
-import { accessTokenAtom, userAtom } from "@/app/libs/atom";
+import { userAtom } from "@/app/libs/atom";
 
 export const useDiet = () => {
-  const accessToken = useAtomValue(accessTokenAtom);
   const user = useAtomValue(userAtom);
   const [date, setDate] = useState<[string, string] | null>(null);
   const [targetMonth, setTargetMonth] = useState<Date>(new Date());
-  const [{ data, loading }, onGetAllDiet] = GetAllDiet(
+  const { data, isLoading } = useAllDiet(
     date ? date[0] : "",
     date ? date[1] : "",
   );
   const [localCalendarData, setLocalCalendarData] = useState<DietCalendarData>(
     {},
   );
-
-  // 날짜 변경 시 데이터 가져오기
-  useEffect(() => {
-    if (accessToken && date) {
-      onGetAllDiet();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken, date]);
 
   // 서버 데이터를 로컬 캘린더 데이터로 변환
   const transformedCalendarData = useMemo(() => {
@@ -71,7 +62,7 @@ export const useDiet = () => {
     calendarData: localCalendarData,
     setDate,
     setTargetMonth,
-    loading: loading || !accessToken,
+    loading: isLoading,
     totalMinusCalorie,
     user,
     updateCalendarData,

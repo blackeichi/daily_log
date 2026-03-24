@@ -1,4 +1,3 @@
-import { UpdateAiCount } from "@/app/actions/client/user";
 import { sendLangMessage } from "@/app/actions/server/chat";
 import Button from "@/app/components/atoms/button";
 import { Input } from "@/app/components/atoms/input";
@@ -8,9 +7,10 @@ import { alertAtom, errorAtom } from "@/app/libs/atom";
 import { localStorageUtilites } from "@/app/libs/utils/storage";
 import { useSetAtom } from "jotai";
 import { useEffect, useState, useTransition } from "react";
+import { useIncrementAiCount } from "@/app/libs/hooks/useUser";
 
 export default function AskToAI({ selectedType }: { selectedType: 0 | 1 | 2 }) {
-  const [{ data, loading }, onUpdateAiCount] = UpdateAiCount();
+  const incrementAiCountMutation = useIncrementAiCount();
   const setError = useSetAtom(errorAtom);
   const setAlert = useSetAtom(alertAtom);
   const [koreanInput, setKoreanInput] = useState<string>("");
@@ -31,20 +31,19 @@ export default function AskToAI({ selectedType }: { selectedType: 0 | 1 | 2 }) {
       return setError("영어로 작문한 문장을 입력해주세요.");
     }
     if (isPending) return;
-    if (loading) return;
-    onUpdateAiCount();
+    if (incrementAiCountMutation.isPending) return;
+    incrementAiCountMutation.mutate(undefined, {
+      onSuccess: () => {
+        const message = engInput
+          ? `한국어로 '${koreanInput}'를 내가 영어로 '${engInput}'이렇게 작문해봤어. 어때?`
+          : `'${koreanInput}'를 영어로 번역해줘.`;
+        startTransition(async () => {
+          const res = await sendLangMessage(message);
+          setResult(res ?? "응답이 없어요...");
+        });
+      },
+    });
   };
-  useEffect(() => {
-    if (data) {
-      const message = engInput
-        ? `한국어로 '${koreanInput}'를 내가 영어로 '${engInput}'이렇게 작문해봤어. 어때?`
-        : `'${koreanInput}'를 영어로 번역해줘.`;
-      startTransition(async () => {
-        const res = await sendLangMessage(message);
-        setResult(res ?? "응답이 없어요...");
-      });
-    }
-  }, [data]);
   return (
     <div className="flex flex-col gap-3 w-full">
       <Input
@@ -74,12 +73,12 @@ export default function AskToAI({ selectedType }: { selectedType: 0 | 1 | 2 }) {
       <Button
         onClick={handleSend}
         text={
-          isPending || loading
+          isPending || incrementAiCountMutation.isPending
             ? "선생님이 대답하는 중..."
             : "AI 선생님 호출하기"
         }
         width="100%"
-        disabled={isPending || loading}
+        disabled={isPending || incrementAiCountMutation.isPending}
       />
       {result && (
         <Overlay isOpen={true} onClick={() => setResult("")}>

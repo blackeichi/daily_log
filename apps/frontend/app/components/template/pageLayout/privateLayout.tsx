@@ -2,21 +2,13 @@
 
 import { useEffect } from "react";
 import MenuList from "./menuList";
-import { GetMe } from "@/app/actions/client/user";
-import { accessTokenAtom, userAtom } from "@/app/libs/atom";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useMe } from "@/app/libs/hooks/useUser";
+import { userAtom } from "@/app/libs/atom";
+import { useSetAtom } from "jotai";
 
 export const PrivateLayout = ({ children }: { children: React.ReactNode }) => {
-  const [{ data: userData }, onGetMe] = GetMe();
-  const accessToken = useAtomValue(accessTokenAtom);
+  const { data: userData } = useMe();
   const setUser = useSetAtom(userAtom);
-
-  useEffect(() => {
-    if (accessToken) {
-      onGetMe();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
 
   useEffect(() => {
     if (userData) {

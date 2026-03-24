@@ -1,4 +1,3 @@
-import { UpdateMe } from "@/app/actions/client/user";
 import Button from "@/app/components/atoms/button";
 import { Input } from "@/app/components/atoms/input";
 import IconButton from "@/app/components/molecules/iconButton";
@@ -7,6 +6,7 @@ import { User } from "@/app/types/data";
 import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import { useUpdateMe } from "@/app/libs/hooks/useUser";
 
 export default function UpdateUserInfo({
   user,
@@ -17,7 +17,19 @@ export default function UpdateUserInfo({
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   setAlert: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
-  const [{ data }, onUpdateMe] = UpdateMe();
+  const updateMeMutation = useUpdateMe();
+  const onUpdateMe = (data: Parameters<typeof updateMeMutation.mutate>[0]) => {
+    updateMeMutation.mutate(data, {
+      onSuccess: (res) => {
+        if (res?.message) {
+          setAlert(res.message);
+          if (res.data) {
+            setUser(res.data);
+          }
+        }
+      },
+    });
+  };
   const [goalCalorie, setGoalCalorie] = useState<number>(
     user?.goalCalorie || 0,
   );
@@ -34,14 +46,6 @@ export default function UpdateUserInfo({
       setLogCategories(user.defaultLogObj);
     }
   }, [user]);
-  useEffect(() => {
-    if (data?.message) {
-      setAlert(data.message);
-      if (data.data) {
-        setUser(data.data);
-      }
-    }
-  }, [data]);
   let newCategory = "";
   return (
     <>

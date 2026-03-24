@@ -1,11 +1,11 @@
-import { ChangePassword } from "@/app/actions/client/client-auth";
 import Button from "@/app/components/atoms/button";
 import { Input } from "@/app/components/atoms/input";
 import { errorAtom } from "@/app/libs/atom";
 import { useSetAtom } from "jotai";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GiConfirmed } from "react-icons/gi";
 import { RiLockPasswordLine } from "react-icons/ri";
+import { useChangePassword } from "@/app/libs/hooks/useAuth";
 
 export const UpdatePassword = ({
   setAlert,
@@ -16,15 +16,7 @@ export const UpdatePassword = ({
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [{ data }, onChangePassword] = ChangePassword();
-  useEffect(() => {
-    if (data?.message) {
-      setOldPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setAlert(data.message);
-    }
-  }, [data]);
+  const changePasswordMutation = useChangePassword();
   return (
     <div className="w-full p-4 border border-stone-300 rounded-xl flex flex-col gap-3 max-w-[600px]">
       <span className="text-lg font-bold mb-2">🔒 비밀번호 변경</span>
@@ -84,7 +76,24 @@ export const UpdatePassword = ({
               setError("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
               return;
             }
-            onChangePassword({ oldPassword, newPassword });
+            changePasswordMutation.mutate(
+              { oldPassword, newPassword },
+              {
+                onSuccess: (res) => {
+                  if (res?.message) {
+                    setOldPassword("");
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setAlert(res.message);
+                  }
+                },
+                onError: (err) => {
+                  setError(
+                    (err as Error).message || "비밀번호 변경에 실패했습니다.",
+                  );
+                },
+              },
+            );
           }}
         />
       </div>

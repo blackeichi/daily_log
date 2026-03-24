@@ -1,14 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import { useAtom, useSetAtom } from "jotai";
-import {
-  accessTokenAtom,
-  alertAtom,
-  confirmAtom,
-  userAtom,
-} from "@/app/libs/atom";
-import { Logout } from "@/app/actions/client/client-auth";
+import { alertAtom, confirmAtom, userAtom } from "@/app/libs/atom";
+import { useLogout } from "@/app/libs/hooks/useAuth";
 import Button from "@/app/components/atoms/button";
 import { COLOR_THEME } from "@/app/constants/system";
 import UpdateUserInfo from "./updateUserInfo";
@@ -18,16 +12,8 @@ import HomeSettings from "./homeSettings";
 export default function ProfileUI() {
   const setConfirm = useSetAtom(confirmAtom);
   const setAlert = useSetAtom(alertAtom);
-  const setAccessToken = useSetAtom(accessTokenAtom);
   const [user, setUser] = useAtom(userAtom);
-  const [{ data: logoutData }, onLogout] = Logout();
-  useEffect(() => {
-    if (logoutData?.message) {
-      setAccessToken(null);
-      setUser(null);
-      window.location.href = "/login";
-    }
-  }, [logoutData, setAccessToken, setUser]);
+  const logoutMutation = useLogout();
   return (
     <div className="w-full h-full flex flex-col justify-center items-center gap-6 pt-10">
       <p className="flex w-full pl-1 max-w-[600px] text-lg">
@@ -55,7 +41,13 @@ export default function ProfileUI() {
           setConfirm({
             title: "로그아웃",
             message: "정말 로그아웃 하시겠습니까?",
-            confirmEvent: () => onLogout(),
+            confirmEvent: () =>
+              logoutMutation.mutate(undefined, {
+                onSuccess: () => {
+                  setUser(null);
+                  window.location.href = "/login";
+                },
+              }),
           });
         }}
       />

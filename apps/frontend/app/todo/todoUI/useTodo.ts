@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { useAtomValue } from "jotai";
-import { CreateTodos, GetTodos, UpdateTodos } from "@/app/actions/client/todo";
-import { accessTokenAtom } from "@/app/libs/atom";
+import {
+  useTodos,
+  useCreateTodos,
+  useUpdateTodos,
+} from "@/app/libs/hooks/useTodos";
 import { GetTodosType, Todo } from "@/app/types/api";
 
 type ListName =
@@ -12,35 +14,18 @@ type ListName =
   | "breakLimitList";
 
 export const useTodo = () => {
-  const accessToken = useAtomValue(accessTokenAtom);
-  const [{ data, loading }, onGetTodos] = GetTodos();
-  const [, onCreateTodos] = CreateTodos();
+  const { data, isLoading } = useTodos();
+  const createTodosMutation = useCreateTodos();
+  const updateTodosMutation = useUpdateTodos(data?.id ?? 0);
   const [isFirst, setIsFirst] = useState(false);
   const [localData, setLocalData] = useState<GetTodosType | null>(null);
 
   // 첫 방문 여부 확인
   useEffect(() => {
-    if (data && !data.id && !loading) {
+    if (data && !data.id && !isLoading) {
       setIsFirst(true);
     }
-  }, [data, loading]);
-
-  // 토큰 있을 때 데이터 가져오기 (초기 로드 시에만)
-  useEffect(() => {
-    if (accessToken && !data && !loading) {
-      onGetTodos();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
-
-  const [, onUpdateTodos] = UpdateTodos(data?.id ?? 0);
-
-  /*   // UpdateTodos 성공 후 응답 데이터로 즉시 업데이트
-  useEffect(() => {
-    if (updateState.data && !updateState.loading) {
-      setLocalData(updateState.data);
-    }
-  }, [updateState.data, updateState.loading]); */
+  }, [data, isLoading]);
 
   const handleUpdateList = (listName: ListName, newData: Todo[]) => {
     // Optimistic update - 즉시 로컬 상태 업데이트
@@ -52,14 +37,14 @@ export const useTodo = () => {
       };
     });
     // 그 다음 서버 요청
-    onUpdateTodos({
+    updateTodosMutation.mutate({
       name: listName,
       data: newData,
     });
   };
 
   const handleCreateTodos = () => {
-    onCreateTodos();
+    createTodosMutation.mutate(undefined);
   };
 
   // 표시할 데이터: localData > data 우선순위 (로컬에서 업데이트된 데이터 우선)
@@ -67,7 +52,7 @@ export const useTodo = () => {
 
   return {
     data: displayData,
-    loading: loading || !accessToken,
+    loading: isLoading,
     isFirst,
     handleCreateTodos,
     handleUpdateList,

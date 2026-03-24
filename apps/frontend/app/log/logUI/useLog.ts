@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useAtomValue, useSetAtom } from "jotai";
-import { DeleteLog, GetLogs, GetLogsForExcel } from "@/app/actions/client/log";
+import { useSetAtom } from "jotai";
 import {
-  accessTokenAtom,
-  alertAtom,
-  errorAtom,
-  modalAtom,
-  confirmAtom,
-} from "@/app/libs/atom";
+  useLogs,
+  useDeleteLog,
+  useLogsForExcel,
+} from "@/app/libs/hooks/useLog";
+import { alertAtom, errorAtom, modalAtom, confirmAtom } from "@/app/libs/atom";
 import { useDateRange } from "@/app/libs/hooks/useDateRange";
 import { downloadExcel } from "@/app/libs/utils/excelUtils";
 import { GetLogsType } from "@/app/types/data";
@@ -16,7 +14,6 @@ import { MODAL_STATE } from "@/app/constants/system";
 const ITEMS_PER_PAGE = 50;
 
 export const useLog = () => {
-  const accessToken = useAtomValue(accessTokenAtom);
   const setModal = useSetAtom(modalAtom);
   const setConfirm = useSetAtom(confirmAtom);
   const setAlertMsg = useSetAtom(alertAtom);
@@ -28,18 +25,11 @@ export const useLog = () => {
   const [searchedTitle, setSearchedTitle] = useState("");
 
   // 데이터 fetch
-  const [{ data, loading }, onGetLogs] = GetLogs(
-    startDate,
-    endDate,
-    searchTitle,
-  );
-
-  useEffect(() => {
-    if (accessToken && !data && !loading) {
-      onGetLogs();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+  const {
+    data,
+    isLoading: loading,
+    refetch: onGetLogs,
+  } = useLogs(startDate, endDate, searchTitle);
 
   // 무한 스크롤 상태
   const [allData, setAllData] = useState<GetLogsType[] | null>(null);
@@ -109,19 +99,14 @@ export const useLog = () => {
   }, [allData, displayedData, isLoadingMore, loadMoreData]);
 
   // 삭제
-  const [{ data: deleteData }, onDeleteLog] = DeleteLog();
-
-  useEffect(() => {
-    if (deleteData?.message && allData && displayedData) {
-      // 서버에서 삭제됨 - 로컬 상태는 이미 handleDeleteLog에서 업데이트됨
-      setAlertMsg("로그가 삭제되었습니다.");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deleteData]);
+  const deleteLogMutation = useDeleteLog();
 
   // 엑셀 다운로드
-  const [{ data: excelData, loading: excelLoading }, onGetExcelData] =
-    GetLogsForExcel(startDate, endDate, searchTitle);
+  const {
+    data: excelData,
+    isFetching: excelLoading,
+    refetch: onGetExcelData,
+  } = useLogsForExcel(startDate, endDate, searchTitle);
 
   useEffect(() => {
     if (excelData) {
@@ -166,7 +151,12 @@ export const useLog = () => {
           setAllData(newAllData);
         }
         // 서버 요청
-        onDeleteLog({ id: row.id });
+        deleteLogMutation.mutate(
+          { id: row.id },
+          {
+            onSuccess: () => setAlertMsg("로그가 삭제되었습니다."),
+          },
+        );
       },
     });
   };
@@ -208,7 +198,7 @@ export const useLog = () => {
 
   return {
     // 상태
-    loading: loading || !accessToken,
+    loading,
     displayedData,
     allData,
     isLoadingMore,
