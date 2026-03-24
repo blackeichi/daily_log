@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "daily-log",
   webDir: "public",
   server: {
-    url: "https://daily-log-frontend.vercel.app",
+    url: "https://daily-log-frontend-piof.vercel.app/",
     cleartext: false, // http라면 true, https면 없어도 됨
   },
 };
