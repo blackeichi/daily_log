@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SnackbarProvider } from "./components/providers/SnackbarProvider";
+import { QueryProvider } from "./components/providers/QueryProvider";
 import { PageLayout } from "./components/template/pageLayout";
 import "./globals.css";
 import { LoadingProgress } from "./components/organisms/loadingProgress";
@@ -28,12 +29,14 @@ export default function RootLayout({
     <html lang="ko">
       <body className={`${notoSansKr.className} antialiased`}>
         <ErrorBoundary enableLogging={true}>
-          <SnackbarProvider>
-            <div className="w-screen h-screen overflow-hidden bg-stone-100 text-stone-800">
-              <LoadingProgress />
-              <PageLayout>{children}</PageLayout>
-            </div>
-          </SnackbarProvider>
+          <QueryProvider>
+            <SnackbarProvider>
+              <div className="w-screen h-screen overflow-hidden bg-stone-100 text-stone-800">
+                <LoadingProgress />
+                <PageLayout>{children}</PageLayout>
+              </div>
+            </SnackbarProvider>
+          </QueryProvider>
         </ErrorBoundary>
       </body>
     </html>
