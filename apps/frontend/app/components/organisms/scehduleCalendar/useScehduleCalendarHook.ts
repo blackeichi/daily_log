@@ -23,15 +23,13 @@ export const useScheduleCalendar = ({
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const today = useMemo(() => new Date(), []);
 
-  const { calendarStart, calendarEnd, weeks, monthKey } = useMemo(() => {
+  const { monthStart, monthEnd, weeks, monthKey } = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
-    const calendarStart = startOfWeek(monthStart);
-    const calendarEnd = endOfWeek(monthEnd);
 
     const days: Date[] = [];
-    let currentDate = new Date(calendarStart);
-    while (currentDate <= calendarEnd) {
+    let currentDate = new Date(monthStart);
+    while (currentDate <= monthEnd) {
       days.push(new Date(currentDate));
       currentDate = addDays(currentDate, 1);
     }
@@ -42,26 +40,19 @@ export const useScheduleCalendar = ({
     }
 
     return {
-      calendarStart,
-      calendarEnd,
+      monthStart,
+      monthEnd,
       weeks,
       monthKey: format(currentMonth, "yyyy-MM"),
     };
   }, [currentMonth]);
 
   useEffect(() => {
-    const start = format(calendarStart, "yyyy-MM-dd");
-    const end = format(calendarEnd, "yyyy-MM-dd");
+    const start = format(monthStart, "yyyy-MM-dd");
+    const end = format(monthEnd, "yyyy-MM-dd");
     if (setTargetMonth) setTargetMonth(currentMonth);
     setDate([start, end]);
-  }, [
-    monthKey,
-    calendarStart,
-    calendarEnd,
-    setDate,
-    setTargetMonth,
-    currentMonth,
-  ]);
+  }, [monthKey, monthStart, monthEnd, setDate, setTargetMonth, currentMonth]);
   const handlePrevMonth = useCallback(() => {
     setCurrentMonth((prev) => subMonths(prev, 1));
   }, []);

@@ -77,7 +77,7 @@ const Calendar = ({
             </div>
           ))}
         </div>
-        <div className="grid grid-rows-5 border-stone-300 border h-fit shadow-md shadow-stone-500 select-none cursor-pointer">
+        <div className="grid grid-rows-5 border-stone-300 border h-fit shadow-md shadow-stone-500 select-none">
           {weeks.map((week, wi) => (
             <div key={wi} className="grid grid-cols-7">
               {week.map((day) => {
@@ -93,7 +93,7 @@ const Calendar = ({
                   <button
                     type="button"
                     key={dateStr}
-                    className={`min-h-20 flex flex-col gap-2 h-[12vh] p-2 text-xs sm:text-sm transition-[background-color] border-stone-300 border-b border-r text-left
+                    className={`min-h-20 flex flex-col gap-2 h-[12vh] p-2 text-xs sm:text-sm transition-[background-color] border-stone-300 border-b border-r text-left cursor-pointer
                       ${
                         isToday
                           ? dateColorMap.today

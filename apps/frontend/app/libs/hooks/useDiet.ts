@@ -10,7 +10,11 @@ export const dietKeys = {
   detail: (date: string) => ["diet", date] as const,
 };
 
-export function useAllDiet(startDate: string, endDate: string) {
+export function useAllDiet(
+  startDate: string,
+  endDate: string,
+  options?: { initialData?: GetAllCalories[] },
+) {
   return useQuery({
     queryKey: dietKeys.all(startDate, endDate),
     queryFn: () =>
@@ -18,6 +22,7 @@ export function useAllDiet(startDate: string, endDate: string) {
         `/calories/all?startDate=${startDate}&endDate=${endDate}`,
       ),
     enabled: !!startDate && !!endDate,
+    initialData: options?.initialData,
   });
 }
 

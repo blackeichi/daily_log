@@ -1,5 +1,6 @@
 import { useRoutines, useUpdateRoutines } from "@/app/libs/hooks/useRoutines";
 import { useEffect, useState } from "react";
+import { Routine } from "@/app/types/api";
 
 type ListName = "dailyRoutines" | "weeklyRoutines" | "monthlyRoutines";
 type RoutineItem = { id: number; text: string };
@@ -11,8 +12,10 @@ interface RoutineData {
   monthlyRoutines: RoutineItem[];
 }
 
-export const useRoutine = () => {
-  const { data, isLoading } = useRoutines();
+export const useRoutine = (initialData?: Routine) => {
+  const { data, isLoading } = useRoutines(
+    initialData ? { initialData } : undefined,
+  );
   const updateRoutinesMutation = useUpdateRoutines();
   const [localData, setLocalData] = useState<RoutineData | null>(null);
 

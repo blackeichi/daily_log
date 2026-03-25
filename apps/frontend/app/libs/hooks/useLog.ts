@@ -16,6 +16,7 @@ export function useLogs(
   startDate: string,
   endDate: string,
   searchTitle?: string,
+  options?: { initialData?: GetLogsType[] },
 ) {
   const params = new URLSearchParams({ startDate, endDate });
   if (searchTitle?.trim()) params.append("searchTitle", searchTitle.trim());
@@ -24,6 +25,7 @@ export function useLogs(
     queryKey: logKeys.all(startDate, endDate, searchTitle),
     queryFn: () => apiClient<GetLogsType[]>(`/log/all?${params.toString()}`),
     enabled: !!startDate && !!endDate,
+    initialData: options?.initialData,
   });
 }
 

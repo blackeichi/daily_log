@@ -10,7 +10,11 @@ export const overallKeys = {
   detail: (date: string) => ["overall", date] as const,
 };
 
-export function useAllOverall(startDate: string, endDate: string) {
+export function useAllOverall(
+  startDate: string,
+  endDate: string,
+  options?: { initialData?: GetAllOverallT[] },
+) {
   return useQuery({
     queryKey: overallKeys.all(startDate, endDate),
     queryFn: () =>
@@ -18,6 +22,7 @@ export function useAllOverall(startDate: string, endDate: string) {
         `/overall/all?startDate=${startDate}&endDate=${endDate}`,
       ),
     enabled: !!startDate && !!endDate,
+    initialData: options?.initialData,
   });
 }
 

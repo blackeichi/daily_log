@@ -13,8 +13,10 @@ type ListName =
   | "yearList"
   | "breakLimitList";
 
-export const useTodo = () => {
-  const { data, isLoading } = useTodos();
+export const useTodo = (initialData?: GetTodosType) => {
+  const { data, isLoading } = useTodos(
+    initialData ? { initialData } : undefined,
+  );
   const createTodosMutation = useCreateTodos();
   const updateTodosMutation = useUpdateTodos(data?.id ?? 0);
   const [isFirst, setIsFirst] = useState(false);

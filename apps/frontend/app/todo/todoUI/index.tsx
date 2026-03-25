@@ -3,7 +3,7 @@
 import Button from "@/app/components/atoms/button";
 import DataList from "@/app/components/organisms/dataList";
 import { useTodo } from "./useTodo";
-import { Todo } from "@/app/types/api";
+import { GetTodosType, Todo } from "@/app/types/api";
 
 const lists = [
   "todayList",
@@ -21,9 +21,9 @@ const LIST_NAMES: { [key in (typeof lists)[number]]: string } = {
   breakLimitList: "한계돌파, 정화의식",
 };
 
-export const TodoUI = () => {
+export const TodoUI = ({ initialData }: { initialData?: GetTodosType }) => {
   const { data, loading, isFirst, handleCreateTodos, handleUpdateList } =
-    useTodo();
+    useTodo(initialData);
 
   if (isFirst)
     return (

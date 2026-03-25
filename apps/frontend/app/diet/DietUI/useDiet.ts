@@ -1,17 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAtomValue } from "jotai";
 import { useAllDiet } from "@/app/libs/hooks/useDiet";
-import { DietCalendarData } from "@/app/types/data";
+import { DietCalendarData, GetAllCalories } from "@/app/types/data";
 import { isSameMonth } from "date-fns";
 import { userAtom } from "@/app/libs/atom";
 
-export const useDiet = () => {
+export const useDiet = (
+  initialData?: GetAllCalories[],
+  initialDateRange?: [string, string],
+) => {
   const user = useAtomValue(userAtom);
-  const [date, setDate] = useState<[string, string] | null>(null);
+  const [date, setDate] = useState<[string, string] | null>(
+    initialDateRange ?? null,
+  );
   const [targetMonth, setTargetMonth] = useState<Date>(new Date());
+
+  const isInitialRange =
+    date &&
+    initialDateRange &&
+    date[0] === initialDateRange[0] &&
+    date[1] === initialDateRange[1];
+
   const { data, isLoading } = useAllDiet(
     date ? date[0] : "",
     date ? date[1] : "",
+    isInitialRange && initialData !== undefined ? { initialData } : undefined,
   );
   const [localCalendarData, setLocalCalendarData] = useState<DietCalendarData>(
     {},

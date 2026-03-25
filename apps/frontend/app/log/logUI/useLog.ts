@@ -13,7 +13,7 @@ import { MODAL_STATE } from "@/app/constants/system";
 
 const ITEMS_PER_PAGE = 50;
 
-export const useLog = () => {
+export const useLog = (initialData?: GetLogsType[]) => {
   const setModal = useSetAtom(modalAtom);
   const setConfirm = useSetAtom(confirmAtom);
   const setAlertMsg = useSetAtom(alertAtom);
@@ -29,7 +29,12 @@ export const useLog = () => {
     data,
     isLoading: loading,
     refetch: onGetLogs,
-  } = useLogs(startDate, endDate, searchTitle);
+  } = useLogs(
+    startDate,
+    endDate,
+    searchTitle,
+    initialData ? { initialData } : undefined,
+  );
 
   // 무한 스크롤 상태
   const [allData, setAllData] = useState<GetLogsType[] | null>(null);

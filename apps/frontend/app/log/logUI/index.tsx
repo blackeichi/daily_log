@@ -18,7 +18,7 @@ const headers = [
 
 const ITEMS_PER_PAGE = 50;
 
-export const LogUI = () => {
+export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
   const {
     loading,
     displayedData,
@@ -39,10 +39,13 @@ export const LogUI = () => {
     handleAddLog,
     handleDeleteLog,
     handleEditLog,
-  } = useLog();
+  } = useLog(initialData);
 
   return (
-    <div className="flex flex-col gap-5 w-full pt-2" style={{ height: 'calc(100vh - 200px)' }}>
+    <div
+      className="flex flex-col gap-5 w-full pt-2"
+      style={{ height: "calc(100vh - 200px)" }}
+    >
       <div className="flex justify-between gap-2">
         <form
           onSubmit={(e) => e.preventDefault()}

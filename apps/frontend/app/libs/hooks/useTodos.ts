@@ -8,10 +8,11 @@ export const todoKeys = {
   all: () => ["todos"] as const,
 };
 
-export function useTodos() {
+export function useTodos(options?: { initialData?: GetTodosType }) {
   return useQuery({
     queryKey: todoKeys.all(),
     queryFn: () => apiClient<GetTodosType>("/todos"),
+    initialData: options?.initialData,
   });
 }
 

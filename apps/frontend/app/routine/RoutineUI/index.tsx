@@ -2,6 +2,7 @@
 
 import DataList from "@/app/components/organisms/dataList";
 import { useRoutine } from "./useRoutineHook";
+import { Routine } from "@/app/types/api";
 
 const lists = ["dailyRoutines", "weeklyRoutines", "monthlyRoutines"] as const;
 
@@ -11,8 +12,8 @@ const LIST_NAMES: { [key in (typeof lists)[number]]: string } = {
   monthlyRoutines: "매달 하는 일",
 };
 
-export const RoutineUI = () => {
-  const { data, handleUpdateList, loading } = useRoutine();
+export const RoutineUI = ({ initialData }: { initialData?: Routine }) => {
+  const { data, handleUpdateList, loading } = useRoutine(initialData);
 
   return (
     <div className="w-full max-w-[800px] flex flex-col text-xs gap-10 pt-4">

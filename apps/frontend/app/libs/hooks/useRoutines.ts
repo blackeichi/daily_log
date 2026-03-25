@@ -8,10 +8,11 @@ export const routineKeys = {
   all: () => ["routines"] as const,
 };
 
-export function useRoutines() {
+export function useRoutines(options?: { initialData?: Routine }) {
   return useQuery({
     queryKey: routineKeys.all(),
     queryFn: () => apiClient<Routine>("/routines"),
+    initialData: options?.initialData,
   });
 }
 

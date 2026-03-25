@@ -2,15 +2,28 @@ import { useSetAtom } from "jotai";
 import { modalAtom } from "../../libs/atom";
 import { useCallback, useEffect, useState } from "react";
 import { useAllOverall } from "../../libs/hooks/useOverall";
-import { OverallCalendarData } from "../../types/data";
+import { GetAllOverallT, OverallCalendarData } from "../../types/data";
 import { MODAL_STATE } from "../../constants/system";
 
-export const useHome = () => {
+export const useHome = (
+  initialData?: GetAllOverallT[],
+  initialDateRange?: [string, string],
+) => {
   const setModal = useSetAtom(modalAtom);
-  const [date, setDate] = useState<[string, string] | null>(null);
+  const [date, setDate] = useState<[string, string] | null>(
+    initialDateRange ?? null,
+  );
+
+  const isInitialRange =
+    date &&
+    initialDateRange &&
+    date[0] === initialDateRange[0] &&
+    date[1] === initialDateRange[1];
+
   const { data, isLoading } = useAllOverall(
     date ? date[0] : "",
     date ? date[1] : "",
+    isInitialRange && initialData !== undefined ? { initialData } : undefined,
   );
   const [localCalendarData, setLocalCalendarData] =
     useState<OverallCalendarData>({});
