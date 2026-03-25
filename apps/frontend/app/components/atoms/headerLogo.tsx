@@ -5,7 +5,7 @@ export const HeaderLogo = ({ to }: { to: string }) => {
   return (
     <Link href={to} className="inline-block">
       <Image
-        src="/Logo.svg"
+        src="/Logo.png"
         alt="Dlog logo"
         width={120}
         height={40}
