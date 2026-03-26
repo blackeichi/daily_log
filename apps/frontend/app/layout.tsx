@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { SnackbarProvider } from "./components/providers/SnackbarProvider";
-import { QueryProvider } from "./components/providers/QueryProvider";
-import { PageLayout } from "./components/template/pageLayout";
+import { SnackbarProvider } from "@/components/providers/SnackbarProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
+import { PageLayout } from "@/components/template/pageLayout";
 import "./globals.css";
-import { LoadingProgress } from "./components/organisms/loadingProgress";
-import { ErrorBoundary } from "./components/organisms/ErrorBoundary";
+import { LoadingProgress } from "@/components/organisms/loadingProgress";
+import { ErrorBoundary } from "@/components/organisms/ErrorBoundary";
 import { Noto_Sans_KR } from "next/font/google";
 
 export const metadata: Metadata = {

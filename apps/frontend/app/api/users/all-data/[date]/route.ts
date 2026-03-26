@@ -3,7 +3,7 @@ import {
   backendFetch,
   handleRouteError,
   createResponse,
-} from "@/app/libs/api/server";
+} from "@/lib/api/server";
 
 // GET /api/users/all-data/[date]
 export async function GET(

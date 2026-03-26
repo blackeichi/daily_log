@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { backendFetch, handleRouteError, createResponse } from "@/app/libs/api/server";
+import { backendFetch, handleRouteError, createResponse } from "@/lib/api/server";
 
 // GET /api/log/all?startDate=&endDate=&searchTitle=
 export async function GET(request: NextRequest) {

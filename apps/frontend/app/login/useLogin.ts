@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSetAtom } from "jotai";
-import { errorAtom } from "@/app/libs/atom";
-import { localStorageUtilites } from "@/app/libs/utils/storage";
-import { ROUTE } from "@/app/constants/routes";
-import { useLogin as useLoginMutation } from "@/app/libs/hooks/useAuth";
+import { errorAtom } from "@/lib/atom";
+import { localStorageUtilites } from "@/lib/utils/storage";
+import { ROUTE } from "@/constants/routes";
+import { useLogin as useLoginMutation } from "@/lib/hooks/useAuth";
 
 export const useLogin = () => {
   const router = useRouter();

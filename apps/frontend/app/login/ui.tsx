@@ -1,9 +1,9 @@
 "use client";
 
-import Button from "@/app/components/atoms/button";
-import { Input } from "@/app/components/atoms/input";
-import Title from "@/app/components/atoms/Title";
-import CheckBox from "@/app/components/atoms/checkBox";
+import Button from "@/components/atoms/button";
+import { Input } from "@/components/atoms/input";
+import Title from "@/components/atoms/Title";
+import CheckBox from "@/components/atoms/checkBox";
 import { PiEnvelopeSimpleThin } from "react-icons/pi";
 import { RiLockPasswordLine } from "react-icons/ri";
 import { useLogin } from "./useLogin";

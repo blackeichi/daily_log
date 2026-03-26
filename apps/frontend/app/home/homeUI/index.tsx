@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense } from "react";
-import { ScheduleCalendar } from "@/app/components/organisms/scehduleCalendar";
+import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
 import { useHome } from "./useHomeHook";
-import { GetAllOverallT } from "@/app/types/data";
+import { GetAllOverallT } from "@/types/data";
 
 interface HomeUIProps {
   initialData?: GetAllOverallT[];

@@ -34,10 +34,11 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@/components/*": ["./app/components/*"],
-      "@/lib/*": ["./app/libs/*"],
-      "@/types/*": ["./app/types/*"],
-      "@/constants/*": ["./app/constants/*"]
+      "@/components/*": ["./components/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/types/*": ["./types/*"],
+      "@/constants/*": ["./constants/*"],
+      "@/actions/*": ["./actions/*"]
     }
   },
   "include": [

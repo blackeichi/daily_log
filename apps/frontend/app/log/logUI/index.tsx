@@ -1,14 +1,14 @@
 "use client";
 
-import IconButton from "@/app/components/molecules/iconButton";
-import { DateRange } from "@/app/components/organisms/dateRange";
-import TableComponent from "@/app/components/organisms/table";
-import { COLOR_THEME } from "@/app/constants/system";
-import { GetLogsType } from "@/app/types/data";
+import IconButton from "@/components/molecules/iconButton";
+import { DateRange } from "@/components/organisms/dateRange";
+import TableComponent from "@/components/organisms/table";
+import { COLOR_THEME } from "@/constants/system";
+import { GetLogsType } from "@/types/data";
 import { FaRegCalendarPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { AiOutlineFileExcel } from "react-icons/ai";
-import { Input } from "@/app/components/atoms/input";
+import { Input } from "@/components/atoms/input";
 import { useLog } from "./useLog";
 
 const headers = [

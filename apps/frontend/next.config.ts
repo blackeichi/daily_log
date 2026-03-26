@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { serverEnv } from "./app/libs/env";
+import { serverEnv } from "./lib/env";
 
 const nextConfig: NextConfig = {
   // 성능 최적화

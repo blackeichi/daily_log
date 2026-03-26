@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAtomValue } from "jotai";
-import { useAllDiet } from "@/app/libs/hooks/useDiet";
-import { DietCalendarData, GetAllCalories } from "@/app/types/data";
+import { useAllDiet } from "@/lib/hooks/useDiet";
+import { DietCalendarData, GetAllCalories } from "@/types/data";
 import { isSameMonth } from "date-fns";
-import { userAtom } from "@/app/libs/atom";
+import { userAtom } from "@/lib/atom";
 
 export const useDiet = (
   initialData?: GetAllCalories[],

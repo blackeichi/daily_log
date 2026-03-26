@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { endOfMonth, format, startOfMonth } from "date-fns";
-import { backendFetch } from "@/app/libs/api/server";
-import { GetAllOverallT } from "@/app/types/data";
+import { backendFetch } from "@/lib/api/server";
+import { GetAllOverallT } from "@/types/data";
 
 const HomeUI = dynamic(() => import("./homeUI"), {
   loading: () => <div className="w-full h-full bg-stone-100" />,

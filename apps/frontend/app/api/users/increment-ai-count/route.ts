@@ -1,4 +1,4 @@
-import { backendFetch, handleRouteError, createResponse } from "@/app/libs/api/server";
+import { backendFetch, handleRouteError, createResponse } from "@/lib/api/server";
 
 // POST /api/users/increment-ai-count
 export async function POST() {

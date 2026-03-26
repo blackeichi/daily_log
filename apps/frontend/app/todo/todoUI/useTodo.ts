@@ -3,8 +3,8 @@ import {
   useTodos,
   useCreateTodos,
   useUpdateTodos,
-} from "@/app/libs/hooks/useTodos";
-import { GetTodosType, Todo } from "@/app/types/api";
+} from "@/lib/hooks/useTodos";
+import { GetTodosType, Todo } from "@/types/api";
 
 type ListName =
   | "todayList"

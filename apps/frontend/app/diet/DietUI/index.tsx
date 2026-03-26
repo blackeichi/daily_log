@@ -2,10 +2,10 @@
 
 import { useCallback } from "react";
 import { useSetAtom } from "jotai";
-import { MODAL_STATE } from "@/app/constants/system";
-import { DietCalendarData, GetAllCalories } from "@/app/types/data";
-import { modalAtom } from "@/app/libs/atom";
-import { ScheduleCalendar } from "@/app/components/organisms/scehduleCalendar";
+import { MODAL_STATE } from "@/constants/system";
+import { DietCalendarData, GetAllCalories } from "@/types/data";
+import { modalAtom } from "@/lib/atom";
+import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
 import { useDiet } from "./useDiet";
 
 interface DietUIProps {

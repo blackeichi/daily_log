@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { COOKIE_NAMES } from "./app/constants/cookie";
+import { COOKIE_NAMES } from "@/constants/cookie";
 
 /**
  * Middleware: 인증 상태에 따른 페이지 접근 제어

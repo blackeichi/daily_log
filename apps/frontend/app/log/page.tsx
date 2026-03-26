@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 import { LogUI } from "./logUI";
-import { backendFetch } from "@/app/libs/api/server";
-import { GetLogsType } from "@/app/types/data";
+import { backendFetch } from "@/lib/api/server";
+import { GetLogsType } from "@/types/data";
 import moment from "moment";
 
 export const metadata: Metadata = {

@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import { backendFetch } from "@/app/libs/api/server";
-import { Routine } from "@/app/types/api";
+import { backendFetch } from "@/lib/api/server";
+import { Routine } from "@/types/api";
 
 const RoutineUI = dynamic(
   () => import("./RoutineUI").then((mod) => ({ default: mod.RoutineUI })),

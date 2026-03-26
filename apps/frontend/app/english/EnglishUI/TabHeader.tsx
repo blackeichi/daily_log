@@ -1,5 +1,5 @@
-import Button from "@/app/components/atoms/button";
-import { COLOR_THEME } from "@/app/constants/system";
+import Button from "@/components/atoms/button";
+import { COLOR_THEME } from "@/constants/system";
 import { useState } from "react";
 
 export default function TabHeader({

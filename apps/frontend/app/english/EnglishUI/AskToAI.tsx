@@ -1,13 +1,13 @@
-import { sendLangMessage } from "@/app/actions/server/chat";
-import Button from "@/app/components/atoms/button";
-import { Input } from "@/app/components/atoms/input";
-import Overlay from "@/app/components/atoms/overlay";
-import { OkCancelBtns } from "@/app/components/molecules/okCancelBtns";
-import { alertAtom, errorAtom } from "@/app/libs/atom";
-import { localStorageUtilites } from "@/app/libs/utils/storage";
+import { sendLangMessage } from "@/actions/server/chat";
+import Button from "@/components/atoms/button";
+import { Input } from "@/components/atoms/input";
+import Overlay from "@/components/atoms/overlay";
+import { OkCancelBtns } from "@/components/molecules/okCancelBtns";
+import { alertAtom, errorAtom } from "@/lib/atom";
+import { localStorageUtilites } from "@/lib/utils/storage";
 import { useSetAtom } from "jotai";
 import { useEffect, useState, useTransition } from "react";
-import { useIncrementAiCount } from "@/app/libs/hooks/useUser";
+import { useIncrementAiCount } from "@/lib/hooks/useUser";
 
 export default function AskToAI({ selectedType }: { selectedType: 0 | 1 | 2 }) {
   const incrementAiCountMutation = useIncrementAiCount();

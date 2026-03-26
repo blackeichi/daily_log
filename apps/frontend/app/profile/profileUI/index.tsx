@@ -1,10 +1,10 @@
 "use client";
 
 import { useAtom, useSetAtom } from "jotai";
-import { alertAtom, confirmAtom, userAtom } from "@/app/libs/atom";
-import { useLogout } from "@/app/libs/hooks/useAuth";
-import Button from "@/app/components/atoms/button";
-import { COLOR_THEME } from "@/app/constants/system";
+import { alertAtom, confirmAtom, userAtom } from "@/lib/atom";
+import { useLogout } from "@/lib/hooks/useAuth";
+import Button from "@/components/atoms/button";
+import { COLOR_THEME } from "@/constants/system";
 import UpdateUserInfo from "./updateUserInfo";
 import { UpdatePassword } from "./updatePassword";
 import HomeSettings from "./homeSettings";

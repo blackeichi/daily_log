@@ -3,7 +3,7 @@ import {
   backendFetch,
   handleRouteError,
   createResponse,
-} from "@/app/libs/api/server";
+} from "@/lib/api/server";
 
 // PUT /api/calories/[id]
 export async function PUT(

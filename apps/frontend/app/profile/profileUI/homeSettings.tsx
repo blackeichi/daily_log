@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MENU_LIST } from "@/app/constants/routes";
-import { COLOR_THEME } from "@/app/constants/system";
-import Button from "@/app/components/atoms/button";
+import { MENU_LIST } from "@/constants/routes";
+import { COLOR_THEME } from "@/constants/system";
+import Button from "@/components/atoms/button";
 
 export default function HomeSettings({
   setAlert,

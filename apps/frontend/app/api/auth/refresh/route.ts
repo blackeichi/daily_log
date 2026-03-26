@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { backendFetch, handleRouteError } from "@/app/libs/api/server";
+import { backendFetch, handleRouteError } from "@/lib/api/server";
 
 interface RefreshResponse {
   message: string;

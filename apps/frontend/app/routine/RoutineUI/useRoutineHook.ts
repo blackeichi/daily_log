@@ -1,6 +1,6 @@
-import { useRoutines, useUpdateRoutines } from "@/app/libs/hooks/useRoutines";
+import { useRoutines, useUpdateRoutines } from "@/lib/hooks/useRoutines";
 import { useEffect, useState } from "react";
-import { Routine } from "@/app/types/api";
+import { Routine } from "@/types/api";
 
 type ListName = "dailyRoutines" | "weeklyRoutines" | "monthlyRoutines";
 type RoutineItem = { id: number; text: string };

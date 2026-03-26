@@ -1,9 +1,9 @@
 import { useSetAtom } from "jotai";
-import { modalAtom } from "../../libs/atom";
+import { modalAtom } from "@/lib/atom";
 import { useCallback, useEffect, useState } from "react";
-import { useAllOverall } from "../../libs/hooks/useOverall";
-import { GetAllOverallT, OverallCalendarData } from "../../types/data";
-import { MODAL_STATE } from "../../constants/system";
+import { useAllOverall } from "@/lib/hooks/useOverall";
+import { GetAllOverallT, OverallCalendarData } from "@/types/data";
+import { MODAL_STATE } from "@/constants/system";
 
 export const useHome = (
   initialData?: GetAllOverallT[],

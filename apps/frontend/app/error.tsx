@@ -1,8 +1,8 @@
 "use client"; // 클라이언트 컴포넌트로 만들기
 
 import { useEffect } from "react";
-import Button from "./components/atoms/button";
-import Title from "./components/atoms/Title";
+import Button from "@/components/atoms/button";
+import Title from "@/components/atoms/Title";
 
 interface ErrorProps {
   error: Error & { digest?: string };

@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
-import { backendFetch } from "@/app/libs/api/server";
-import { GetAllCalories } from "@/app/types/data";
+import { backendFetch } from "@/lib/api/server";
+import { GetAllCalories } from "@/types/data";
 
 const DietUI = dynamic(() => import("./DietUI"), {
   loading: () => <div className="w-full h-full bg-stone-100" />,

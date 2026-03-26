@@ -1,7 +1,7 @@
-import IconButton from "@/app/components/molecules/iconButton";
-import { COLOR_THEME } from "@/app/constants/system";
-import { confirmAtom } from "@/app/libs/atom";
-import { localStorageUtilites } from "@/app/libs/utils/storage";
+import IconButton from "@/components/molecules/iconButton";
+import { COLOR_THEME } from "@/constants/system";
+import { confirmAtom } from "@/lib/atom";
+import { localStorageUtilites } from "@/lib/utils/storage";
 import { useSetAtom } from "jotai";
 import { useState } from "react";
 import { MdDelete } from "react-icons/md";

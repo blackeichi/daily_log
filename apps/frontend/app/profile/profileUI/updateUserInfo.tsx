@@ -1,12 +1,12 @@
-import Button from "@/app/components/atoms/button";
-import { Input } from "@/app/components/atoms/input";
-import IconButton from "@/app/components/molecules/iconButton";
-import { COLOR_THEME, DEFAULT_LOG_OBJS } from "@/app/constants/system";
-import { User } from "@/app/types/data";
+import Button from "@/components/atoms/button";
+import { Input } from "@/components/atoms/input";
+import IconButton from "@/components/molecules/iconButton";
+import { COLOR_THEME, DEFAULT_LOG_OBJS } from "@/constants/system";
+import { User } from "@/types/data";
 import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
-import { useUpdateMe } from "@/app/libs/hooks/useUser";
+import { useUpdateMe } from "@/lib/hooks/useUser";
 
 export default function UpdateUserInfo({
   user,

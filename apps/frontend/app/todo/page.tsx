@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import { backendFetch } from "@/app/libs/api/server";
-import { GetTodosType } from "@/app/types/api";
+import { backendFetch } from "@/lib/api/server";
+import { GetTodosType } from "@/types/api";
 
 const TodoUI = dynamic(
   () => import("./todoUI").then((mod) => ({ default: mod.TodoUI })),
@@ -12,7 +12,7 @@ const TodoUI = dynamic(
 );
 const ErrorBoundaryProvider = dynamic(
   () =>
-    import("@/app/components/providers/ErrorBoundaryProvider").then((mod) => ({
+    import("@/components/providers/ErrorBoundaryProvider").then((mod) => ({
       default: mod.ErrorBoundaryProvider,
     })),
   {

@@ -1,9 +1,9 @@
 "use client";
 
-import Button from "@/app/components/atoms/button";
-import DataList from "@/app/components/organisms/dataList";
+import Button from "@/components/atoms/button";
+import DataList from "@/components/organisms/dataList";
 import { useTodo } from "./useTodo";
-import { GetTodosType, Todo } from "@/app/types/api";
+import { GetTodosType, Todo } from "@/types/api";
 
 const lists = [
   "todayList",

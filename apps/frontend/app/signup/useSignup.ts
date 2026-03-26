@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSetAtom } from "jotai";
-import { alertAtom, errorAtom } from "@/app/libs/atom";
-import { ROUTE } from "@/app/constants/routes";
-import { useSignup as useSignupMutation } from "@/app/libs/hooks/useAuth";
+import { alertAtom, errorAtom } from "@/lib/atom";
+import { ROUTE } from "@/constants/routes";
+import { useSignup as useSignupMutation } from "@/lib/hooks/useAuth";
 
 export const useSignup = () => {
   const router = useRouter();

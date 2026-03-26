@@ -1,11 +1,11 @@
-import Button from "@/app/components/atoms/button";
-import { Input } from "@/app/components/atoms/input";
-import { errorAtom } from "@/app/libs/atom";
+import Button from "@/components/atoms/button";
+import { Input } from "@/components/atoms/input";
+import { errorAtom } from "@/lib/atom";
 import { useSetAtom } from "jotai";
 import { useState } from "react";
 import { GiConfirmed } from "react-icons/gi";
 import { RiLockPasswordLine } from "react-icons/ri";
-import { useChangePassword } from "@/app/libs/hooks/useAuth";
+import { useChangePassword } from "@/lib/hooks/useAuth";
 
 export const UpdatePassword = ({
   setAlert,
