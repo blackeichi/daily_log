@@ -55,7 +55,6 @@ const Calendar = ({
     getTextColor,
   } = useScheduleCalendar({
     setTargetMonth,
-    user,
     setDate,
   });
   return (

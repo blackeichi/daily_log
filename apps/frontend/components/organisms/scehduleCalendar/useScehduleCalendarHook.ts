@@ -1,4 +1,3 @@
-import { User } from "@/types/api";
 import {
   addDays,
   addMonths,
@@ -10,11 +9,9 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export const useScheduleCalendar = ({
-  user,
   setDate,
   setTargetMonth,
 }: {
-  user: User | null | undefined;
   setDate: React.Dispatch<React.SetStateAction<[string, string] | null>>;
   setTargetMonth: React.Dispatch<React.SetStateAction<Date>> | undefined;
 }) => {
