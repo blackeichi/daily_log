@@ -73,7 +73,7 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
                 </span>
                 입니다.
               </p>
-              (약 {(-totalMinusCalorie / 7000).toFixed(1)}kg 초과) 🐖
+              (약 {(-totalMinusCalorie / 7000).toFixed(1)}kg 초과) 🍩
             </>
           )}
         </h1>

@@ -59,16 +59,6 @@ export const useScheduleCalendar = ({
     setCurrentMonth((prev) => addMonths(prev, 1));
   }, []);
 
-  const getEmoji = useCallback(
-    (calorie: number | undefined) => {
-      if (calorie === undefined || !user) return "";
-      if (calorie <= user.goalCalorie) return "🚩";
-      if (calorie <= user.maximumCalorie) return "✅";
-      return "🐷";
-    },
-    [user],
-  );
-
   const getTextColor = useCallback((dayOfWeek: number) => {
     if (dayOfWeek === 0) return "text-red-700";
     if (dayOfWeek === 6) return "text-blue-700";
@@ -87,6 +77,5 @@ export const useScheduleCalendar = ({
     today,
     getDayOfWeek,
     getTextColor,
-    getEmoji,
   };
 };

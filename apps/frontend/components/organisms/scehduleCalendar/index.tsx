@@ -5,6 +5,9 @@ import { memo } from "react";
 import { User } from "@/types/api";
 import { CalendarHeader } from "./calendarHeader";
 import { useScheduleCalendar } from "./useScehduleCalendarHook";
+import { TbPigMoney } from "react-icons/tb";
+import { IoMdTrophy } from "react-icons/io";
+import { FaRegCheckCircle } from "react-icons/fa";
 
 const dateColorMap = {
   today: "bg-amber-100",
@@ -12,6 +15,14 @@ const dateColorMap = {
   otherMonth: "bg-stone-100 text-stone-500 hover:bg-stone-200",
 };
 
+const getEmoji = (calorie: number | undefined, user?: User | null) => {
+  if (calorie === undefined || !user) return null;
+  if (calorie <= user.goalCalorie)
+    return <IoMdTrophy className="text-yellow-500 text-base sm:text-lg" />;
+  if (calorie <= user.maximumCalorie)
+    return <FaRegCheckCircle className="text-green-500 text-base sm:text-lg" />;
+  return <TbPigMoney className="text-pink-400 text-base sm:text-lg" />;
+};
 const Calendar = ({
   user,
   calendarData,
@@ -42,7 +53,6 @@ const Calendar = ({
     today,
     getDayOfWeek,
     getTextColor,
-    getEmoji,
   } = useScheduleCalendar({
     setTargetMonth,
     user,
@@ -87,7 +97,7 @@ const Calendar = ({
                 const dayOfWeek = getDayOfWeek(day);
                 const textColor = getTextColor(dayOfWeek);
                 const value = calendarData[dateStr];
-                const emoji = getEmoji(value?.calorie);
+                const emoji = getEmoji(value?.calorie, user);
 
                 return (
                   <button
@@ -118,7 +128,7 @@ const Calendar = ({
                       <>
                         <div className={`${textColor} flex gap-2 items-center`}>
                           {format(day, "d")}
-                          {emoji && <span>{emoji}</span>}
+                          {emoji && emoji}
                         </div>
                         {value?.calorie !== undefined ? (
                           <span>{`${value.calorie} kcal`}</span>
