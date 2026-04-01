@@ -145,20 +145,30 @@ export class AuthController {
   ) {
     const refreshToken = req.cookies?.[COOKIE_NAMES.REFRESH_TOKEN] as string;
     if (!refreshToken) {
+      res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, { path: '/' });
+      res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, { path: '/' });
       throw new ForbiddenException('리프레시 토큰이 없습니다.');
     }
-    const accessToken = await this.authService.refreshToken(refreshToken);
 
-    // accessToken 쿠키 갱신
-    res.cookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      path: '/',
-      maxAge: 15 * 60 * 1000, // 15분
-    });
+    try {
+      const accessToken = await this.authService.refreshToken(refreshToken);
 
-    return { message: '토큰이 갱신되었습니다.' };
+      // accessToken 쿠키 갱신
+      res.cookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        path: '/',
+        maxAge: 15 * 60 * 1000, // 15분
+      });
+
+      return { message: '토큰이 갱신되었습니다.' };
+    } catch (error) {
+      // refresh token이 유효하지 않으면 모든 쿠키 삭제
+      res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, { path: '/' });
+      res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, { path: '/' });
+      throw error;
+    }
   }
 
   @UseGuards(JwtAuthGuard)
