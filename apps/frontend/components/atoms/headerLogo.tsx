@@ -7,8 +7,8 @@ export const HeaderLogo = ({ to }: { to: string }) => {
       <Image
         src="/Logo.png"
         alt="Dlog logo"
-        width={120}
-        height={40}
+        width={112}
+        height={37}
         priority
         className="w-16 sm:w-28 h-auto"
       />
