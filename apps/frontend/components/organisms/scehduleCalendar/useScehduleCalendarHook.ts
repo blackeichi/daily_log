@@ -1,10 +1,12 @@
 import {
-  addDays,
   addMonths,
   endOfMonth,
   format,
   startOfMonth,
   subMonths,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
 } from "date-fns";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -22,13 +24,18 @@ export const useScheduleCalendar = ({
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
 
-    const days: Date[] = [];
-    let currentDate = new Date(monthStart);
-    while (currentDate <= monthEnd) {
-      days.push(new Date(currentDate));
-      currentDate = addDays(currentDate, 1);
-    }
+    // 달력 시작일: 해당 월의 첫 날이 속한 주의 일요일
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+    // 달력 종료일: 해당 월의 마지막 날이 속한 주의 토요일
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
+    // 달력에 표시될 모든 날짜 생성 (이전 달, 현재 달, 다음 달 포함)
+    const days = eachDayOfInterval({
+      start: calendarStart,
+      end: calendarEnd,
+    });
+
+    // 7일씩 나눠서 주 단위로 배열 생성
     const weeks: Date[][] = [];
     for (let i = 0; i < days.length; i += 7) {
       weeks.push(days.slice(i, i + 7));

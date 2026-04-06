@@ -102,7 +102,8 @@ const Calendar = ({
                   <button
                     type="button"
                     key={dateStr}
-                    className={`min-h-20 flex flex-col gap-2 h-[12vh] p-2 text-xs sm:text-sm transition-[background-color] border-stone-300 border-b border-r text-left cursor-pointer
+                    className={`min-h-20 flex flex-col gap-2 h-[12vh] p-2 text-xs sm:text-sm transition-[background-color] border-stone-300 border-b border-r text-left
+                      ${!isCurrentMonth || loading ? "cursor-not-allowed" : "cursor-pointer"}
                       ${
                         isToday
                           ? dateColorMap.today
@@ -111,9 +112,9 @@ const Calendar = ({
                             : dateColorMap.otherMonth
                       }`}
                     onClick={() => {
-                      if (!loading) onClick(dateStr);
+                      if (!loading && isCurrentMonth) onClick(dateStr);
                     }}
-                    disabled={loading}
+                    disabled={!isCurrentMonth || loading}
                     aria-label={`${format(day, "yyyy\ub144 M\uc6d4 d\uc77c")} ${value?.emotion || ""}`}
                   >
                     {loading ? (
