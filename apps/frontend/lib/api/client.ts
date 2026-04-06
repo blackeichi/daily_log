@@ -68,13 +68,9 @@ export async function apiClient<T>(
       // JSON 파싱 실패시 기본 메시지 유지
     }
 
-    // 401: 세션 만료 (refresh도 실패) → 로그인 페이지로 이동
-    if (res.status === 401) {
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
-    }
-
+    // 401: 세션 만료 (서버에서 이미 refresh 시도했지만 실패)
+    // 에러를 던져서 호출하는 곳에서 처리하도록 함
+    // React Query의 onError나 전역 에러 핸들러에서 처리 가능
     throw new ApiError(errorMessage, res.status, errors);
   }
 

@@ -17,8 +17,18 @@ function getErrorMessage(error: unknown): string {
 }
 
 function handleGlobalError(error: unknown) {
-  // 401은 client.ts에서 로그인 페이지로 리다이렉트 처리하므로 전역 에러 표시 제외
-  if (error instanceof ApiError && error.statusCode === 401) return;
+  // 401: 세션 만료 (서버 사이드에서 refresh 시도했지만 실패)
+  // 로그인 페이지로 리다이렉트
+  if (error instanceof ApiError && error.statusCode === 401) {
+    if (typeof window !== "undefined") {
+      const currentPath = window.location.pathname;
+      // 이미 로그인/회원가입 페이지가 아닌 경우에만 리다이렉트
+      if (currentPath !== "/login" && currentPath !== "/signup") {
+        window.location.href = "/login";
+      }
+    }
+    return;
+  }
   getDefaultStore().set(errorAtom, getErrorMessage(error));
 }
 
