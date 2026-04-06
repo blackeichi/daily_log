@@ -38,15 +38,28 @@ export function useCreateDiet() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: {
+    mutationFn: async (data: {
       eatenList?: { name: string; cal: number }[];
       memo?: string;
       date?: string;
-    }) =>
-      apiClient<{
-        message: string;
-        data: { isSuccess: boolean; totalCalorie: number };
-      }>("/calories", { method: "POST", body: data }),
+    }): Promise<{ message: string; data: GetCalorie }> => {
+      const response = await apiClient<{ message: string; data: GetCalorie }>(
+        "/calories",
+        {
+          method: "POST",
+          body: data,
+        },
+      );
+      // POST는 {message, data} 또는 data 객체를 반환할 수 있으므로 정규화
+      if (response?.message && response?.data) {
+        return response;
+      }
+      // data 객체만 반환된 경우, message를 추가
+      return {
+        message: "성공적으로 칼로리 기록이 생성되었습니다.",
+        data: response as unknown as GetCalorie,
+      };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diet"] });
       queryClient.invalidateQueries({ queryKey: ["diet-all"] });
@@ -65,7 +78,7 @@ export function useUpdateDiet(id: number) {
     }) =>
       apiClient<{
         message: string;
-        data: { isSuccess: boolean; totalCalorie: number };
+        data: GetCalorie;
       }>(`/calories/${id}`, { method: "PUT", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diet"] });
