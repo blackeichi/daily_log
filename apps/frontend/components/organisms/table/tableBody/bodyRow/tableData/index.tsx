@@ -27,6 +27,15 @@ function TableData({
             <div className="w-full h-full overflow-hidden flex items-center">
               {row[property.id] !== null && property.id === "title" ? (
                 <TooltipData row={row} property={property} />
+              ) : property.id === "score" &&
+                typeof row[property.id] === "number" ? (
+                <div className="flex items-center gap-2 sm:text-lg text-base">
+                  {row[property.id] === 1 && "😢"}
+                  {row[property.id] === 2 && "😕"}
+                  {row[property.id] === 3 && "😐"}
+                  {row[property.id] === 4 && "🙂"}
+                  {row[property.id] === 5 && "😄"}
+                </div>
               ) : (
                 <>{row[property.id]}</>
               )}

@@ -48,6 +48,7 @@ export type GetLogsType = {
   title: string;
   logDate: string;
   todayLog: Record<string, string>;
+  score?: number;
 };
 
 export type GetLogDetail = {
@@ -55,6 +56,7 @@ export type GetLogDetail = {
   title: string;
   todayLog: Record<string, string>;
   logDate: string;
+  score?: number;
 };
 
 export type GetAllCalories = {
@@ -67,7 +69,7 @@ export type GetAllCalories = {
 
 export type GetCalorie = {
   id: number;
-  eatenList: { name: string; cal: number, index:number }[];
+  eatenList: { name: string; cal: number; index: number }[];
   memo: string;
   totalCalorie: number;
   date: string;
@@ -128,6 +130,7 @@ export type UpdateLogRequest = {
   todayLog?: Record<string, string>;
   title?: string;
   logDate?: string;
+  score?: number;
 };
 
 export type UpdateOverallRequest = {

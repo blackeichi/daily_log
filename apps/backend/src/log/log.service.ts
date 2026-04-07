@@ -33,7 +33,9 @@ export class LogService {
 
     return this.prisma.log.findMany({
       where: whereCondition,
-      select: isExcel ? undefined : { id: true, title: true, logDate: true },
+      select: isExcel
+        ? undefined
+        : { id: true, title: true, logDate: true, score: true },
       orderBy: {
         logDate: 'desc',
       },
@@ -76,6 +78,7 @@ export class LogService {
         userId: id,
         title: dto.title || '',
         todayLog: dto.todayLog || {},
+        score: dto.score,
         logDate: dto.logDate || new Date().toISOString().split('T')[0],
       },
       include: { user: true },
@@ -94,6 +97,7 @@ export class LogService {
       data: {
         title: dto.title || '',
         todayLog: dto.todayLog || {},
+        score: dto.score !== undefined ? dto.score : existingLog.score,
         logDate: dto.logDate || existingLog.logDate,
       },
       include: { user: true },

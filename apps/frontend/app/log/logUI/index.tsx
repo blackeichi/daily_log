@@ -14,6 +14,7 @@ import { useLog } from "./useLog";
 const headers = [
   { id: "logDate", label: "날짜", width: 110 },
   { id: "title", label: "제목", width: 300 },
+  { id: "score", label: "평가", width: 50 },
 ];
 
 const ITEMS_PER_PAGE = 50;
@@ -40,7 +41,6 @@ export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
     handleDeleteLog,
     handleEditLog,
   } = useLog(initialData);
-
   return (
     <div
       className="flex flex-col gap-5 w-full pt-2"

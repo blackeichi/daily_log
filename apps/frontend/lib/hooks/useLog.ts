@@ -60,6 +60,7 @@ export function useCreateLog() {
       title: string;
       todayLog: Record<string, string>;
       logDate: string;
+      score: number;
     }) =>
       apiClient<{ message: string }>("/log", { method: "POST", body: data }),
     onSuccess: () => {
@@ -76,6 +77,7 @@ export function useUpdateLog(id?: number) {
       title: string;
       todayLog: Record<string, string>;
       logDate: string;
+      score: number;
     }) =>
       apiClient<{ message: string }>(`/log/${id}`, {
         method: "PUT",

@@ -1,6 +1,7 @@
 import { RiEdit2Fill } from "react-icons/ri";
 import Title from "../../atoms/Title";
 import { MdOutlineNoteAdd } from "react-icons/md";
+import { FaStar } from "react-icons/fa";
 import { useLog, useCreateLog, useUpdateLog } from "@/lib/hooks/useLog";
 import { useMemo, useState } from "react";
 import { GetLogDetail } from "@/types/data";
@@ -62,6 +63,7 @@ const ActualUI = ({
     title: string;
     todayLog: Record<string, string>;
     logDate: string;
+    score: number;
   }) => {
     createLogMutation.mutate(logData, {
       onSuccess: () => {
@@ -74,6 +76,7 @@ const ActualUI = ({
     title: string;
     todayLog: Record<string, string>;
     logDate: string;
+    score: number;
   }) => {
     updateLogMutation.mutate(logData, {
       onSuccess: () => {
@@ -86,6 +89,7 @@ const ActualUI = ({
   const [logDate, setLogDate] = useState(
     data?.logDate || moment().format("YYYY-MM-DD"),
   );
+  const [score, setScore] = useState<number>(data?.score || 5);
   const user = useAtomValue(userAtom);
   const [todayLog, setTodayLog] = useState(data?.todayLog || {});
   const ObjKeys = useMemo(
@@ -100,6 +104,25 @@ const ActualUI = ({
         {isEdit ? <RiEdit2Fill size={25} /> : <MdOutlineNoteAdd size={25} />}
         {isEdit ? "로그 수정하기" : "로그 추가하기"}
       </Title>
+      <div className="flex w-full justify-center">
+        <div className="flex gap-1 items-center justify-center pb-4 pt-2 px-6  w-fit">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setScore(value)}
+              className="transition-all hover:scale-110"
+            >
+              <FaStar
+                size={24}
+                className={`${
+                  value <= score ? "text-yellow-400" : "text-gray-300"
+                } transition-colors`}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
       <Input
         id="title"
         value={title}
@@ -118,6 +141,7 @@ const ActualUI = ({
         required
         disabled={isEdit}
       />
+
       {user ? (
         ObjKeys.map((objKey) => (
           <TextArea
@@ -148,12 +172,14 @@ const ActualUI = ({
               title,
               logDate,
               todayLog,
+              score,
             });
           } else {
             onCreateLog({
               title,
               logDate,
               todayLog,
+              score,
             });
           }
         }}

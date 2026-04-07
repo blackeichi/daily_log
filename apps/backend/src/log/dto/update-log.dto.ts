@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsObject, IsDateString } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsObject,
+  IsDateString,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 
 export class UpdateLogDto {
   @ApiProperty({
@@ -19,6 +27,17 @@ export class UpdateLogDto {
   @IsOptional()
   @IsString()
   title?: string;
+
+  @ApiProperty({
+    description: '로그 점수 (1-5)',
+    example: 4,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  score?: number;
 
   @ApiProperty({
     description: '로그 날짜 (YYYY-MM-DD)',

@@ -8,6 +8,7 @@ export const downloadExcel = (data: GetLogsType[], filename?: string) => {
       번호: index + 1,
       날짜: log.logDate,
       제목: log.title,
+      점수: log.score ?? "-",
       ...log.todayLog,
     }));
 
@@ -22,6 +23,7 @@ export const downloadExcel = (data: GetLogsType[], filename?: string) => {
       { wch: 8 }, // 번호
       { wch: 12 }, // 날짜
       { wch: 50 }, // 제목
+      { wch: 8 }, // 점수
       ...Object.keys(data[0]?.todayLog || {}).map(() => ({ wch: 50 })), // todayLog의 각 키에 대한 너비
     ];
     worksheet["!cols"] = columnWidths;

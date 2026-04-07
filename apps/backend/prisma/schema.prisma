@@ -90,6 +90,7 @@ model Log {
   user      User     @relation(fields: [userId], references: [id])
   title     String?  @db.VarChar(100)
   todayLog   Json?
+  score     Int?
   logDate   String
   createdAt DateTime @default(now())
   // 동일한 사용자는 하루에 하나만 가능하게 unique 제약
