@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSetAtom } from "jotai";
 import { errorAtom } from "@/lib/atom";
@@ -10,16 +10,22 @@ export const useLogin = () => {
   const router = useRouter();
   const setError = useSetAtom(errorAtom);
   // 로컬스토리지에서 저장된 이메일 가져오기
-  const [email, setEmail] = useState(
-    localStorageUtilites.getRememberMe() || "",
-  );
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(
-    !!localStorageUtilites.getRememberMe(),
-  );
+  const [rememberMe, setRememberMe] = useState(false);
   const [isGuestMode, setIsGuestMode] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const loginMutation = useLoginMutation();
+
+  // 클라이언트 사이드에서만 로컬스토리지 값 로드
+  useEffect(() => {
+    const savedEmail = localStorageUtilites.getRememberMe();
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   // 로그인 핸들러
   const handleLogin = () => {
@@ -38,6 +44,7 @@ export const useLogin = () => {
       { email: loginEmail, password: loginPassword },
       {
         onSuccess: () => {
+          setIsNavigating(true);
           if (rememberMe && !isGuestMode) {
             localStorageUtilites.setRememberMe(email);
           } else {
@@ -66,7 +73,7 @@ export const useLogin = () => {
     setRememberMe,
     isGuestMode,
     setIsGuestMode,
-    loading: loginMutation.isPending,
+    loading: loginMutation.isPending || isNavigating,
     handleLogin,
     handleGoToSignup,
   };
