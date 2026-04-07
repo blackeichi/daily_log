@@ -82,7 +82,7 @@ export class AuthService {
 
       const tokens = await this.getTokens(user.id, user.email);
       return tokens.accessToken;
-    } catch (e) {
+    } catch {
       throw new ForbiddenException(
         '토큰이 유효하지 않습니다. 다시 로그인 해주세요.',
       );
@@ -119,7 +119,7 @@ export class AuthService {
         { sub: userId, email },
         {
           secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: '7d',
+          expiresIn: '30d',
         },
       ),
     ]);

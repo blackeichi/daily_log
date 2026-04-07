@@ -17,8 +17,10 @@ function getErrorMessage(error: unknown): string {
 }
 
 function handleGlobalError(error: unknown) {
-  // 401: 세션 만료 (서버 사이드에서 refresh 시도했지만 실패)
-  // 로그인 페이지로 리다이렉트
+  // 401: 세션 만료 → 로그인 페이지로 리다이렉트
+  // 클라이언트 → Route Handler → backendFetch → 백엔드 401 → backendFetch /auth/refresh 시도 실패
+  // → apiClient로 401 전달 → handleGlobalError에서 감지 → 로그인 페이지로 리다이렉트
+  // SSR의 경우엔 실패하면 클라이언트에서 다시 요청하기에 QueryProvider에서만 처리해도 충분할 것으로 예상
   if (error instanceof ApiError && error.statusCode === 401) {
     if (typeof window !== "undefined") {
       const currentPath = window.location.pathname;

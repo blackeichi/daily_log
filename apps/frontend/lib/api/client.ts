@@ -50,6 +50,8 @@ export async function apiClient<T>(
   const res = await fetch(`/api${endpoint}`, fetchOptions);
 
   // 에러 처리
+  // 401은 Route Handler의 backendFetch에서 이미 refresh 시도했으므로
+  // 여기서는 그냥 에러로 처리하여 handleGlobalError로 전달
   if (!res.ok) {
     let errorMessage = "요청 처리 중 오류가 발생했습니다.";
     let errors: string[] | undefined;
@@ -67,10 +69,7 @@ export async function apiClient<T>(
     } catch {
       // JSON 파싱 실패시 기본 메시지 유지
     }
-
-    // 401: 세션 만료 (서버에서 이미 refresh 시도했지만 실패)
-    // 에러를 던져서 호출하는 곳에서 처리하도록 함
-    // React Query의 onError나 전역 에러 핸들러에서 처리 가능
+    console.log(errorMessage);
     throw new ApiError(errorMessage, res.status, errors);
   }
 

@@ -4,7 +4,6 @@ import { PrivateLayout } from "./privateLayout";
 import { usePathname } from "next/navigation";
 import { ROUTE } from "@/constants/routes";
 import Modal from "../../organisms/modal";
-import { TokenRefreshProvider } from "../../providers/TokenRefreshProvider";
 
 export const PageLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -14,9 +13,7 @@ export const PageLayout = ({ children }: { children: React.ReactNode }) => {
       {pathname === ROUTE.LOGIN || pathname === ROUTE.SIGNUP ? (
         <>{children}</>
       ) : (
-        <TokenRefreshProvider>
-          <PrivateLayout>{children}</PrivateLayout>
-        </TokenRefreshProvider>
+        <PrivateLayout>{children}</PrivateLayout>
       )}
     </div>
   );
