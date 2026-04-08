@@ -15,6 +15,7 @@ export type DataListItem = {
   id: number;
   text: string;
   isDone?: boolean;
+  type?: "todo" | "section" | undefined;
 };
 
 export function DataListItem({
@@ -24,6 +25,7 @@ export function DataListItem({
   dataList,
   setDataList,
   isEditing,
+  enableDrag = false,
   debounce,
   onSaveDataList,
   needCheckBox,
@@ -34,6 +36,7 @@ export function DataListItem({
   dataList: DataListItem[];
   setDataList: (val: DataListItem[], delay?: number) => void;
   isEditing: boolean;
+  enableDrag?: boolean;
   debounce: (func: () => void, delay: number) => void;
   onSaveDataList: (val: DataListItem[]) => void;
   needCheckBox: boolean;
@@ -50,6 +53,8 @@ export function DataListItem({
   );
   const [checked, setChecked] = useState(item.isDone || false);
   const [isDone, setIsDone] = useState(item.isDone || false);
+  const isSection = item?.type === "section";
+  const dragEnabled = isEditing && enableDrag;
 
   const handleCheckboxChange = useCallback((val: boolean) => {
     setChecked(val);
@@ -82,7 +87,7 @@ export function DataListItem({
   }, [item.text, dataList, index, setDataList, setConfirmMgs]);
 
   useEffect(() => {
-    if (needCheckBox && isDone !== item.isDone) {
+    if (!isSection && needCheckBox && isDone !== item.isDone) {
       const newList = [...dataList];
       if (newList[index]) {
         newList[index].isDone = isDone;
@@ -95,6 +100,7 @@ export function DataListItem({
   }, [
     isDone,
     needCheckBox,
+    isSection,
     item.isDone,
     dataList,
     index,
@@ -105,13 +111,15 @@ export function DataListItem({
 
   return (
     <form
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      className="flex min-h-12 items-center bg-white shadow-xs shadow-stone-500 pl-3 pr-1 py-1"
+      ref={dragEnabled ? setNodeRef : undefined}
+      style={dragEnabled ? style : undefined}
+      {...(dragEnabled ? attributes : {})}
+      className={`flex min-h-12 items-center shadow-xs shadow-stone-500 pl-3 pr-1 py-1 ${
+        isSection ? "bg-stone-200 border-l-4 border-stone-600" : "bg-white"
+      }`}
       onSubmit={(e) => e.preventDefault()}
     >
-      {!isEditing && needCheckBox && (
+      {!isEditing && needCheckBox && !isSection && (
         <CheckBox
           id={item.id.toString()}
           value={checked}
@@ -119,9 +127,24 @@ export function DataListItem({
         />
       )}
       {!isEditing ? (
-        <span className={`flex-1 pl-2 ${checked ? "line-through" : ""}`}>
-          {item.text}
-        </span>
+        <div className="flex-1 pl-2 flex items-center gap-2">
+          {isSection && (
+            <span className="rounded-full bg-stone-700 px-2 py-0.5 text-[10px] font-semibold text-white">
+              SECTION
+            </span>
+          )}
+          <span
+            className={
+              isSection
+                ? "font-semibold tracking-wide text-stone-800"
+                : checked
+                  ? "line-through"
+                  : ""
+            }
+          >
+            {item.text}
+          </span>
+        </div>
       ) : (
         <div className="flex-1">
           <Input
@@ -129,7 +152,11 @@ export function DataListItem({
             defaultValue={item.text}
             setValue={handleInputChange}
             width="100%"
-            placeholder={`${title}을(를) 입력하세요.`}
+            placeholder={
+              isSection
+                ? "섹터 제목을 입력하세요."
+                : `${title}을(를) 입력하세요.`
+            }
             maxLength={200}
           />
         </div>
@@ -147,7 +174,7 @@ export function DataListItem({
           <IoIosMenu
             size={22}
             className="cursor-grab w-7 touch-none"
-            {...listeners}
+            {...(dragEnabled ? listeners : {})}
           />
         </div>
       )}

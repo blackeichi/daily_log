@@ -21,6 +21,15 @@ export class TodoItemDto {
   @ApiProperty({ description: '완료 여부', example: false })
   @IsBoolean()
   isDone: boolean;
+
+  @ApiProperty({
+    description: '항목 유형',
+    enum: ['todo', 'section'],
+    example: 'todo',
+  })
+  @IsString()
+  @IsIn(['todo', 'section'])
+  type: 'todo' | 'section' | undefined;
 }
 
 export class UpdateTodoDto {

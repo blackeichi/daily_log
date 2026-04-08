@@ -44,10 +44,14 @@ function DataListComponent({
   const debounce = useDebounce();
   const [isOpen, setIsOpen] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [dataList, setDataList] = useState<DataList[]>(defaultDataList);
   useEffect(() => {
     setDataList(defaultDataList);
   }, [defaultDataList]);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // 센서 설정
   const sensors = useSensors(
@@ -66,6 +70,7 @@ function DataListComponent({
     }
   };
   const hasItems = dataList && dataList.length > 0;
+  const dragEnabled = isMounted && isEditing;
   return (
     <div className="flex flex-col w-full shadow-lg shadow-stone-500 rounded-lg overflow-hidden text-xs sm:text-sm">
       {/* Header */}
@@ -154,15 +159,35 @@ function DataListComponent({
           }}
           className="overflow-hidden"
         >
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={dataList.map((i) => i.id)}
-              strategy={verticalListSortingStrategy}
+          {dragEnabled ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
+              <SortableContext
+                items={dataList.map((i) => i.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {dataList.map((item, index) => (
+                  <DataListItem
+                    title={title}
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    dataList={dataList}
+                    setDataList={setDataList}
+                    isEditing={isEditing}
+                    enableDrag={dragEnabled}
+                    debounce={debounce}
+                    onSaveDataList={onSaveDataList}
+                    needCheckBox={needCheckBox}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <div>
               {dataList.map((item, index) => (
                 <DataListItem
                   title={title}
@@ -172,13 +197,14 @@ function DataListComponent({
                   dataList={dataList}
                   setDataList={setDataList}
                   isEditing={isEditing}
+                  enableDrag={false}
                   debounce={debounce}
                   onSaveDataList={onSaveDataList}
                   needCheckBox={needCheckBox}
                 />
               ))}
-            </SortableContext>
-          </DndContext>
+            </div>
+          )}
         </motion.div>
       ) : (
         <div className="flex h-10 sm:h-12 items-center bg-white shadow-sm shadow-stone-500 justify-center">

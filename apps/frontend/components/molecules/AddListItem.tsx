@@ -13,6 +13,7 @@ export type DataListItem = {
   id: number;
   text: string;
   isDone?: boolean;
+  type?: "todo" | "section" | undefined;
 };
 
 export const AddListItem = ({
@@ -27,6 +28,7 @@ export const AddListItem = ({
   const setError = useSetAtom(errorAtom);
   const [newData, setNewData] = useState("");
   const [open, setOpen] = useState(false);
+  const [itemType, setItemType] = useState<"todo" | "section">("todo");
 
   return (
     <form
@@ -39,17 +41,52 @@ export const AddListItem = ({
         }
         setDataList([
           ...dataList,
-          { id: Date.now(), text: newData, isDone: false },
+          itemType === "section"
+            ? {
+                id: Date.now(),
+                text: newData,
+                type: "section",
+              }
+            : {
+                id: Date.now(),
+                text: newData,
+                isDone: false,
+                type: "todo",
+              },
         ]);
         setNewData("");
+        setItemType("todo");
+        setOpen(false);
       }}
     >
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: open ? "90%" : 0 }}
         transition={{ duration: 0.3 }}
-        className="overflow-hidden"
+        className="overflow-hidden flex items-center gap-2"
       >
+        <div className="flex shrink-0 rounded-md border border-stone-300 bg-stone-100 p-0.5">
+          <button
+            type="button"
+            className={`rounded px-2 py-1 text-[11px] ${
+              itemType === "todo" ? "bg-stone-700 text-white" : "text-stone-600"
+            }`}
+            onClick={() => setItemType("todo")}
+          >
+            할 일
+          </button>
+          <button
+            type="button"
+            className={`rounded px-2 py-1 text-[11px] ${
+              itemType === "section"
+                ? "bg-stone-700 text-white"
+                : "text-stone-600"
+            }`}
+            onClick={() => setItemType("section")}
+          >
+            섹터
+          </button>
+        </div>
         <Input
           id="add-new-data"
           value={newData}
@@ -58,7 +95,9 @@ export const AddListItem = ({
           placeholder={
             dataList.length >= MAX_ITEMS
               ? "더 이상 추가할 수 없습니다."
-              : `${title}을(를) 입력하세요.`
+              : itemType === "section"
+                ? "섹터 제목을 입력하세요."
+                : `${title}을(를) 입력하세요.`
           }
           maxLength={200}
           disabled={dataList.length >= MAX_ITEMS}
@@ -69,7 +108,7 @@ export const AddListItem = ({
           <IconButton
             text="추가"
             onClick={() => {}}
-            className={`w-12 h-[34px] text-white text-xs rounded-sm gap-0.5`}
+            className="w-12 h-9 text-white text-xs rounded-sm gap-0.5"
             color="white"
             type="submit"
             size={15}
