@@ -30,17 +30,18 @@ model User {
   routines       Routine[]
   successDates   SuccessDates[]
   failDates      FailDates[]
-  overallReviews OverallReview[]
-  useAiCount      UseAiCount?
+  aiHistories    AiHistory[]
 }
 
-model UseAiCount {
+model AiHistory {
   id        Int      @id @default(autoincrement())
-  userId    Int      @unique
+  userId    Int
   user      User     @relation(fields: [userId], references: [id])
-  count     Int      @default(0)
+  content   String   @db.Text
   date      String
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  @@unique([userId, date])
+  @@index([userId, createdAt])
 }
 
 model SuccessDates {
@@ -110,18 +111,5 @@ model Calorie {
   createdAt DateTime @default(now())
   isSuccess Boolean @default(true)
   @@unique([userId, date])
-  @@index([userId, createdAt])
-}
-
-model OverallReview{
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  reviewDate String
-  emotion String   @db.VarChar(50)
-  memo String   @db.VarChar(500)
-  isGetAdvice Boolean @default(false)
-  createdAt DateTime @default(now())
-  @@unique([userId, reviewDate])
   @@index([userId, createdAt])
 }

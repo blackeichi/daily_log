@@ -52,16 +52,11 @@ export function useUpdateMe() {
   });
 }
 
-export function useIncrementAiCount() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () =>
-      apiClient<{ message: string }>("/users/increment-ai-count", {
-        method: "POST",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.me() });
-    },
+export function useGetAiConversation() {
+  return useQuery({
+    queryKey: ["ai-conversation"],
+    queryFn: () =>
+      apiClient<{ content: string; date: string }>("/users/ai-conversation"),
+    staleTime: 1000 * 60 * 60, // 1시간 동안 fresh 상태 유지
   });
 }

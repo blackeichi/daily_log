@@ -80,15 +80,30 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('increment-ai-count')
-  async incrementAiCount(@Req() req: any) {
+  @Get('ai-conversation')
+  async getAiConversation(@Req() req: any) {
     const user = await this.usersService.findById(req.user.sub);
     if (!user) throw new BadRequestException('사용자가 존재하지 않습니다.');
-    const useAiCount = await this.usersService.getAiCount(req.user.sub);
-    if (!useAiCount) {
-      throw new BadRequestException('AI 사용량 정보를 불러올 수 없습니다.');
+
+    // 오늘 날짜의 AI history가 있는지 확인
+    const todayAiHistory = await this.usersService.getTodayAiHistory(
+      req.user.sub,
+    );
+
+    if (todayAiHistory) {
+      // 이미 오늘의 AI 대화가 있으면 반환
+      return todayAiHistory.content;
     }
-    await this.usersService.updateAiCount(req.user.sub, useAiCount);
-    return true;
+
+    // 오늘의 AI 대화가 없으면 생성
+    const aiContent = await this.usersService.generateAiConversation(
+      req.user.sub,
+    );
+    const newAiHistory = await this.usersService.createAiHistory(
+      req.user.sub,
+      aiContent,
+    );
+
+    return newAiHistory.content;
   }
 }

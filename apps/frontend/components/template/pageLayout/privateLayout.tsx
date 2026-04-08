@@ -17,7 +17,7 @@ export const PrivateLayout = ({ children }: { children: React.ReactNode }) => {
   }, [userData, setUser]);
 
   return (
-    <div className="w-full min-h-full py-24 relative flex flex-col items-center">
+    <div className="w-full min-h-full py-24 pb-10 relative flex flex-col items-center">
       <MenuList />
       <div className="w-full min-h-full max-w-5xl px-3 text-xs sm:text-base flex justify-center">
         {children}

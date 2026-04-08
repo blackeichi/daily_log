@@ -1,50 +1,103 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
+import OpenAI from 'openai';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
-  async getAiCount(userId: number) {
-    const useAiCount = await this.prisma.useAiCount.findUnique({
-      where: { userId: userId },
+  private openai: OpenAI;
+
+  constructor(private prisma: PrismaService) {
+    this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
-    if (!useAiCount) {
-      const today = new Date().toISOString().split('T')[0];
-      return this.prisma.useAiCount.create({
-        data: {
-          userId: userId,
-          count: 0,
-          date: today,
-        },
-      });
-    }
-    return useAiCount;
   }
-  async updateAiCount(
-    userId: number,
-    existing: { userId: number; count: number; date: string },
-  ) {
+
+  async getTodayAiHistory(userId: number) {
     const today = new Date().toISOString().split('T')[0];
-    if (today !== existing.date) {
-      return this.prisma.useAiCount.update({
-        where: { userId },
-        data: {
-          count: 1,
+    return this.prisma.aiHistory.findUnique({
+      where: {
+        userId_date: {
+          userId,
           date: today,
         },
-      });
-    }
-    if (1 + existing.count > 10) {
-      throw new BadRequestException('AI 사용량이 초과되었습니다.');
-    }
-    return this.prisma.useAiCount.update({
-      where: { userId },
-      data: {
-        count: 1 + existing.count,
+      },
+    });
+  }
+
+  async createAiHistory(userId: number, content: string) {
+    const today = new Date().toISOString().split('T')[0];
+    return this.prisma.aiHistory.upsert({
+      where: {
+        userId_date: {
+          userId,
+          date: today,
+        },
+      },
+      update: {
+        content,
+      },
+      create: {
+        userId,
+        content,
         date: today,
       },
     });
   }
+
+  async generateAiConversation(userId: number): Promise<string> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new BadRequestException('사용자를 찾을 수 없습니다.');
+    }
+
+    // 일주일치 로그 가져오기
+    const logs = await this.prisma.log.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 최근 7일간
+          lte: new Date(), // 오늘까지
+        },
+      },
+    });
+    const defaultMessage =
+      '오늘도 충분히 잘하고 있어요! \n 천천히 가도 괜찮아요. 😉';
+    // AI에게 전달할 메시지 구성
+    let userMessage = `사용자 이름: ${user.name}\n`;
+
+    if (logs.length > 0) {
+      userMessage += `최근 ${logs.length}일간의 활동 기록:\n`;
+      logs.forEach((log) => {
+        userMessage += `\n[${log.logDate}]${log.score ? ` (점수: ${log.score}점)` : ''}\n`;
+        if (log.title) {
+          userMessage += `제목: ${log.title}\n`;
+        }
+        if (log.todayLog) {
+          userMessage += `내용: ${JSON.stringify(log.todayLog)}\n`;
+        }
+      });
+    }
+
+    try {
+      const completion = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content:
+              '너는 사용자의 일주일간의 일기(로그)를 바탕으로 도움되거나 응원을 하는 한 마디를 해주는 조언자야. 사용자가 도움이될 수 있도록 짧게 답변해줘. 줄바꿈도 넣어주고',
+          },
+          { role: 'user', content: userMessage },
+        ],
+      });
+
+      return completion.choices[0]?.message.content ?? defaultMessage;
+    } catch (error) {
+      console.error('OpenAI API Error:', error);
+      return defaultMessage;
+    }
+  }
+
   async findAll() {
     return this.prisma.user.findMany();
   }

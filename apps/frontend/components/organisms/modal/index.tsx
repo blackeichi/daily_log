@@ -14,12 +14,6 @@ const ModifyCaloriesModal = dynamic(
     ssr: false,
   },
 );
-const ModifyOverallModal = dynamic(
-  () => import("../modal/modifyOverallModal"),
-  {
-    ssr: false,
-  },
-);
 
 const Modal = () => {
   const [modal, setModal] = useAtom(modalAtom);
@@ -50,18 +44,6 @@ const Modal = () => {
           modal?.id === MODAL_STATE.ADD_CALORIES) && (
           <ModifyCaloriesModal
             isEdit={modal?.id === MODAL_STATE.EDIT_CALORIES}
-            date={modal.data as string}
-            callBack={modal.callBack as () => void}
-            onClose={onClose}
-          />
-        )}
-      {modal?.id &&
-        (modal?.data as string | undefined) &&
-        modal?.callBack &&
-        (modal?.id === MODAL_STATE.EDIT_OVERALL ||
-          modal?.id === MODAL_STATE.ADD_OVERALL) && (
-          <ModifyOverallModal
-            isEdit={modal?.id === MODAL_STATE.EDIT_OVERALL}
             date={modal.data as string}
             callBack={modal.callBack as () => void}
             onClose={onClose}

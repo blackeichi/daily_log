@@ -83,14 +83,6 @@ export type Routine = {
   monthlyRoutines: { id: number; text: string }[];
 };
 
-export type OverallReview = {
-  id: number;
-  emotion: string;
-  memo?: string;
-  reviewDate: string;
-  isGetAdvice?: boolean;
-};
-
 // 인증 관련 타입
 export type LoginRequest = {
   email: string;
@@ -131,11 +123,4 @@ export type UpdateLogRequest = {
   title?: string;
   logDate?: string;
   score?: number;
-};
-
-export type UpdateOverallRequest = {
-  emotion: string;
-  memo?: string;
-  reviewDate: string;
-  isGetAdvice?: boolean;
 };

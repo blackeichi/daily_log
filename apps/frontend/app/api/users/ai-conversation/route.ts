@@ -1,13 +1,13 @@
-import { NextRequest } from "next/server";
 import { backendFetch, handleRouteError, createResponse } from "@/lib/api/server";
 
-// GET /api/overall/all?startDate=&endDate=
-export async function GET(request: NextRequest) {
+// GET /api/users/ai-conversation
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.toString();
     const { data, cookies: setCookies } = await backendFetch(
-      `/overall/all?${query}`,
+      "/users/ai-conversation",
+      {
+        method: "GET",
+      },
     );
     return createResponse(data, setCookies);
   } catch (error) {

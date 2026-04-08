@@ -9,7 +9,6 @@ export type {
   GetLogDetail,
   GetAllCalories,
   GetCalorie,
-  OverallReview,
 } from "./api";
 
 export type DietCalendarData = {
@@ -30,21 +29,3 @@ export type Routine = {
 };
 
 export type Eaten = { name: string; cal: number; index: number };
-
-export type OverallCalendarData = {
-  [key: string]: { emotion: string };
-};
-
-export type GetAllOverallT = {
-  id: number;
-  reviewDate: string;
-  emotion: string;
-};
-
-export type GetOverallT = {
-  id: number;
-  reviewDate: string;
-  emotion: string;
-  memo: string;
-  isGetAdvice: boolean;
-};

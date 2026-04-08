@@ -10,7 +10,6 @@ import { TodosModule } from './todos/todos.module';
 import { CaloriesModule } from './calories/calories.module';
 import { LogModule } from './log/log.module';
 import { RoutineModule } from './routine/routine.module';
-import { OverallModule } from './overall/overall.module';
 import { CustomLogger } from './common/logger.service';
 
 @Module({
@@ -41,7 +40,6 @@ import { CustomLogger } from './common/logger.service';
     CaloriesModule,
     LogModule,
     RoutineModule,
-    OverallModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, CustomLogger],
