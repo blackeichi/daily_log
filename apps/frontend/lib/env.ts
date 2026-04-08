@@ -22,14 +22,3 @@ export const env = {
     return this.nodeEnv === "production";
   },
 } as const;
-
-// 서버 사이드에서만 접근 가능한 환경변수
-export const serverEnv = {
-  get apiUrl() {
-    const url = process.env.API_URL;
-    if (!url) {
-      throw new Error("API_URL 환경변수가 설정되지 않았습니다.");
-    }
-    return url;
-  },
-} as const;

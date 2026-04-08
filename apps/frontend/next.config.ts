@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { serverEnv } from "./lib/env";
 
 const nextConfig: NextConfig = {
   // 성능 최적화
@@ -37,14 +36,6 @@ const nextConfig: NextConfig = {
               "frame-ancestors 'self' https://portfolio-six-jet-37.vercel.app",
           },
         ],
-      },
-    ];
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${serverEnv.apiUrl}/:path*`,
       },
     ];
   },
