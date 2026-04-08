@@ -58,6 +58,9 @@ importers:
       helmet:
         specifier: ^8.1.0
         version: 8.1.0
+      openai:
+        specifier: ^6.32.0
+        version: 6.32.0(ws@8.20.0)
       passport:
         specifier: ^0.7.0
         version: 0.7.0
