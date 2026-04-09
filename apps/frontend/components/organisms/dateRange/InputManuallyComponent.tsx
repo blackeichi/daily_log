@@ -19,7 +19,6 @@ export const InputManuallyComponent = ({
         id="startDateInput"
         label="시작일"
         width={145}
-        noCalendar
       />
       <DateInput
         date={endDate}
@@ -27,7 +26,6 @@ export const InputManuallyComponent = ({
         id="endDateInput"
         label="종료일"
         width={145}
-        noCalendar
       />
     </div>
   );
