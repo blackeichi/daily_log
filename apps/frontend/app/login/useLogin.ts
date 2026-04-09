@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSetAtom } from "jotai";
 import { errorAtom } from "@/lib/atom";
 import { localStorageUtilites } from "@/lib/utils/storage";
-import { ROUTE } from "@/constants/routes";
+import { IS_REDIRECTED, ROUTE } from "@/constants/routes";
 import { useLogin as useLoginMutation } from "@/lib/hooks/useAuth";
 
 export const useLogin = () => {
   const router = useRouter();
   const setError = useSetAtom(errorAtom);
-  // 로컬스토리지에서 저장된 이메일 가져오기
+  const isRedirect = useSearchParams().get(IS_REDIRECTED);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -26,6 +26,13 @@ export const useLogin = () => {
       setRememberMe(true);
     }
   }, []);
+
+  // 세션 만료로 redirect된 경우 알림 표시
+  useEffect(() => {
+    if (isRedirect) {
+      setError("세션이 만료되었습니다. 다시 로그인해주세요.");
+    }
+  }, [isRedirect, setError]);
 
   // 로그인 핸들러
   const handleLogin = () => {

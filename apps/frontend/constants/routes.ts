@@ -19,3 +19,5 @@ export const MENU_LIST = [
   // { id: "ENGLISH", name: "🗽 ENGLISH", href: ROUTE.ENGLISH },
   { id: "PROFILE", name: "🪪 프로필", href: ROUTE.PROFILE },
 ];
+
+export const IS_REDIRECTED = "is_redirected";

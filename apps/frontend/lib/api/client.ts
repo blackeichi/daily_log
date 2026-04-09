@@ -69,7 +69,6 @@ export async function apiClient<T>(
     } catch {
       // JSON 파싱 실패시 기본 메시지 유지
     }
-    console.log(errorMessage);
     throw new ApiError(errorMessage, res.status, errors);
   }
 

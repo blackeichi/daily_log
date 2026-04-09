@@ -110,6 +110,8 @@ export async function backendFetch<T>(
     );
 
     if (!refreshRes.ok) {
+      cookieStore.delete(COOKIE_NAMES.ACCESS_TOKEN);
+      cookieStore.delete(COOKIE_NAMES.REFRESH_TOKEN);
       throw new BackendFetchError(
         "세션이 만료되었습니다. 다시 로그인해주세요.",
         401,

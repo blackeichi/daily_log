@@ -27,7 +27,7 @@ export const LoginUI = () => {
     <div className="w-full h-full flex justify-center items-center p-4">
       <form
         onSubmit={(e) => e.preventDefault()}
-        className="w-full sm:w-[540px] shadow-stone-500 border-stone-300 border sm:shadow-lg bg-white rounded-lg p-5 sm:p-10 flex flex-col gap-3"
+        className="w-full sm:w-135 shadow-stone-500 border-stone-300 border sm:shadow-lg bg-white rounded-lg p-5 sm:p-10 flex flex-col gap-3"
       >
         <Title className="font-medium mb-3">로그인</Title>
         <Input
