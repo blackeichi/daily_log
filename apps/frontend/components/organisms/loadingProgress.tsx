@@ -1,20 +1,14 @@
 "use client";
 
-import { useAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { motion } from "framer-motion";
-import { useEffect } from "react";
 import { loadingState } from "@/lib/atom";
 
 export const LoadingProgress = () => {
-  const [loading, setLoading] = useAtom(loadingState);
-  useEffect(() => {
-    if (loading < 0) {
-      setLoading(0);
-    }
-  }, [loading, setLoading]);
+  const loading = useAtomValue(loadingState);
   return (
     <div className="z-50 fixed top-0 left-0 w-screen">
-      {loading && loading > 0 ? (
+      {loading ? (
         <div className="w-full h-1.5 relative overflow-hidden bg-inherit">
           <motion.div
             className="w-1/2 h-full -left-1/2 top-0 absolute"
@@ -29,9 +23,7 @@ export const LoadingProgress = () => {
             <div className="w-full h-full bg-stone-800" />
           </motion.div>
         </div>
-      ) : (
-        <></>
-      )}
+      ) : null}
     </div>
   );
 };

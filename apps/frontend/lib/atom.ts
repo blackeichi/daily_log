@@ -8,7 +8,7 @@ export type ModalStateType = {
 } | null;
 
 export const modalAtom = atom<ModalStateType>(null);
-export const loadingState = atom<number>(0);
+export const loadingState = atom<boolean>(false);
 export const accessTokenAtom = atom<string | null>(null);
 export const userAtom = atom<User | null>(null);
 export const errorAtom = atom<string | null>(null);
