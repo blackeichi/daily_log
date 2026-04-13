@@ -4,7 +4,6 @@ import { User } from "../types/api";
 export type ModalStateType = {
   id: string;
   data?: unknown;
-  callBack?: (data?: unknown) => void;
 } | null;
 
 export const modalAtom = atom<ModalStateType>(null);

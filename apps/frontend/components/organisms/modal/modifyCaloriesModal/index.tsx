@@ -3,7 +3,7 @@ import {
   useCreateDiet,
   useUpdateDiet,
 } from "@/lib/hooks/useDiet";
-import { DietCalendarData, Eaten, GetCalorie } from "@/types/data";
+import { Eaten, GetCalorie } from "@/types/data";
 import { useState } from "react";
 import { FcCalendar } from "react-icons/fc";
 import { MODAL_BOX } from "@/constants/styles";
@@ -24,12 +24,10 @@ const ModifyCaloriesModal = ({
   isEdit,
   date,
   onClose,
-  callBack,
 }: {
   isEdit: boolean;
   date: string;
   onClose: () => void;
-  callBack: (val?: DietCalendarData) => void;
 }) => {
   const { data } = useDietQuery(isEdit ? date : undefined);
   const isLoading = isEdit && !data;
@@ -37,26 +35,17 @@ const ModifyCaloriesModal = ({
   if (isLoading) {
     return <div className="p-4">로딩중...</div>;
   }
-  return (
-    <ActualUI
-      data={data ?? null}
-      date={date}
-      onClose={onClose}
-      callBack={callBack}
-    />
-  );
+  return <ActualUI data={data ?? null} date={date} onClose={onClose} />;
 };
 
 const ActualUI = ({
   data,
   date,
   onClose,
-  callBack,
 }: {
   data: GetCalorie | null;
   date: string;
   onClose: () => void;
-  callBack: (val?: DietCalendarData) => void;
 }) => {
   const createDietMutation = useCreateDiet();
   const updateDietMutation = useUpdateDiet(data?.id ?? 0);
@@ -68,16 +57,8 @@ const ActualUI = ({
   }) => {
     const mutation = data?.id ? updateDietMutation : createDietMutation;
     mutation.mutate(dietData, {
-      onSuccess: (res) => {
-        if (res?.data) {
-          callBack({
-            [date]: {
-              isChecked: res.data.isSuccess,
-              calorie: res.data.totalCalorie,
-            },
-          });
-          onClose();
-        }
+      onSuccess: () => {
+        onClose();
       },
     });
   };

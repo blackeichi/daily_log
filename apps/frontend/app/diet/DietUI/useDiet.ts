@@ -66,11 +66,6 @@ export const useDiet = (
     return totalCalorie;
   }, [localCalendarData, user, targetMonth]);
 
-  // 로컬 캘린더 데이터 업데이트 (Optimistic Update)
-  const updateCalendarData = (newData: DietCalendarData) => {
-    setLocalCalendarData({ ...localCalendarData, ...newData });
-  };
-
   return {
     calendarData: localCalendarData,
     setDate,
@@ -78,6 +73,5 @@ export const useDiet = (
     loading: isLoading,
     totalMinusCalorie,
     user,
-    updateCalendarData,
   };
 };

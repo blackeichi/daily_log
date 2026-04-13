@@ -31,6 +31,7 @@ export function useDiet(date?: string) {
     queryKey: dietKeys.detail(date ?? ""),
     queryFn: () => apiClient<GetCalorie>(`/calories?date=${date ?? ""}`),
     enabled: !!date,
+    gcTime: 0,
   });
 }
 
@@ -61,7 +62,6 @@ export function useCreateDiet() {
       };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["diet"] });
       queryClient.invalidateQueries({ queryKey: ["diet-all"] });
     },
   });
@@ -81,7 +81,6 @@ export function useUpdateDiet(id: number) {
         data: GetCalorie;
       }>(`/calories/${id}`, { method: "PUT", body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["diet"] });
       queryClient.invalidateQueries({ queryKey: ["diet-all"] });
     },
   });

@@ -43,13 +43,11 @@ const Modal = () => {
         })()}
       {modal?.id &&
         (modal?.data as string | undefined) &&
-        modal?.callBack &&
         (modal?.id === MODAL_STATE.EDIT_CALORIES ||
           modal?.id === MODAL_STATE.ADD_CALORIES) && (
           <ModifyCaloriesModal
             isEdit={modal?.id === MODAL_STATE.EDIT_CALORIES}
             date={modal.data as string}
-            callBack={modal.callBack as () => void}
             onClose={onClose}
           />
         )}

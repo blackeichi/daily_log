@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useSetAtom } from "jotai";
 import { MODAL_STATE } from "@/constants/system";
-import { DietCalendarData, GetAllCalories } from "@/types/data";
+import { GetAllCalories } from "@/types/data";
 import { modalAtom } from "@/lib/atom";
 import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
 import { useDiet } from "./useDiet";
@@ -22,7 +22,6 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
     loading,
     totalMinusCalorie,
     user,
-    updateCalendarData,
   } = useDiet(initialData, initialDateRange);
 
   const handleCalendarClick = useCallback(
@@ -32,12 +31,8 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
         id: calendarData[clickedDate]
           ? MODAL_STATE.EDIT_CALORIES
           : MODAL_STATE.ADD_CALORIES,
-        callBack: (data?: unknown) => {
-          const newData = data as DietCalendarData;
-          updateCalendarData(newData);
-        },
       }),
-    [calendarData, setModal, updateCalendarData],
+    [calendarData, setModal],
   );
   return (
     <div className="w-full h-full">
