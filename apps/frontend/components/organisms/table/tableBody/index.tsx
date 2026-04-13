@@ -12,6 +12,7 @@ const ROW_HEIGHT = 44; // 각 행의 고정 높이 (픽셀)
 function TableBody<T>({
   tableData,
   onClick,
+  onEdit,
   onDelete,
   rowUniqueKey,
   tableHeader,
@@ -68,6 +69,7 @@ function TableBody<T>({
             row={rowData as Record<string, unknown>}
             tableHeader={tableHeader}
             {...(onClick && { onClick })}
+            {...(onEdit && { onEdit })}
             {...(onDelete && { onDelete })}
             {...(onDoubleClick && { onDoubleClick })}
           />
@@ -79,6 +81,7 @@ function TableBody<T>({
       rowUniqueKey,
       tableHeader,
       onClick,
+      onEdit,
       onDelete,
       onDoubleClick,
       lastRow,

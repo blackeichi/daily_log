@@ -34,6 +34,7 @@ export function useLog(id?: number) {
     queryKey: logKeys.detail(id ?? 0),
     queryFn: () => apiClient<GetLogDetail>(`/log?id=${id ?? 0}`),
     enabled: !!id,
+    gcTime: 0,
   });
 }
 
@@ -85,7 +86,6 @@ export function useUpdateLog(id?: number) {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["logs"] });
-      if (id) queryClient.invalidateQueries({ queryKey: logKeys.detail(id) });
     },
   });
 }

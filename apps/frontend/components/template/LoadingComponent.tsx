@@ -19,7 +19,7 @@ export const LoadingComponent = () => {
       {elapsed < 6 ? (
         <span>로딩 중입니다...</span>
       ) : elapsed < 16 ? (
-        <span>잠자는 서버를 깨우는 중입니다. 잠시만 기다려주세요. 🙏</span>
+        <span>잠시만 기다려주세요. 🙏</span>
       ) : elapsed < 60 ? (
         <span>서버가 열심히 일어나고 있어요.. 🤖</span>
       ) : elapsed < 80 ? (

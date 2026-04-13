@@ -5,7 +5,7 @@ import { typedMemo } from "@/lib/utils/component";
 
 function TableHeader<T>({
   tableHeader,
-  onClick,
+  onEdit,
   onDelete,
   onDoubleClick,
 }: TableHeaderProps<T>) {
@@ -30,7 +30,7 @@ function TableHeader<T>({
             {tableHeader.map((row) => (
               <TableHeaderRow key={row.id} row={row} />
             ))}
-            {onClick && <td className="w-8 sm:w-10 shrink-0" />}
+            {onEdit && <td className="w-8 sm:w-10 shrink-0" />}
             {onDelete && <td className="w-8 sm:w-10 shrink-0" />}
             {onDoubleClick && <td className="w-8 sm:w-10 shrink-0" />}
           </tr>

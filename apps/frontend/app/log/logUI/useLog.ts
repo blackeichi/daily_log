@@ -1,10 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSetAtom } from "jotai";
-import {
-  useLogs,
-  useDeleteLog,
-  useLogsForExcel,
-} from "@/lib/hooks/useLog";
+import { useLogs, useDeleteLog, useLogsForExcel } from "@/lib/hooks/useLog";
 import { alertAtom, errorAtom, modalAtom, confirmAtom } from "@/lib/atom";
 import { useDateRange } from "@/lib/hooks/useDateRange";
 import { downloadExcel } from "@/lib/utils/excelUtils";
@@ -110,7 +106,7 @@ export const useLog = (initialData?: GetLogsType[]) => {
   const {
     data: excelData,
     isFetching: excelLoading,
-    refetch: onGetExcelData,
+    refetch: getExcelData,
   } = useLogsForExcel(startDate, endDate, searchTitle);
 
   useEffect(() => {
@@ -124,79 +120,83 @@ export const useLog = (initialData?: GetLogsType[]) => {
     }
   }, [excelData, startDate, endDate, setAlertMsg, setErrorMsg]);
 
+  // 엑셀 다운로드 핸들러
+  const handleGetExcelData = useCallback(
+    () =>
+      setConfirm({
+        title: "엑셀 다운로드",
+        message:
+          "현재 검색 조건에 맞는 로그 데이터를 엑셀로 다운로드하시겠습니까?",
+        confirmEvent: getExcelData,
+      }),
+    [setConfirm, getExcelData],
+  );
+
   // 검색 핸들러
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     setSearchedTitle(searchTitle);
     onGetLogs();
-  };
+  }, [searchTitle, onGetLogs]);
 
   // 새 로그 추가 핸들러
-  const handleAddLog = () => {
+  const handleAddLog = useCallback(() => {
     setModal({
       id: MODAL_STATE.ADD_LOG,
-      callBack: () => onGetLogs(),
     });
-  };
+  }, [setModal]);
+
+  // 로그 상세조회
+  const handleViewLog = useCallback(
+    (row: GetLogsType) => {
+      setModal({
+        id: MODAL_STATE.VIEW_LOG,
+        data: { id: row.id, title: row.title },
+      });
+    },
+    [setModal],
+  );
 
   // 로그 삭제 핸들러
-  const handleDeleteLog = (row: GetLogsType) => {
-    setConfirm({
-      title: "로그 삭제",
-      message: "정말로 해당 로그를 삭제하시겠습니까?",
-      confirmEvent: () => {
-        // Optimistic Update - 먼저 로컬 상태 업데이트
-        if (displayedData) {
-          const newDisplayedData = displayedData.filter(
-            (item) => item.id !== row.id,
+  const handleDeleteLog = useCallback(
+    (row: GetLogsType) => {
+      setConfirm({
+        title: "로그 삭제",
+        message: "정말로 해당 로그를 삭제하시겠습니까?",
+        confirmEvent: () => {
+          // Optimistic Update - 먼저 로컬 상태 업데이트
+          if (displayedData) {
+            const newDisplayedData = displayedData.filter(
+              (item) => item.id !== row.id,
+            );
+            setDisplayedData(newDisplayedData);
+          }
+          if (allData) {
+            const newAllData = allData.filter((item) => item.id !== row.id);
+            setAllData(newAllData);
+          }
+          // 서버 요청
+          deleteLogMutation.mutate(
+            { id: row.id },
+            {
+              onSuccess: () => setAlertMsg("로그가 삭제되었습니다."),
+            },
           );
-          setDisplayedData(newDisplayedData);
-        }
-        if (allData) {
-          const newAllData = allData.filter((item) => item.id !== row.id);
-          setAllData(newAllData);
-        }
-        // 서버 요청
-        deleteLogMutation.mutate(
-          { id: row.id },
-          {
-            onSuccess: () => setAlertMsg("로그가 삭제되었습니다."),
-          },
-        );
-      },
-    });
-  };
+        },
+      });
+    },
+    [setConfirm, deleteLogMutation, setAlertMsg, displayedData, allData],
+  );
 
   // 로그 편집 핸들러
-  const handleEditLog = (row: GetLogsType, index: number) => {
-    setModal({
-      id: MODAL_STATE.EDIT_LOG,
-      data: row.id,
-      callBack: (data?: unknown) => {
-        if (typeof data === "string" && displayedData && displayedData[index]) {
-          const newDisplayedData = [...displayedData];
-          newDisplayedData[index] = {
-            ...newDisplayedData[index],
-            title: data,
-          } as GetLogsType;
-          setDisplayedData(newDisplayedData);
-
-          if (allData) {
-            const newAllData = [...allData];
-            const originalIndex = allData.findIndex(
-              (item) => item.id === row.id,
-            );
-            if (originalIndex !== -1) {
-              newAllData[originalIndex] = {
-                ...newAllData[originalIndex],
-                title: data,
-              } as GetLogsType;
-              setAllData(newAllData);
-            }
-          }
-        }
-      },
-    });
-  };
+  const handleEditLog = useCallback(
+    (row: GetLogsType) => {
+      setModal({
+        id: MODAL_STATE.EDIT_LOG,
+        data: row.id,
+      });
+    },
+    [setModal],
+  );
 
   const hasMoreData =
     allData && displayedData ? displayedData.length < allData.length : false;
@@ -219,11 +219,12 @@ export const useLog = (initialData?: GetLogsType[]) => {
     searchedTitle,
     // 엑셀
     excelLoading,
-    onGetExcelData,
+    handleGetExcelData,
     // 핸들러
     handleSearch,
     handleAddLog,
     handleDeleteLog,
     handleEditLog,
+    handleViewLog,
   };
 };

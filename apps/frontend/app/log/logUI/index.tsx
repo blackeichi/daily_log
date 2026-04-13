@@ -35,11 +35,12 @@ export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
     setSearchTitle,
     searchedTitle,
     excelLoading,
-    onGetExcelData,
+    handleGetExcelData,
     handleSearch,
     handleAddLog,
     handleDeleteLog,
     handleEditLog,
+    handleViewLog,
   } = useLog(initialData);
   return (
     <div
@@ -78,16 +79,18 @@ export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
           />
         </form>
         <div className="flex gap-2">
-          <IconButton
-            icon={AiOutlineFileExcel}
-            onClick={() => onGetExcelData()}
-            className="rounded-full w-8 h-8"
-            tooltip={excelLoading ? "다운로드 중..." : "엑셀 다운로드"}
-            size={17}
-            bgColor={excelLoading ? "#6b7280" : "#10b981"}
-            color="white"
-            disabled={excelLoading}
-          />
+          <div className="sm:block hidden">
+            <IconButton
+              icon={AiOutlineFileExcel}
+              onClick={handleGetExcelData}
+              className="rounded-full w-8 h-8"
+              tooltip={excelLoading ? "다운로드 중..." : "엑셀 다운로드"}
+              size={17}
+              bgColor={excelLoading ? "#6b7280" : "#10b981"}
+              color="white"
+              disabled={excelLoading}
+            />
+          </div>
           <IconButton
             icon={FaRegCalendarPlus}
             onClick={handleAddLog}
@@ -115,7 +118,8 @@ export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
           isLoading={loading}
           headers={headers}
           onDelete={handleDeleteLog}
-          onClick={handleEditLog}
+          onEdit={handleEditLog}
+          onClick={handleViewLog}
         />
       </div>
 

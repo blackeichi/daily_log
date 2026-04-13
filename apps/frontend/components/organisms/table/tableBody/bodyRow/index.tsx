@@ -5,19 +5,26 @@ import { TableRowProps } from "@/types/tableT";
 import { COLOR_THEME } from "@/constants/system";
 import { FaTrash } from "react-icons/fa";
 import { typedMemo } from "@/lib/utils/component";
+import { useMemo } from "react";
 
 function BodyRow<T>({
   rowUniqueKey,
   row,
   index,
-  onClick,
   tableHeader,
+  onClick,
+  onEdit,
   onDelete,
   onDoubleClick,
 }: TableRowProps<T>) {
+  const cursorStyle = useMemo(() => {
+    return onClick
+      ? "cursor-pointer hover:underline hover:underline-offset-2"
+      : "";
+  }, [onClick]);
   return (
     <div
-      className={`w-full flex items-center border-b border-b-stone-300 pl-3 pr-1 hover:bg-stone-200 transition-[background-color] relative ${onClick ? "cursor-pointer" : ""}`}
+      className={`w-full flex items-center border-b border-b-stone-300 pl-3 pr-1 hover:bg-stone-200 transition-[background-color] relative ${cursorStyle}`}
       onClick={() => {
         if (onClick) {
           onClick(row as T, index);
@@ -34,12 +41,12 @@ function BodyRow<T>({
         rowUniqueKey={rowUniqueKey}
         tableHeader={tableHeader}
       />
-      {onClick && (
+      {onEdit && (
         <div className="w-8 sm:w-10 shrink-0 mr-1">
           <IconButton
             onClick={(event) => {
               event.stopPropagation();
-              onClick(row as T, index);
+              onEdit(row as T, index);
             }}
             icon={MdEdit}
             className="rounded-full w-8 h-8"

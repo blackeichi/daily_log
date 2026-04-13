@@ -1,43 +1,35 @@
 import { RiEdit2Fill } from "react-icons/ri";
-import Title from "../../atoms/Title";
+import Title from "../../../atoms/Title";
 import { MdOutlineNoteAdd } from "react-icons/md";
 import { FaStar } from "react-icons/fa";
 import { useLog, useCreateLog, useUpdateLog } from "@/lib/hooks/useLog";
 import { useMemo, useState } from "react";
 import { GetLogDetail } from "@/types/data";
-import { Input } from "../../atoms/input";
-import DateInput from "../../atoms/dateInput";
+import { Input } from "../../../atoms/input";
+import DateInput from "../../../atoms/dateInput";
 import moment from "moment";
-import { TextArea } from "../../atoms/textArea";
-import { OkCancelBtns } from "../../molecules/okCancelBtns";
+import { TextArea } from "../../../atoms/textArea";
+import { OkCancelBtns } from "../../../molecules/okCancelBtns";
 import { useAtomValue, useSetAtom } from "jotai";
 import { errorAtom, userAtom } from "@/lib/atom";
 import { MODAL_BOX } from "@/constants/styles";
-import { ComponentLoader } from "../../atoms/componentLoader";
+import { ComponentLoader } from "../../../atoms/componentLoader";
 
 const ModifyLogModal = ({
   isEdit,
   id,
   onClose,
-  callBack,
 }: {
   isEdit: boolean;
-  id?: number;
+  id: number | undefined;
   onClose: () => void;
-  callBack: (title?: string) => void;
 }) => {
   const { data } = useLog(isEdit ? id : undefined);
   if (isEdit && !data) {
     return <div className="p-4">로딩중...</div>;
   }
   return (
-    <ActualUI
-      id={id}
-      isEdit={isEdit}
-      data={data ?? null}
-      onClose={onClose}
-      callBack={callBack}
-    />
+    <ActualUI id={id} isEdit={isEdit} data={data ?? null} onClose={onClose} />
   );
 };
 
@@ -46,13 +38,11 @@ const ActualUI = ({
   isEdit,
   data,
   onClose,
-  callBack,
 }: {
-  id?: number | undefined;
+  id: number | undefined;
   isEdit: boolean;
   data: GetLogDetail | null;
   onClose: () => void;
-  callBack: (title?: string) => void;
 }) => {
   const setError = useSetAtom(errorAtom);
   const createLogMutation = useCreateLog();
@@ -67,7 +57,6 @@ const ActualUI = ({
   }) => {
     createLogMutation.mutate(logData, {
       onSuccess: () => {
-        callBack(logData.title);
         onClose();
       },
     });
@@ -80,7 +69,6 @@ const ActualUI = ({
   }) => {
     updateLogMutation.mutate(logData, {
       onSuccess: () => {
-        callBack(logData.title);
         onClose();
       },
     });
@@ -130,6 +118,7 @@ const ActualUI = ({
         width="100%"
         height={40}
         label="제목"
+        autoFocus
         required
       />
       <DateInput

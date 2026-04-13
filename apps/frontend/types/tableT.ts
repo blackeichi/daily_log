@@ -6,6 +6,7 @@ export type Header = {
 
 type funcProps<T> = {
   onClick?: (row: T, index: number) => void;
+  onEdit?: (row: T, index: number) => void;
   onDelete?: (row: T, index: number) => void;
   onDoubleClick?: (row: T, index: number) => void;
 };

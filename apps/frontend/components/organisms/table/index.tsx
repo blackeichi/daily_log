@@ -10,6 +10,7 @@ function Table<T>({
   isLoading,
   headers,
   noHeader = false,
+  onEdit,
   onClick,
   onDelete,
   onDoubleClick,
@@ -28,7 +29,7 @@ function Table<T>({
       {!noHeader && (
         <TableHeader<T>
           tableHeader={headers}
-          {...(onClick && { onClick })}
+          {...(onEdit && { onEdit })}
           {...(onDelete && { onDelete })}
           {...(onDoubleClick && { onDoubleClick })}
         />
@@ -42,6 +43,7 @@ function Table<T>({
             tableData={tableData}
             tableHeader={headers}
             {...(onClick && { onClick })}
+            {...(onEdit && { onEdit })}
             {...(onDelete && { onDelete })}
             rowUniqueKey={rowUniqueKey}
             {...(onDoubleClick && { onDoubleClick })}
