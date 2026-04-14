@@ -52,8 +52,8 @@ export class LogController {
   @UseGuards(JwtAuthGuard)
   @Post()
   async createLog(@Req() req: any, @Body() dto: UpdateLogDto) {
-    if (Object.values(dto.todayLog || {}).some((value) => value.length > 200)) {
-      throw new Error('로그 항목은 최대 200자까지 입력할 수 있습니다.');
+    if (Object.values(dto.todayLog || {}).some((value) => value.length > 300)) {
+      throw new Error('로그 항목은 최대 300자까지 입력할 수 있습니다.');
     }
     return this.logService.createLog(req.user.sub, dto);
   }
@@ -64,8 +64,8 @@ export class LogController {
     @Body() dto: UpdateLogDto,
     @Req() req,
   ) {
-    if (Object.values(dto.todayLog || {}).some((value) => value.length > 200)) {
-      throw new Error('로그 항목은 최대 200자까지 입력할 수 있습니다.');
+    if (Object.values(dto.todayLog || {}).some((value) => value.length > 300)) {
+      throw new Error('로그 항목은 최대 300자까지 입력할 수 있습니다.');
     }
     const updatedLog = await this.logService.updateLog(id, req.user.sub, dto);
     return updatedLog;

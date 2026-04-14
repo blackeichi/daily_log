@@ -29,7 +29,7 @@ export const TextArea = ({
 }) => {
   const onHandleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (setValue) {
-      if (event.target.value.length > 200) return;
+      if (event.target.value.length > 300) return;
       setValue(event.target.value);
     }
   };
