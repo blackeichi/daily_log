@@ -7,7 +7,7 @@ import { useSetAtom } from "jotai";
 import { errorAtom } from "@/lib/atom";
 import { COLOR_THEME } from "@/constants/system";
 
-const MAX_ITEMS = 20;
+const MAX_ITEMS = 30;
 
 export type DataListItem = {
   id: number;
