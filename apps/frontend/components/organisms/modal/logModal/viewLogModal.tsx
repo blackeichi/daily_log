@@ -43,45 +43,30 @@ const ViewLogModal = ({
     );
   return (
     <div className={MODAL_BOX}>
-      <Title className="flex gap-2 items-center text-lg w-full py-2">
-        <RiCalendarView size={25} />
-        {title}
-      </Title>
+      <div className="flex flex-col w-full">
+        <Title className="flex gap-2 items-center text-lg w-full py-2">
+          <RiCalendarView size={25} />
+          {title}
+          <div className="flex gap-1 rounded-full bg-yellow-50 p-2">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <FaStar
+                key={value}
+                size={15}
+                className={
+                  value <= (data?.score || 0)
+                    ? "text-yellow-400"
+                    : "text-gray-300"
+                }
+              />
+            ))}
+          </div>
+        </Title>
+        <div className="inline-flex items-center gap-2 rounded-full pl-1.5 text-sm font-medium text-gray-500">
+          <span>{data?.logDate || "-"}</span>
+        </div>
+      </div>
 
       <div className="mt-1 space-y-4">
-        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Log Date
-              </p>
-              <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-800">
-                <RiCalendarView size={16} />
-                <span>{data?.logDate || "-"}</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-start sm:items-end">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Score
-              </p>
-              <div className="flex gap-1 rounded-full bg-yellow-50 px-3 py-2">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <FaStar
-                    key={value}
-                    size={20}
-                    className={
-                      value <= (data?.score || 0)
-                        ? "text-yellow-400"
-                        : "text-gray-300"
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {user ? (
           <div className="space-y-3">
             {ObjKeys.map((objKey) => (

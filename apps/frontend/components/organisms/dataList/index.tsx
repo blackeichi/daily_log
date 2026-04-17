@@ -152,7 +152,7 @@ function DataListComponent({
         </div>
       ) : hasItems ? (
         <motion.div
-          animate={{ maxHeight: isOpen ? 1000 : 0 }}
+          animate={{ maxHeight: isOpen ? 2000 : 0 }}
           transition={{
             duration: dataList?.length === 0 ? 0.1 : dataList?.length * 0.05,
             ease: "easeInOut",

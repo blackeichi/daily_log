@@ -157,7 +157,7 @@ export function DataListItem({
                 ? "섹터 제목을 입력하세요."
                 : `${title}을(를) 입력하세요.`
             }
-            maxLength={200}
+            maxLength={300}
           />
         </div>
       )}
