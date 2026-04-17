@@ -1,6 +1,6 @@
+import { LoginUI } from "@/features/auth/components/LoginUI";
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { LoginUI } from "@/feature/auth/components/LoginUI";
 
 export const metadata: Metadata = {
   title: "로그인",

@@ -1,6 +1,6 @@
+import { SignupUI } from "@/features/auth/components/SignupUI";
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { SignupUI } from "@/feature/auth/components/SignupUI";
 
 export const metadata: Metadata = {
   title: "회원가입",
