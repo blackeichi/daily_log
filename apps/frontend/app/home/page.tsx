@@ -3,9 +3,10 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { backendFetch } from "@/lib/api/server";
 
-const HomeUI = dynamic(() => import("./homeUI"), {
-  loading: () => <div className="w-full h-full bg-stone-100" />,
-});
+const HomeUI = dynamic(
+  () => import("../../feature/home/components/HomeUi"),
+  {},
+);
 
 export const metadata: Metadata = {
   title: "홈",

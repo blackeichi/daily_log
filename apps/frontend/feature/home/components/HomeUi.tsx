@@ -9,115 +9,15 @@ import { modalAtom, userAtom } from "@/lib/atom";
 import { useAllDiet } from "@/lib/hooks/useDiet";
 import { useLogs } from "@/lib/hooks/useLog";
 import { MODAL_STATE } from "@/constants/system";
+import { CalorieStatusLabel, HomeUIProps, ScoreLabel } from "../types";
+import { CHART_CARD, DATE_RANGE_DAYS, DEFAULT_MESSAGE } from "../constants";
+import { donutBaseOption, getCalorieStatus, getNumericValue } from "../utils";
+import { SummaryCard } from "./SummaryCard";
+import { ChartCard } from "./ChartCard";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), {
   ssr: false,
 });
-
-interface HomeUIProps {
-  initialData?: string;
-}
-
-type ScoreLabel = "1점" | "2점" | "3점" | "4점" | "5점" | "미평가";
-type CalorieStatusLabel = "목표 달성" | "일일섭취칼로리 달성" | "실패";
-
-const CHART_CARD =
-  "rounded-lg bg-white p-5 pb-4 shadow-lg shadow-stone-500 border border-stone-100";
-const DATE_RANGE_DAYS = 29;
-const DEFAULT_MESSAGE =
-  "오늘도 충분히 잘하고 있어요! \n 천천히 가도 괜찮아요. 😉";
-
-function getCalorieStatus(
-  totalCalorie: number,
-  goalCalorie: number,
-  maximumCalorie: number,
-): CalorieStatusLabel {
-  if (totalCalorie <= goalCalorie) return "목표 달성";
-  if (totalCalorie <= maximumCalorie) return "일일섭취칼로리 달성";
-  return "실패";
-}
-
-function formatPercent(value: number, total: number): string {
-  if (!total) return "0.0%";
-  return `${((value / total) * 100).toFixed(1)}%`;
-}
-
-function getNumericValue(value: unknown): number {
-  if (typeof value === "number") return value;
-  if (Array.isArray(value) && typeof value[0] === "number") return value[0];
-  return 0;
-}
-
-function donutBaseOption(
-  title: string,
-  data: { name: string; value: number }[],
-  unit: string,
-): EChartsOption {
-  const total = data.reduce((acc, cur) => acc + cur.value, 0);
-
-  return {
-    tooltip: {
-      trigger: "item",
-      formatter: (params: unknown) => {
-        const p = params as { name?: string; value?: unknown };
-        const name = p.name ?? "";
-        const value = getNumericValue(p.value);
-        return `${name}<br/>${value}${unit} (${formatPercent(value, total)})`;
-      },
-    },
-    legend: {
-      bottom: 0,
-      left: "center",
-      itemWidth: 14,
-      itemHeight: 14,
-      textStyle: {
-        fontSize: 12,
-      },
-    },
-    series: [
-      {
-        name: title,
-        type: "pie",
-        radius: ["46%", "66%"],
-        center: ["50%", "42%"],
-        avoidLabelOverlap: true,
-        minAngle: 8,
-        stillShowZeroSum: false,
-        label: {
-          show: true,
-          position: "outer",
-          alignTo: "edge",
-          edgeDistance: 10,
-          bleedMargin: 6,
-          fontSize: 12,
-          lineHeight: 16,
-          formatter: (params: unknown) => {
-            const p = params as { name?: string; value?: unknown };
-            const name = p.name ?? "";
-            const value = getNumericValue(p.value);
-
-            if (value <= 0) return "";
-            return `${name}\n${formatPercent(value, total)}`;
-          },
-        },
-        labelLine: {
-          show: true,
-          length: 10,
-          length2: 8,
-        },
-        labelLayout: {
-          hideOverlap: true,
-          moveOverlap: "shiftY",
-        },
-        emphasis: {
-          scale: true,
-          scaleSize: 4,
-        },
-        data,
-      },
-    ],
-  };
-}
 
 export default function HomeUI({ initialData }: HomeUIProps) {
   const message = initialData?.trim() || DEFAULT_MESSAGE;
@@ -388,7 +288,7 @@ export default function HomeUI({ initialData }: HomeUIProps) {
             label="평균 섭취 칼로리"
             value={`${summary.avgCalorie} kcal`}
           />
-          <SummaryCard label="평균 점수" value={`${summary.avgScore}`} />
+          <SummaryCard label="평균 기분 점수" value={`${summary.avgScore}`} />
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
@@ -441,54 +341,6 @@ export default function HomeUI({ initialData }: HomeUIProps) {
             />
           )}
         </section>
-      </div>
-    </div>
-  );
-}
-
-function ChartCard({
-  title,
-  description,
-  loading,
-  empty,
-  children,
-}: {
-  title: string;
-  description: string;
-  loading: boolean;
-  empty: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={CHART_CARD}>
-      <div className="mb-4 flex flex-col gap-1">
-        <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
-          {title}
-        </h3>
-        <p className="text-sm text-stone-500">{description}</p>
-      </div>
-
-      {loading ? (
-        <div className="flex h-80 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-          통계를 불러오는 중...
-        </div>
-      ) : empty ? (
-        <div className="flex h-80 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-          최근 30일 데이터가 없습니다.
-        </div>
-      ) : (
-        children
-      )}
-    </section>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-stone-100 bg-white px-4 py-5 shadow-lg shadow-stone-500">
-      <div className="text-xs text-stone-500 sm:text-sm">{label}</div>
-      <div className="mt-2 text-lg font-semibold text-stone-800 sm:text-xl">
-        {value}
       </div>
     </div>
   );
