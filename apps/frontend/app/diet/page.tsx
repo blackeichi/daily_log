@@ -5,8 +5,8 @@ import { endOfMonth, format, startOfMonth } from "date-fns";
 import { backendFetch } from "@/lib/api/server";
 import { GetAllCalories } from "@/types/data";
 
-const DietUI = dynamic(() => import("./DietUI"), {
-  loading: () => <div className="w-full h-full bg-stone-100" />,
+const DietUI = dynamic(() => import("../../feature/diet/components/DietUI"), {
+  loading: () => <div className="h-full w-full bg-stone-100" />,
 });
 
 export const metadata: Metadata = {
@@ -17,12 +17,14 @@ function getCurrentMonthRange(): [string, string] {
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
+
   return [format(monthStart, "yyyy-MM-dd"), format(monthEnd, "yyyy-MM-dd")];
 }
 
 export default async function DietPage() {
   const initialDateRange = getCurrentMonthRange();
   let initialData: GetAllCalories[] | undefined;
+
   try {
     const [startDate, endDate] = initialDateRange;
     const { data } = await backendFetch<GetAllCalories[]>(
@@ -32,7 +34,7 @@ export default async function DietPage() {
   } catch {}
 
   return (
-    <Suspense fallback={<div className="w-full h-full bg-stone-100" />}>
+    <Suspense fallback={<div className="h-full w-full bg-stone-100" />}>
       <DietUI
         {...(initialData !== undefined ? { initialData } : {})}
         initialDateRange={initialDateRange}

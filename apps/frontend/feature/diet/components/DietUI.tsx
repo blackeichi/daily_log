@@ -2,52 +2,49 @@
 
 import { useCallback } from "react";
 import { useSetAtom } from "jotai";
-import { MODAL_STATE } from "@/constants/system";
-import { GetAllCalories } from "@/types/data";
 import { modalAtom } from "@/lib/atom";
+import { MODAL_STATE } from "@/constants/system";
 import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
-import { useDiet } from "./useDiet";
-
-interface DietUIProps {
-  initialData?: GetAllCalories[];
-  initialDateRange?: [string, string];
-}
+import { DietUIProps } from "../types";
+import { useDietPage } from "../useDietPage";
 
 export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
   const setModal = useSetAtom(modalAtom);
+
   const {
-    calendarData,
-    setDate,
-    setTargetMonth,
-    loading,
-    totalMinusCalorie,
     user,
-  } = useDiet(initialData, initialDateRange);
+    loading,
+    calendarData,
+    totalMinusCalorie,
+    setDateRange,
+    setTargetMonth,
+  } = useDietPage(initialData, initialDateRange);
 
   const handleCalendarClick = useCallback(
-    (clickedDate: string) =>
+    (clickedDate: string) => {
       setModal({
         data: clickedDate,
         id: calendarData[clickedDate]
           ? MODAL_STATE.EDIT_CALORIES
           : MODAL_STATE.ADD_CALORIES,
-      }),
+      });
+    },
     [calendarData, setModal],
   );
+
   return (
-    <div className="w-full h-full">
-      {
-        <ScheduleCalendar
-          user={user}
-          calendarData={calendarData}
-          loading={loading}
-          setDate={setDate}
-          setTargetMonth={setTargetMonth}
-          onClick={handleCalendarClick}
-        />
-      }
+    <div className="h-full w-full">
+      <ScheduleCalendar
+        user={user}
+        calendarData={calendarData}
+        loading={loading}
+        setDate={setDateRange}
+        setTargetMonth={setTargetMonth}
+        onClick={handleCalendarClick}
+      />
+
       {!loading && user && (
-        <h1 className="mx-1 sm:mx-4 mb-5 mt-1 text-sm flex gap-1 flex-col">
+        <div className="mx-1 mb-5 mt-1 flex flex-col gap-1 text-sm sm:mx-4">
           {totalMinusCalorie >= 0 ? (
             <>
               <p>
@@ -57,7 +54,7 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
                 </span>
                 입니다.
               </p>
-              (약 {(totalMinusCalorie / 7000).toFixed(1)}kg 감량) 🫡
+              <p>(약 {(totalMinusCalorie / 7000).toFixed(1)}kg 감량) 🫡</p>
             </>
           ) : (
             <>
@@ -68,10 +65,10 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
                 </span>
                 입니다.
               </p>
-              (약 {(-totalMinusCalorie / 7000).toFixed(1)}kg 초과) 🍩
+              <p>(약 {(-totalMinusCalorie / 7000).toFixed(1)}kg 초과) 🍩</p>
             </>
           )}
-        </h1>
+        </div>
       )}
     </div>
   );
