@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { backendFetch } from "@/lib/api/server";
 
-const HomeUI = dynamic(() => import("../../feature/home/components/HomeUi"), {
+const HomeUI = dynamic(() => import("../../features/home/components/HomeUi"), {
   loading: () => <div className="w-full h-full bg-stone-100" />,
 });
 

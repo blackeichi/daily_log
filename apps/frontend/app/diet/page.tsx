@@ -5,7 +5,7 @@ import { endOfMonth, format, startOfMonth } from "date-fns";
 import { backendFetch } from "@/lib/api/server";
 import { GetAllCalories } from "@/types/data";
 
-const DietUI = dynamic(() => import("../../feature/diet/components/DietUI"), {
+const DietUI = dynamic(() => import("../../features/diet/components/DietUI"), {
   loading: () => <div className="h-full w-full bg-stone-100" />,
 });
 

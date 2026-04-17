@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import moment from "moment";
 import { backendFetch } from "@/lib/api/server";
 import { GetLogsType } from "@/types/data";
-import { LogUI } from "@/feature/log/components/LogUI";
+import { LogUI } from "@/features/log/components/LogUI";
 
 export const metadata: Metadata = {
   title: "로그",

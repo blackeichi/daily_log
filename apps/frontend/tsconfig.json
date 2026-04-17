@@ -40,7 +40,7 @@
       "@/constants/*": ["./constants/*"],
       "@/actions/*": ["./actions/*"],
       "@/hooks/*": ["./hooks/*"],
-      "@/feature/*": ["./feature/*"]
+      "@/feature/*": ["features/*"]
     }
   },
   "include": [
