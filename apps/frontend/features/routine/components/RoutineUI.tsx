@@ -1,8 +1,8 @@
 "use client";
 
 import DataList from "@/components/organisms/dataList";
-import { useRoutine } from "./useRoutineHook";
 import { Routine } from "@/types/api";
+import { useRoutine } from "../hooks/useRoutinePage";
 
 const lists = ["dailyRoutines", "weeklyRoutines", "monthlyRoutines"] as const;
 
@@ -12,7 +12,7 @@ const LIST_NAMES: { [key in (typeof lists)[number]]: string } = {
   monthlyRoutines: "매달 하는 일",
 };
 
-export const RoutineUI = ({ initialData }: { initialData?: Routine }) => {
+export default function RoutineUI({ initialData }: { initialData?: Routine }) {
   const { data, handleUpdateList, loading } = useRoutine(initialData);
 
   return (
@@ -29,4 +29,4 @@ export const RoutineUI = ({ initialData }: { initialData?: Routine }) => {
       ))}
     </div>
   );
-};
+}

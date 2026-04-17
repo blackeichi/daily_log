@@ -5,7 +5,7 @@ import { backendFetch } from "@/lib/api/server";
 import { Routine } from "@/types/api";
 
 const RoutineUI = dynamic(
-  () => import("./RoutineUI").then((mod) => ({ default: mod.RoutineUI })),
+  () => import("@/features/routine/components/RoutineUI"),
   {
     loading: () => <div className="w-full h-full bg-stone-100" />,
   },

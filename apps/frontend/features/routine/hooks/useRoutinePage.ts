@@ -1,16 +1,7 @@
 import { useRoutines, useUpdateRoutines } from "@/lib/hooks/useRoutines";
 import { useEffect, useState } from "react";
 import { Routine } from "@/types/api";
-
-type ListName = "dailyRoutines" | "weeklyRoutines" | "monthlyRoutines";
-type RoutineItem = { id: number; text: string };
-
-interface RoutineData {
-  id: number;
-  dailyRoutines: RoutineItem[];
-  weeklyRoutines: RoutineItem[];
-  monthlyRoutines: RoutineItem[];
-}
+import { ListName, RoutineData, RoutineItem } from "../types";
 
 export const useRoutine = (initialData?: Routine) => {
   const { data, isLoading } = useRoutines(
