@@ -4,12 +4,9 @@ import { Suspense } from "react";
 import { backendFetch } from "@/lib/api/server";
 import { GetTodosType } from "@/types/api";
 
-const TodoUI = dynamic(
-  () => import("./todoUI").then((mod) => ({ default: mod.TodoUI })),
-  {
-    loading: () => <div className="w-full h-full bg-stone-100" />,
-  },
-);
+const TodoUI = dynamic(() => import("../../features/todo/components/TodoUI"), {
+  loading: () => <div className="w-full h-full bg-stone-100" />,
+});
 const ErrorBoundaryProvider = dynamic(
   () =>
     import("@/components/providers/ErrorBoundaryProvider").then((mod) => ({

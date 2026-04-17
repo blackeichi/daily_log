@@ -2,8 +2,8 @@
 
 import Button from "@/components/atoms/button";
 import DataList from "@/components/organisms/dataList";
-import { useTodo } from "./useTodo";
 import { GetTodosType, Todo } from "@/types/api";
+import { useTodo } from "../hooks/useTodoPage";
 
 const lists = [
   "todayList",
@@ -21,7 +21,11 @@ const LIST_NAMES: { [key in (typeof lists)[number]]: string } = {
   breakLimitList: "한계돌파, 정화의식",
 };
 
-export const TodoUI = ({ initialData }: { initialData?: GetTodosType }) => {
+export default function TodoUI({
+  initialData,
+}: {
+  initialData?: GetTodosType;
+}) {
   const { data, loading, isFirst, handleCreateTodos, handleUpdateList } =
     useTodo(initialData);
 
@@ -50,4 +54,4 @@ export const TodoUI = ({ initialData }: { initialData?: GetTodosType }) => {
       ))}
     </div>
   );
-};
+}
