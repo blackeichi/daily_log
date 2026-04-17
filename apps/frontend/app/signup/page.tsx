@@ -1,22 +1,15 @@
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
-
-const SignUpUI = dynamic(
-  () => import("./ui").then((mod) => ({ default: mod.SignUpUI })),
-  {
-    loading: () => <div className="w-full h-full bg-stone-100" />,
-  },
-);
+import { SignupUI } from "@/feature/auth/components/SignupUI";
 
 export const metadata: Metadata = {
   title: "회원가입",
 };
 
-export default function SignUpPage() {
+export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="w-full h-full bg-stone-100" />}>
-      <SignUpUI />
+    <Suspense fallback={<div className="h-full w-full bg-stone-100" />}>
+      <SignupUI />
     </Suspense>
   );
 }

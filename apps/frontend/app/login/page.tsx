@@ -1,21 +1,14 @@
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
-
-const LoginUI = dynamic(
-  () => import("./ui").then((mod) => ({ default: mod.LoginUI })),
-  {
-    loading: () => <div className="w-full h-full bg-stone-100" />,
-  },
-);
+import { LoginUI } from "@/feature/auth/components/LoginUI";
 
 export const metadata: Metadata = {
   title: "로그인",
 };
 
-export default function Login() {
+export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="w-full h-full bg-stone-100" />}>
+    <Suspense fallback={<div className="h-full w-full bg-stone-100" />}>
       <LoginUI />
     </Suspense>
   );
