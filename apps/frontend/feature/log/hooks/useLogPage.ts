@@ -1,26 +1,25 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSetAtom } from "jotai";
-import { useLogs, useDeleteLog, useLogsForExcel } from "@/lib/hooks/useLog";
-import { alertAtom, errorAtom, modalAtom, confirmAtom } from "@/lib/atom";
+import { alertAtom, confirmAtom, errorAtom, modalAtom } from "@/lib/atom";
+import { MODAL_STATE } from "@/constants/system";
 import { useDateRange } from "@/lib/hooks/useDateRange";
+import { useDeleteLog, useLogs, useLogsForExcel } from "@/lib/hooks/useLog";
 import { downloadExcel } from "@/lib/utils/excelUtils";
 import { GetLogsType } from "@/types/data";
-import { MODAL_STATE } from "@/constants/system";
+import { LOG_ITEMS_PER_PAGE } from "../constants";
 
-const ITEMS_PER_PAGE = 50;
-
-export const useLog = (initialData?: GetLogsType[]) => {
+export const useLogPage = (initialData?: GetLogsType[]) => {
   const setModal = useSetAtom(modalAtom);
   const setConfirm = useSetAtom(confirmAtom);
   const setAlertMsg = useSetAtom(alertAtom);
   const setErrorMsg = useSetAtom(errorAtom);
 
-  // 날짜 범위 및 검색
   const [startDate, endDate, setStartDate, setEndDate] = useDateRange();
   const [searchTitle, setSearchTitle] = useState("");
   const [searchedTitle, setSearchedTitle] = useState("");
 
-  // 데이터 fetch
   const {
     data,
     isLoading: loading,
@@ -32,7 +31,6 @@ export const useLog = (initialData?: GetLogsType[]) => {
     initialData ? { initialData } : undefined,
   );
 
-  // 무한 스크롤 상태
   const [allData, setAllData] = useState<GetLogsType[] | null>(null);
   const [displayedData, setDisplayedData] = useState<GetLogsType[] | null>(
     null,
@@ -41,35 +39,32 @@ export const useLog = (initialData?: GetLogsType[]) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // 전체 데이터 설정
   useEffect(() => {
-    if (data) {
-      setAllData(data);
-      setCurrentPage(1);
-      setDisplayedData(data.slice(0, ITEMS_PER_PAGE));
-    }
+    if (!data) return;
+
+    setAllData(data);
+    setCurrentPage(1);
+    setDisplayedData(data.slice(0, LOG_ITEMS_PER_PAGE));
   }, [data]);
 
-  // 더 많은 데이터 로딩
   const loadMoreData = useCallback(() => {
     if (!allData || isLoadingMore) return;
 
-    const nextPageEndIndex = currentPage * ITEMS_PER_PAGE + ITEMS_PER_PAGE;
-    const hasMoreData = nextPageEndIndex < allData.length;
+    const nextPageEndIndex =
+      currentPage * LOG_ITEMS_PER_PAGE + LOG_ITEMS_PER_PAGE;
+    const canLoadMore = nextPageEndIndex < allData.length;
 
-    if (!hasMoreData) return;
+    if (!canLoadMore) return;
 
     setIsLoadingMore(true);
 
     setTimeout(() => {
-      const newData = allData.slice(0, nextPageEndIndex);
-      setDisplayedData(newData);
+      setDisplayedData(allData.slice(0, nextPageEndIndex));
       setCurrentPage((prev) => prev + 1);
       setIsLoadingMore(false);
     }, 300);
-  }, [allData, isLoadingMore, currentPage]);
+  }, [allData, currentPage, isLoadingMore]);
 
-  // Intersection Observer
   useEffect(() => {
     if (!loadMoreRef.current) return;
 
@@ -78,11 +73,11 @@ export const useLog = (initialData?: GetLogsType[]) => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && allData && displayedData) {
-            const hasMoreData = displayedData.length < allData.length;
-            if (hasMoreData && !isLoadingMore) {
-              loadMoreData();
-            }
+          if (!entry.isIntersecting || !allData || !displayedData) return;
+
+          const canLoadMore = displayedData.length < allData.length;
+          if (canLoadMore && !isLoadingMore) {
+            loadMoreData();
           }
         });
       },
@@ -99,10 +94,8 @@ export const useLog = (initialData?: GetLogsType[]) => {
     };
   }, [allData, displayedData, isLoadingMore, loadMoreData]);
 
-  // 삭제
   const deleteLogMutation = useDeleteLog();
 
-  // 엑셀 다운로드
   const {
     data: excelData,
     isFetching: excelLoading,
@@ -110,42 +103,38 @@ export const useLog = (initialData?: GetLogsType[]) => {
   } = useLogsForExcel(startDate, endDate, searchTitle);
 
   useEffect(() => {
-    if (excelData) {
-      const success = downloadExcel(excelData, `로그_${startDate}_${endDate}`);
-      if (success) {
-        setAlertMsg("엑셀 파일이 다운로드되었습니다.");
-      } else {
-        setErrorMsg("엑셀 다운로드 중 오류가 발생했습니다.");
-      }
+    if (!excelData) return;
+
+    const success = downloadExcel(excelData, `로그_${startDate}_${endDate}`);
+
+    if (success) {
+      setAlertMsg("엑셀 파일이 다운로드되었습니다.");
+      return;
     }
+
+    setErrorMsg("엑셀 다운로드 중 오류가 발생했습니다.");
   }, [excelData, startDate, endDate, setAlertMsg, setErrorMsg]);
 
-  // 엑셀 다운로드 핸들러
-  const handleGetExcelData = useCallback(
-    () =>
-      setConfirm({
-        title: "엑셀 다운로드",
-        message:
-          "현재 검색 조건에 맞는 로그 데이터를 엑셀로 다운로드하시겠습니까?",
-        confirmEvent: getExcelData,
-      }),
-    [setConfirm, getExcelData],
-  );
+  const handleGetExcelData = useCallback(() => {
+    setConfirm({
+      title: "엑셀 다운로드",
+      message:
+        "현재 검색 조건에 맞는 로그 데이터를 엑셀로 다운로드하시겠습니까?",
+      confirmEvent: getExcelData,
+    });
+  }, [getExcelData, setConfirm]);
 
-  // 검색 핸들러
   const handleSearch = useCallback(() => {
     setSearchedTitle(searchTitle);
     onGetLogs();
-  }, [searchTitle, onGetLogs]);
+  }, [onGetLogs, searchTitle]);
 
-  // 새 로그 추가 핸들러
   const handleAddLog = useCallback(() => {
     setModal({
       id: MODAL_STATE.ADD_LOG,
     });
   }, [setModal]);
 
-  // 로그 상세조회
   const handleViewLog = useCallback(
     (row: GetLogsType) => {
       setModal({
@@ -156,25 +145,22 @@ export const useLog = (initialData?: GetLogsType[]) => {
     [setModal],
   );
 
-  // 로그 삭제 핸들러
   const handleDeleteLog = useCallback(
     (row: GetLogsType) => {
       setConfirm({
         title: "로그 삭제",
         message: "정말로 해당 로그를 삭제하시겠습니까?",
         confirmEvent: () => {
-          // Optimistic Update - 먼저 로컬 상태 업데이트
           if (displayedData) {
-            const newDisplayedData = displayedData.filter(
-              (item) => item.id !== row.id,
+            setDisplayedData(
+              displayedData.filter((item) => item.id !== row.id),
             );
-            setDisplayedData(newDisplayedData);
           }
+
           if (allData) {
-            const newAllData = allData.filter((item) => item.id !== row.id);
-            setAllData(newAllData);
+            setAllData(allData.filter((item) => item.id !== row.id));
           }
-          // 서버 요청
+
           deleteLogMutation.mutate(
             { id: row.id },
             {
@@ -184,10 +170,9 @@ export const useLog = (initialData?: GetLogsType[]) => {
         },
       });
     },
-    [setConfirm, deleteLogMutation, setAlertMsg, displayedData, allData],
+    [allData, deleteLogMutation, displayedData, setAlertMsg, setConfirm],
   );
 
-  // 로그 편집 핸들러
   const handleEditLog = useCallback(
     (row: GetLogsType) => {
       setModal({
@@ -202,14 +187,12 @@ export const useLog = (initialData?: GetLogsType[]) => {
     allData && displayedData ? displayedData.length < allData.length : false;
 
   return {
-    // 상태
     loading,
     displayedData,
     allData,
     isLoadingMore,
     hasMoreData,
     loadMoreRef,
-    // 날짜 및 검색
     startDate,
     endDate,
     setStartDate,
@@ -217,10 +200,8 @@ export const useLog = (initialData?: GetLogsType[]) => {
     searchTitle,
     setSearchTitle,
     searchedTitle,
-    // 엑셀
     excelLoading,
     handleGetExcelData,
-    // 핸들러
     handleSearch,
     handleAddLog,
     handleDeleteLog,

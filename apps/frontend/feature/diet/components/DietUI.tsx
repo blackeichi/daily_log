@@ -6,7 +6,7 @@ import { modalAtom } from "@/lib/atom";
 import { MODAL_STATE } from "@/constants/system";
 import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
 import { DietUIProps } from "../types";
-import { useDietPage } from "../useDietPage";
+import { useDietPage } from "../hooks/useDietPage";
 
 export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
   const setModal = useSetAtom(modalAtom);

@@ -1,25 +1,19 @@
 "use client";
 
+import { AiOutlineFileExcel } from "react-icons/ai";
+import { FaRegCalendarPlus } from "react-icons/fa";
+import { IoIosSearch } from "react-icons/io";
+import { Input } from "@/components/atoms/input";
 import IconButton from "@/components/molecules/iconButton";
 import { DateRange } from "@/components/organisms/dateRange";
 import TableComponent from "@/components/organisms/table";
 import { COLOR_THEME } from "@/constants/system";
 import { GetLogsType } from "@/types/data";
-import { FaRegCalendarPlus } from "react-icons/fa";
-import { IoIosSearch } from "react-icons/io";
-import { AiOutlineFileExcel } from "react-icons/ai";
-import { Input } from "@/components/atoms/input";
-import { useLog } from "./useLog";
+import { LOG_ITEMS_PER_PAGE, LOG_TABLE_HEADERS } from "../constants";
+import { LogUIProps } from "../types";
+import { useLogPage } from "../hooks/useLogPage";
 
-const headers = [
-  { id: "logDate", label: "날짜", width: 110 },
-  { id: "title", label: "제목", width: 300 },
-  { id: "score", label: "평가", width: 50 },
-];
-
-const ITEMS_PER_PAGE = 50;
-
-export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
+export const LogUI = ({ initialData }: LogUIProps) => {
   const {
     loading,
     displayedData,
@@ -41,16 +35,20 @@ export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
     handleDeleteLog,
     handleEditLog,
     handleViewLog,
-  } = useLog(initialData);
+  } = useLogPage(initialData);
+
   return (
     <div
-      className="flex flex-col gap-5 w-full pt-2"
+      className="flex h-full w-full flex-col gap-5 pt-2"
       style={{ height: "calc(100vh - 140px)" }}
     >
       <div className="flex justify-between gap-2">
         <form
-          onSubmit={(e) => e.preventDefault()}
-          className="flex gap-2 items-center flex-wrap"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSearch();
+          }}
+          className="flex flex-wrap items-center gap-2"
         >
           <DateRange
             fromPlaceholder="시작일"
@@ -60,30 +58,33 @@ export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
             toValue={endDate}
             setToValue={setEndDate}
           />
+
           <Input
             id="title-search"
             placeholder="제목을 검색해주세요."
             value={searchTitle}
             setValue={setSearchTitle}
             label="제목 검색"
-            width={"200px"}
+            width="200px"
           />
+
           <IconButton
             icon={IoIosSearch}
             onClick={handleSearch}
-            className="rounded-full w-6 h-6"
+            className="h-6 w-6 rounded-full"
             bgColor={COLOR_THEME.BG_COLOR}
             color={COLOR_THEME.DARK_GRAY}
             tooltip="검색"
             type="submit"
           />
         </form>
+
         <div className="flex gap-2">
-          <div className="sm:block hidden">
+          <div className="hidden sm:block">
             <IconButton
               icon={AiOutlineFileExcel}
               onClick={handleGetExcelData}
-              className="rounded-full w-8 h-8"
+              className="h-8 w-8 rounded-full"
               tooltip={excelLoading ? "다운로드 중..." : "엑셀 다운로드"}
               size={17}
               bgColor={excelLoading ? "#6b7280" : "#10b981"}
@@ -91,62 +92,62 @@ export const LogUI = ({ initialData }: { initialData?: GetLogsType[] }) => {
               disabled={excelLoading}
             />
           </div>
+
           <IconButton
             icon={FaRegCalendarPlus}
             onClick={handleAddLog}
-            className="rounded-full w-8 h-8"
+            className="h-8 w-8 rounded-full"
             tooltip="새 로그추가"
             size={17}
           />
         </div>
       </div>
 
-      {/* 검색 결과 및 데이터 로딩 상태 표시 */}
-      <div className="text-sm text-gray-500 mb-2 flex gap-4">
+      <div className="mb-2 flex gap-4 text-sm text-gray-500">
         <span>
           표시 중: {displayedData?.length || 0} / {allData?.length || 0} 개
         </span>
-        {searchedTitle && searchedTitle.trim() && (
-          <span className="text-blue-500 text-sm">
+
+        {searchedTitle.trim() && (
+          <span className="text-sm text-blue-500">
             &quot;{searchedTitle}&quot; 검색 결과
           </span>
         )}
       </div>
-      <div className="flex-1 overflow-hidden min-h-0">
+
+      <div className="min-h-0 flex-1 overflow-hidden">
         <TableComponent<GetLogsType>
           data={displayedData}
           isLoading={loading}
-          headers={headers}
+          headers={LOG_TABLE_HEADERS}
           onDelete={handleDeleteLog}
           onEdit={handleEditLog}
           onClick={handleViewLog}
         />
       </div>
 
-      {/* 무한 스크롤 트리거 및 로딩 표시 */}
       {hasMoreData && (
         <div
           ref={loadMoreRef}
-          className="flex justify-center items-center py-8"
+          className="flex items-center justify-center py-8"
         >
           {isLoadingMore ? (
             <div className="flex items-center gap-2 text-gray-500">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+              <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-500" />
               <span>더 많은 데이터 로딩 중...</span>
             </div>
           ) : (
-            <div className="text-gray-400 text-sm">
+            <div className="text-sm text-gray-400">
               스크롤하여 더 많은 데이터 보기
             </div>
           )}
         </div>
       )}
 
-      {/* 모든 데이터 로딩 완료 표시 */}
       {!hasMoreData &&
         displayedData &&
-        displayedData.length > ITEMS_PER_PAGE && (
-          <div className="text-center text-gray-400 text-sm py-4">
+        displayedData.length > LOG_ITEMS_PER_PAGE && (
+          <div className="py-4 text-center text-sm text-gray-400">
             모든 데이터를 불러왔습니다.
           </div>
         )}

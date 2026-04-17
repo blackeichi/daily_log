@@ -38,7 +38,9 @@
       "@/lib/*": ["./lib/*"],
       "@/types/*": ["./types/*"],
       "@/constants/*": ["./constants/*"],
-      "@/actions/*": ["./actions/*"]
+      "@/actions/*": ["./actions/*"],
+      "@/hooks/*": ["./hooks/*"],
+      "@/feature/*": ["./feature/*"]
     }
   },
   "include": [

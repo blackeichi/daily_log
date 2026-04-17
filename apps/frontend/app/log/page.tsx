@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { LogUI } from "./logUI";
+import moment from "moment";
 import { backendFetch } from "@/lib/api/server";
 import { GetLogsType } from "@/types/data";
-import moment from "moment";
+import { LogUI } from "@/feature/log/components/LogUI";
 
 export const metadata: Metadata = {
   title: "로그",
@@ -14,6 +14,7 @@ export default async function LogPage() {
   const startDate = moment().subtract(3, "months").format("YYYY-MM-DD");
 
   let initialData: GetLogsType[] | undefined;
+
   try {
     const params = new URLSearchParams({ startDate, endDate });
     const { data } = await backendFetch<GetLogsType[]>(
@@ -23,8 +24,8 @@ export default async function LogPage() {
   } catch {}
 
   return (
-    <div className="w-full h-full">
-      <Suspense fallback={<div className="w-full h-full bg-stone-100" />}>
+    <div className="h-full w-full">
+      <Suspense fallback={<div className="h-full w-full bg-stone-100" />}>
         <LogUI {...(initialData !== undefined ? { initialData } : {})} />
       </Suspense>
     </div>
