@@ -1,84 +1,87 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSetAtom } from "jotai";
-import { alertAtom, errorAtom } from "@/lib/atom";
-import { LoginFormValues } from "../types";
+import { errorAtom } from "@/lib/atom";
+import { localStorageUtilites } from "@/lib/utils/storage";
+import { IS_REDIRECTED, ROUTE } from "@/constants/routes";
+import { useLogin as useLoginMutation } from "@/lib/hooks/useAuth";
 
-const SAVED_ID_KEY = "saved-login-id";
-
-export function useLogin() {
-  const setAlert = useSetAtom(alertAtom);
+export const useLogin = () => {
+  const router = useRouter();
   const setError = useSetAtom(errorAtom);
+  const isRedirect = useSearchParams().get(IS_REDIRECTED);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  const [form, setForm] = useState<LoginFormValues>({
-    id: "",
-    password: "",
-  });
-  const [rememberId, setRememberId] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const loginMutation = useLoginMutation();
 
+  // 클라이언트 사이드에서만 로컬스토리지 값 로드
   useEffect(() => {
-    const savedId = localStorage.getItem(SAVED_ID_KEY);
-
-    if (!savedId) return;
-
-    setForm((prev) => ({
-      ...prev,
-      id: savedId,
-    }));
-    setRememberId(true);
+    const savedEmail = localStorageUtilites.getRememberMe();
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
   }, []);
 
-  const setField = useCallback(
-    <K extends keyof LoginFormValues>(key: K, value: LoginFormValues[K]) => {
-      setForm((prev) => ({
-        ...prev,
-        [key]: value,
-      }));
-    },
-    [],
-  );
+  // 세션 만료로 redirect된 경우 알림 표시
+  useEffect(() => {
+    if (isRedirect) {
+      setError("세션이 만료되었습니다. 다시 로그인해주세요.");
+    }
+  }, [isRedirect, setError]);
 
-  const submit = useCallback(async () => {
-    if (!form.id.trim()) {
-      setError("아이디를 입력해주세요.");
+  // 로그인 핸들러
+  const handleLogin = () => {
+    const loginEmail = isGuestMode
+      ? process.env.NEXT_PUBLIC_GUEST_EMAIL || ""
+      : email;
+    const loginPassword = isGuestMode
+      ? "ImGuestAndThisisWrongPassword!"
+      : password;
+
+    if (!loginEmail || !loginPassword) {
+      setError("모든 항목을 입력해주세요.");
       return;
     }
+    loginMutation.mutate(
+      { email: loginEmail, password: loginPassword },
+      {
+        onSuccess: () => {
+          setIsNavigating(true);
+          if (rememberMe && !isGuestMode) {
+            localStorageUtilites.setRememberMe(email);
+          } else {
+            localStorageUtilites.setRememberMe(null);
+          }
+          router.push(ROUTE.HOME);
+        },
+        onError: (err) => {
+          setError((err as Error).message || "로그인에 실패했습니다.");
+        },
+      },
+    );
+  };
 
-    if (!form.password.trim()) {
-      setError("비밀번호를 입력해주세요.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // 여기 부분은 네 기존 로그인 API/액션으로 교체
-      // 예:
-      // await loginMutation.mutateAsync({ id: form.id, password: form.password });
-
-      if (rememberId) {
-        localStorage.setItem(SAVED_ID_KEY, form.id);
-      } else {
-        localStorage.removeItem(SAVED_ID_KEY);
-      }
-
-      setAlert("로그인되었습니다.");
-    } catch (error) {
-      console.error(error);
-      setError("로그인 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }, [form.id, form.password, rememberId, setAlert, setError]);
+  // 회원가입 페이지로 이동
+  const handleGoToSignup = () => {
+    router.push(ROUTE.SIGNUP);
+  };
 
   return {
-    form,
-    loading,
-    rememberId,
-    setRememberId,
-    setField,
-    submit,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    rememberMe,
+    setRememberMe,
+    isGuestMode,
+    setIsGuestMode,
+    loading: loginMutation.isPending || isNavigating,
+    handleLogin,
+    handleGoToSignup,
   };
-}
+};

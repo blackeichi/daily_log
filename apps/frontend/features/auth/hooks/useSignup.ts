@@ -1,91 +1,73 @@
-"use client";
-
-import { useCallback, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSetAtom } from "jotai";
 import { alertAtom, errorAtom } from "@/lib/atom";
-import { SignupFormValues } from "../types";
+import { ROUTE } from "@/constants/routes";
+import { useSignup as useSignupMutation } from "@/lib/hooks/useAuth";
 
-const initialForm: SignupFormValues = {
-  id: "",
-  password: "",
-  passwordConfirm: "",
-  name: "",
-};
-
-export function useSignup() {
+export const useSignup = () => {
+  const router = useRouter();
   const setAlert = useSetAtom(alertAtom);
   const setError = useSetAtom(errorAtom);
 
-  const [form, setForm] = useState<SignupFormValues>(initialForm);
-  const [loading, setLoading] = useState(false);
+  // Form 상태
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [secretKey, setSecretKey] = useState("");
 
-  const setField = useCallback(
-    <K extends keyof SignupFormValues>(key: K, value: SignupFormValues[K]) => {
-      setForm((prev) => ({
-        ...prev,
-        [key]: value,
-      }));
-    },
-    [],
-  );
+  const signupMutation = useSignupMutation();
 
-  const validate = useCallback(() => {
-    if (!form.id.trim()) {
-      setError("아이디를 입력해주세요.");
-      return false;
+  // 비밀번호 일치 여부
+  const isPasswordMatch = confirmPassword && confirmPassword === password;
+
+  // 회원가입 핸들러
+  const handleSignUp = () => {
+    if (!email || !name || !password || !confirmPassword || !secretKey) {
+      setError("모든 항목을 입력해주세요.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("비밀번호가 일치하지 않습니다.");
+      return;
     }
 
-    if (!form.name.trim()) {
-      setError("이름을 입력해주세요.");
-      return false;
-    }
+    signupMutation.mutate(
+      { email, name, password, secretKey },
+      {
+        onSuccess: (res) => {
+          setAlert(
+            res?.message || "회원가입이 완료되었습니다. 로그인을 해주세요.",
+          );
+          router.push(ROUTE.LOGIN);
+        },
+        onError: (err) => {
+          setError((err as Error).message || "회원가입에 실패했습니다.");
+        },
+      },
+    );
+  };
 
-    if (!form.password.trim()) {
-      setError("비밀번호를 입력해주세요.");
-      return false;
-    }
-
-    if (form.password.length < 8) {
-      setError("비밀번호는 8자 이상이어야 합니다.");
-      return false;
-    }
-
-    if (form.password !== form.passwordConfirm) {
-      setError("비밀번호 확인이 일치하지 않습니다.");
-      return false;
-    }
-
-    return true;
-  }, [form, setError]);
-
-  const submit = useCallback(async () => {
-    if (!validate()) return;
-
-    try {
-      setLoading(true);
-
-      // 여기 부분은 네 기존 회원가입 API/액션으로 교체
-      // 예:
-      // await signupMutation.mutateAsync({
-      //   id: form.id,
-      //   password: form.password,
-      //   name: form.name,
-      // });
-
-      setAlert("회원가입이 완료되었습니다.");
-      setForm(initialForm);
-    } catch (error) {
-      console.error(error);
-      setError("회원가입 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }, [form, setAlert, setError, validate]);
+  // 로그인 페이지로 이동
+  const handleGoToLogin = () => {
+    router.push(ROUTE.LOGIN);
+  };
 
   return {
-    form,
-    loading,
-    setField,
-    submit,
+    email,
+    setEmail,
+    name,
+    setName,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    secretKey,
+    setSecretKey,
+    isPasswordMatch,
+    isLoading: signupMutation.isPending,
+    handleSignUp,
+    handleGoToLogin,
   };
-}
+};

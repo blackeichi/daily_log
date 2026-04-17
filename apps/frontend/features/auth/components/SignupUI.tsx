@@ -1,82 +1,124 @@
 "use client";
 
-import Link from "next/link";
+import Button from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
+import Title from "@/components/atoms/Title";
+import { FaKey, FaRegUserCircle } from "react-icons/fa";
+import { GiConfirmed } from "react-icons/gi";
+import { PiEnvelopeSimpleThin } from "react-icons/pi";
+import { RiLockPasswordLine } from "react-icons/ri";
 import { useSignup } from "../hooks/useSignup";
 
-export function SignupUI() {
-  const { form, loading, setField, submit } = useSignup();
+export const SignupUI = () => {
+  const {
+    email,
+    setEmail,
+    name,
+    setName,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    secretKey,
+    setSecretKey,
+    isPasswordMatch,
+    isLoading,
+    handleSignUp,
+    handleGoToLogin,
+  } = useSignup();
 
   return (
-    <div className="flex min-h-[calc(100vh-120px)] items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-lg shadow-stone-300">
-        <div className="bg-stone-700 px-6 py-5 text-white">
-          <h1 className="text-xl font-semibold">회원가입</h1>
-          <p className="mt-1 text-sm text-stone-200">
-            계정을 만들고 기록을 시작해보세요.
-          </p>
-        </div>
-
-        <form
-          className="space-y-5 p-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-        >
-          <Input
-            id="signup-id"
-            label="아이디"
-            value={form.id}
-            setValue={(value: string) => setField("id", value)}
-            placeholder="아이디를 입력해주세요"
-          />
-
-          <Input
-            id="signup-name"
-            label="이름"
-            value={form.name}
-            setValue={(value: string) => setField("name", value)}
-            placeholder="이름을 입력해주세요"
-          />
-
-          <Input
-            id="signup-password"
-            label="비밀번호"
-            type="password"
-            value={form.password}
-            setValue={(value: string) => setField("password", value)}
-            placeholder="비밀번호를 입력해주세요"
-          />
-
-          <Input
-            id="signup-password-confirm"
-            label="비밀번호 확인"
-            type="password"
-            value={form.passwordConfirm}
-            setValue={(value: string) => setField("passwordConfirm", value)}
-            placeholder="비밀번호를 다시 입력해주세요"
-          />
-
-          <button
+    <div className="w-full h-full flex justify-center items-center p-4">
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="w-full sm:w-[540px] shadow-stone-500 border-stone-300 border sm:shadow-lg bg-white rounded-lg p-5 sm:p-10 flex flex-col gap-3"
+      >
+        <Title className="font-medium mb-3">회원가입</Title>
+        <Input
+          id="email"
+          value={email}
+          setValue={setEmail}
+          placeholder="이메일을 입력해주세요."
+          required
+          title="이메일"
+          type="email"
+          icon={<PiEnvelopeSimpleThin size={20} />}
+          width="100%"
+          height={45}
+        />
+        <Input
+          id="name"
+          value={name}
+          setValue={setName}
+          placeholder="이름을 입력해주세요."
+          required
+          title="이름"
+          icon={<FaRegUserCircle size={20} />}
+          width="100%"
+          height={45}
+        />
+        <Input
+          id="password"
+          value={password}
+          setValue={setPassword}
+          placeholder="비밀번호를 입력해주세요."
+          required
+          title="비밀번호"
+          type="password"
+          icon={<RiLockPasswordLine size={18} />}
+          width="100%"
+          height={45}
+        />
+        <Input
+          id="confirmPassword"
+          value={confirmPassword}
+          setValue={setConfirmPassword}
+          placeholder="비밀번호를 다시 입력해주세요."
+          required
+          title="비밀번호 확인"
+          type="password"
+          icon={
+            <GiConfirmed color={isPasswordMatch ? "green" : ""} size={20} />
+          }
+          width="100%"
+          height={45}
+        />
+        <Input
+          id="secretKey"
+          value={secretKey}
+          setValue={setSecretKey}
+          placeholder="시크릿 키를 입력해주세요."
+          required
+          title="시크릿 키"
+          type="password"
+          icon={<FaKey size={18} />}
+          width="100%"
+          height={45}
+        />
+        <div className="mt-3">
+          <Button
+            text="회원가입"
             type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-stone-800 px-4 py-3 text-sm font-medium text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "가입 중..." : "회원가입"}
-          </button>
-
-          <div className="text-center text-sm text-stone-500">
-            이미 계정이 있나요?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-stone-800 underline"
-            >
-              로그인
-            </Link>
-          </div>
-        </form>
-      </div>
+            onClick={handleSignUp}
+            width="100%"
+            isLoading={isLoading}
+          />
+        </div>
+        <div className="flex justify-center mt-2">
+          <Button
+            text="로그인하러 가기"
+            onClick={handleGoToLogin}
+            contained={false}
+            width={150}
+            height={35}
+            style={{
+              border: "none",
+              textDecoration: "underline",
+              fontSize: "13px",
+            }}
+          />
+        </div>
+      </form>
     </div>
   );
-}
+};
