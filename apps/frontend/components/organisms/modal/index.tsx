@@ -14,7 +14,9 @@ const ViewLogModal = dynamic(() => import("./logModal/viewLogModal"), {
 const ModifyCaloriesModal = dynamic(() => import("./modifyCaloriesModal"), {
   ssr: false,
 });
-
+const HomeChartDetailModal = dynamic(() => import("./homeChartDetailModal"), {
+  ssr: false,
+});
 const Modal = () => {
   const [modal, setModal] = useAtom(modalAtom);
   const onClose = () => {
@@ -51,6 +53,24 @@ const Modal = () => {
             onClose={onClose}
           />
         )}
+
+      {modal?.id === MODAL_STATE.VIEW_HOME_CHART_DETAIL &&
+        (() => {
+          const { title, kind, items } = modal.data as {
+            title: string;
+            kind: "log" | "calorie";
+            items: unknown[];
+          };
+
+          return (
+            <HomeChartDetailModal
+              title={title}
+              kind={kind}
+              items={items as never}
+              onClose={onClose}
+            />
+          );
+        })()}
     </Overlay>
   );
 };
