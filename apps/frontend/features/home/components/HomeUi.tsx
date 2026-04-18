@@ -1,267 +1,29 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import moment from "moment";
-import { useCallback, useMemo } from "react";
-import type { EChartsOption } from "echarts";
-import { useAtomValue, useSetAtom } from "jotai";
-import { modalAtom, userAtom } from "@/lib/atom";
-import { useAllDiet } from "@/lib/hooks/useDiet";
-import { useLogs } from "@/lib/hooks/useLog";
-import { MODAL_STATE } from "@/constants/system";
-import { CalorieStatusLabel, HomeUIProps, ScoreLabel } from "../types";
-import { CHART_CARD, DATE_RANGE_DAYS, DEFAULT_MESSAGE } from "../constants";
-import { donutBaseOption, getCalorieStatus, getNumericValue } from "../utils";
-import { SummaryCard } from "./SummaryCard";
-import { ChartCard } from "./ChartCard";
+import { HomeUIProps } from "../types";
+import { useHomePage } from "../hooks/useHomePage";
+import ChartCard from "./ChartCard";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), {
   ssr: false,
 });
 
 export default function HomeUI({ initialData }: HomeUIProps) {
-  const message = initialData?.trim() || DEFAULT_MESSAGE;
-
-  const user = useAtomValue(userAtom);
-  const setModal = useSetAtom(modalAtom);
-
-  const endDate = moment().format("YYYY-MM-DD");
-  const startDate = moment()
-    .subtract(DATE_RANGE_DAYS, "days")
-    .format("YYYY-MM-DD");
-
-  const { data: calories = [], isLoading: caloriesLoading } = useAllDiet(
-    startDate,
-    endDate,
-  );
-  const { data: logs = [], isLoading: logsLoading } = useLogs(
-    startDate,
-    endDate,
-  );
-
-  const calorieStatusData = useMemo(() => {
-    if (!user) return [];
-
-    const counts: Record<CalorieStatusLabel, number> = {
-      "목표 달성": 0,
-      "일일섭취칼로리 달성": 0,
-      실패: 0,
-    };
-
-    calories.forEach((item) => {
-      const status = getCalorieStatus(
-        item.totalCalorie,
-        user.goalCalorie,
-        user.maximumCalorie,
-      );
-      counts[status] += 1;
-    });
-
-    return (Object.entries(counts) as [CalorieStatusLabel, number][]).map(
-      ([name, value]) => ({ name, value }),
-    );
-  }, [calories, user]);
-
-  const scoreDistributionData = useMemo(() => {
-    const counts: Record<ScoreLabel, number> = {
-      "1점": 0,
-      "2점": 0,
-      "3점": 0,
-      "4점": 0,
-      "5점": 0,
-      미평가: 0,
-    };
-
-    logs.forEach((log) => {
-      if (!log.score) {
-        counts["미평가"] += 1;
-        return;
-      }
-      counts[`${log.score}점` as ScoreLabel] += 1;
-    });
-
-    return (Object.entries(counts) as [ScoreLabel, number][]).map(
-      ([name, value]) => ({ name, value }),
-    );
-  }, [logs]);
-
-  const calorieTrend = useMemo(() => {
-    const map = new Map(calories.map((item) => [item.date, item]));
-
-    return Array.from({ length: DATE_RANGE_DAYS + 1 }, (_, index) => {
-      const date = moment(startDate).add(index, "days").format("YYYY-MM-DD");
-      const item = map.get(date);
-
-      return {
-        date,
-        shortDate: moment(date).format("MM/DD"),
-        totalCalorie: item?.totalCalorie ?? null,
-      };
-    });
-  }, [calories, startDate]);
-
-  const summary = useMemo(() => {
-    const recordedCalorieDays = calories.length;
-    const recordedLogDays = logs.length;
-
-    const avgCalorie = recordedCalorieDays
-      ? Math.round(
-          calories.reduce((acc, cur) => acc + cur.totalCalorie, 0) /
-            recordedCalorieDays,
-        )
-      : 0;
-
-    const scoredLogs = logs.filter((log) => !!log.score);
-    const avgScore = scoredLogs.length
-      ? (
-          scoredLogs.reduce((acc, cur) => acc + (cur.score ?? 0), 0) /
-          scoredLogs.length
-        ).toFixed(1)
-      : "-";
-
-    return {
-      recordedCalorieDays,
-      recordedLogDays,
-      avgCalorie,
-      avgScore,
-    };
-  }, [calories, logs]);
-
-  const calorieStatusOption = useMemo(() => {
-    return donutBaseOption("칼로리 상태", calorieStatusData, "일");
-  }, [calorieStatusData]);
-
-  const scoreDistributionOption = useMemo(() => {
-    return donutBaseOption("점수 분포", scoreDistributionData, "개");
-  }, [scoreDistributionData]);
-
-  const calorieTrendOption = useMemo(() => {
-    return {
-      tooltip: {
-        trigger: "axis",
-        formatter: (params: unknown) => {
-          const list = params as Array<{ axisValue?: string; data?: unknown }>;
-          const first = list?.[0];
-          const value = getNumericValue(first?.data);
-          const hasValue = first?.data !== null && first?.data !== undefined;
-
-          return `${first?.axisValue ?? ""}<br/>${
-            hasValue ? value : "기록 없음"
-          }`;
-        },
-      },
-      grid: { left: 36, right: 20, top: 30, bottom: 40 },
-      xAxis: {
-        type: "category",
-        data: calorieTrend.map((item) => item.shortDate),
-        axisLabel: { interval: 4 },
-      },
-      yAxis: {
-        type: "value",
-      },
-      series: [
-        {
-          name: "섭취 칼로리",
-          type: "line",
-          smooth: true,
-          connectNulls: false,
-          data: calorieTrend.map((item) => item.totalCalorie),
-          symbolSize: 8,
-          markLine: user
-            ? {
-                silent: true,
-                data: [
-                  { yAxis: user.goalCalorie, name: "goal" },
-                  { yAxis: user.maximumCalorie, name: "maximum" },
-                ],
-              }
-            : undefined,
-        },
-      ],
-    } as EChartsOption;
-  }, [calorieTrend, user]);
-
-  const openCalorieStatusModal = useCallback(
-    (label: CalorieStatusLabel) => {
-      if (!user) return;
-
-      const filtered = calories.filter((item) => {
-        return (
-          getCalorieStatus(
-            item.totalCalorie,
-            user.goalCalorie,
-            user.maximumCalorie,
-          ) === label
-        );
-      });
-
-      setModal({
-        id: MODAL_STATE.VIEW_HOME_CHART_DETAIL,
-        data: {
-          title: `최근 30일 칼로리 상태 - ${label}`,
-          kind: "calorie",
-          items: filtered,
-        },
-      });
-    },
-    [user, calories, setModal],
-  );
-
-  const openScoreModal = useCallback(
-    (label: ScoreLabel) => {
-      const filtered = logs.filter((log) => {
-        if (label === "미평가") return !log.score;
-        return `${log.score}점` === label;
-      });
-
-      setModal({
-        id: MODAL_STATE.VIEW_HOME_CHART_DETAIL,
-        data: {
-          title: `최근 30일 로그 점수 - ${label}`,
-          kind: "log",
-          items: filtered,
-        },
-      });
-    },
-    [logs, setModal],
-  );
-
-  const handleCalorieTrendClick = useCallback(
-    (params: { dataIndex: number }) => {
-      const target = calorieTrend[params.dataIndex];
-      if (!target?.date || target.totalCalorie == null) return;
-
-      setModal({
-        id: MODAL_STATE.EDIT_CALORIES,
-        data: target.date,
-      });
-    },
-    [calorieTrend, setModal],
-  );
-
-  const calorieStatusEvents = useMemo(
-    () => ({
-      click: (params: { name: CalorieStatusLabel }) =>
-        openCalorieStatusModal(params.name),
-    }),
-    [openCalorieStatusModal],
-  );
-
-  const scoreDistributionEvents = useMemo(
-    () => ({
-      click: (params: { name: ScoreLabel }) => openScoreModal(params.name),
-    }),
-    [openScoreModal],
-  );
-
-  const calorieTrendEvents = useMemo(
-    () => ({
-      click: handleCalorieTrendClick,
-    }),
-    [handleCalorieTrendClick],
-  );
-
-  const isLoading = caloriesLoading || logsLoading;
+  const {
+    message,
+    summary,
+    isLoading,
+    calorieStatusData,
+    scoreDistributionData,
+    calorieStatusOption,
+    scoreDistributionOption,
+    calorieTrendOption,
+    calorieStatusEvents,
+    scoreDistributionEvents,
+    calorieTrendEvents,
+    chartCardClassName,
+  } = useHomePage(initialData);
 
   return (
     <div className="w-full min-h-screen max-w-200">
@@ -283,17 +45,10 @@ export default function HomeUI({ initialData }: HomeUIProps) {
           </div>
         </section>
 
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <SummaryCard
-            label="평균 섭취 칼로리"
-            value={`${summary.avgCalorie} kcal`}
-          />
-          <SummaryCard label="평균 기분 점수" value={`${summary.avgScore}`} />
-        </section>
-
         <section className="grid gap-6 lg:grid-cols-2">
           <ChartCard
             title="최근 30일 칼로리 상태 비율"
+            badge={`평균 섭취 칼로리 : ${summary.avgCalorie} kcal`}
             description="목표 달성 / 일일섭취칼로리 달성 / 실패 비율을 확인할 수 있어요."
             loading={isLoading}
             empty={!calorieStatusData.some((item) => item.value > 0)}
@@ -307,6 +62,7 @@ export default function HomeUI({ initialData }: HomeUIProps) {
 
           <ChartCard
             title="최근 30일 로그 점수 분포"
+            badge={`평균 기분 점수 : ${summary.avgScore}`}
             description="각 점수 구간을 누르면 해당 로그 목록을 볼 수 있어요."
             loading={isLoading}
             empty={!scoreDistributionData.some((item) => item.value > 0)}
@@ -319,7 +75,7 @@ export default function HomeUI({ initialData }: HomeUIProps) {
           </ChartCard>
         </section>
 
-        <section className={CHART_CARD}>
+        <section className={chartCardClassName}>
           <div className="mb-4 flex flex-col gap-1">
             <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
               최근 30일 칼로리 추이

@@ -1,13 +1,16 @@
+import { memo } from "react";
 import { CHART_CARD } from "../constants";
 
-export const ChartCard = ({
+const ChartCard = ({
   title,
+  badge,
   description,
   loading,
   empty,
   children,
 }: {
   title: string;
+  badge: string;
   description: string;
   loading: boolean;
   empty: boolean;
@@ -19,6 +22,9 @@ export const ChartCard = ({
         <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
           {title}
         </h3>
+        <p className="text-sm bg-stone-600 text-white p-0.5 px-2 rounded w-fit">
+          {badge}
+        </p>
         <p className="text-sm text-stone-500">{description}</p>
       </div>
 
@@ -36,3 +42,5 @@ export const ChartCard = ({
     </section>
   );
 };
+
+export default memo(ChartCard);
