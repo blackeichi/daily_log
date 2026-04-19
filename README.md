@@ -1,10 +1,12 @@
 # Daily Log
 
-> 개인 생산성 관리를 위한 풀스택 웹 애플리케이션  
+> 기록, 식단, 루틴, 할 일, 프로필 관리를 한곳에서 다루는 개인 생산성 앱  
 > **Next.js (App Router) · NestJS · Prisma · PostgreSQL**
 
-Daily Log는 하루 회고, 할 일, 루틴, 로그, 칼로리 관리를 한 곳에서 다룰 수 있도록 만든 서비스입니다.  
-단순 CRUD 구현에 그치지 않고, **인증 구조**, **서버 상태 관리**, **SSR 초기 데이터 로딩**, **대용량 리스트 렌더링** 을 중심으로 설계하고 구현했습니다.
+Daily Log는 하루 기록을 남기고, 식단과 칼로리를 관리하고, 루틴과 할 일을 추적할 수 있도록 만든 풀스택 웹 애플리케이션입니다.  
+현재 프로젝트는 **모노레포 구조**로 운영되며, 프론트엔드는 Next.js App Router, 백엔드는 NestJS + Prisma 기반으로 구성되어 있습니다.
+
+최근 구조 변경에 맞춰 프론트엔드는 **페이지별 feature 분리**, **Route Handler 기반 API 중계**, **쿠키 기반 인증 흐름** 중심으로 정리되어 있습니다.
 
 ---
 
@@ -12,57 +14,60 @@ Daily Log는 하루 회고, 할 일, 루틴, 로그, 칼로리 관리를 한 곳
 
 - **프로젝트명**: Daily Log
 - **형태**: 개인 사이드 프로젝트
-- **구성**: Monorepo (Frontend / Backend)
-- **목적**: 일상 기록, 루틴 관리, 할 일 추적, 기록 탐색을 통합한 생산성 서비스 구현
+- **구성**: Monorepo (`apps/frontend`, `apps/backend`)
+- **목적**: 일상 기록과 생산성 관리를 하나의 앱으로 통합
 
-### 이런 점에 집중했습니다
+이 프로젝트는 단순 CRUD보다 아래 항목에 더 초점을 맞췄습니다.
 
-- 로그 목록에서 **무한 스크롤**과 **가상화 테이블**을 적용한 데이터 탐색 UX
-- **JWT Access / Refresh Token + 쿠키 기반 인증 구조**
-- Next.js App Router 환경에서 **Server / Client 경계 분리**
-- **React Query 기반 서버 상태 관리 표준화**
+- 인증이 필요한 앱을 안정적으로 운영할 수 있는 **쿠키 기반 인증 구조**
+- Next.js 서버 레이어를 활용한 **백엔드 API 중계와 SSR 진입 흐름**
+- React Query를 중심으로 한 **서버 상태 관리 표준화**
 - **페이지 첫 진입 시 SSR 프리페치 + initialData 적용**으로 초기 로딩 경험 개선
+- 로그/기록 화면에서의 **대용량 데이터 탐색 경험 개선**
 
 ---
 
 ## 주요 기능
 
-### 1) 회고 / 감정 기록
+### 1. 홈 대시보드
 
-- 하루 단위 회고 작성
-- 감정 상태 기록
-- 누적된 일상 로그를 기반으로 개인 기록 관리
+- `/home` 진입 시 주요 기록 데이터를 한눈에 확인
+- 차트 카드 기반 요약 UI 제공
+- log 데이터 기반 AI 조언 및 위로 제공
+- 기본 진입 페이지는 `localStorage`의 `defaultHome` 값으로 제어 (프로필 페이지에서 변경 가능)
 
-### 2) 할 일 관리
+### 2. 식단 / 칼로리 관리
 
-- 오늘 / 주간 / 월간 / 연간 단위 할 일 관리
-- Drag & Drop 기반 정렬
-- 일정 단위로 태스크를 나눠 관리할 수 있는 UI 제공
+- `/diet`에서 식단 및 칼로리 기록 조회/관리
+- 월간/일간 단위로 데이터를 확인하는 흐름
+- 식단 관련 화면 로직은 `features/diet`로 분리
 
-### 3) 루틴 관리
+### 3. 로그 관리
 
-- 반복 수행할 루틴 템플릿 생성
-- 루틴 복사 및 재사용
-- 일상 루틴을 구조적으로 기록할 수 있도록 설계
+- `/log`에서 기록 목록 조회 및 관리
+- 검색, 목록 탐색, 엑셀 다운로드 API 제공
+- 많은 로그를 다루는 화면을 고려한 구조
 
-### 4) 로그 관리
+### 4. 루틴 관리
 
-- 날짜 범위, 제목 기반 검색
-- 무한 스크롤을 통한 연속 탐색
-- 가상화 테이블 기반 렌더링 최적화
-- 엑셀 다운로드 기능 제공
+- `/routine`에서 반복 루틴 조회 및 관리
+- 루틴 데이터를 별도 feature 레이어에서 관리
 
-### 5) 칼로리 관리
+### 5. 할 일 관리
 
-- 식단 및 칼로리 기록
-- 월간 단위 데이터 확인
-- 기록 기반 통계 확인
+- `/todo`에서 할 일 조회 및 관리
+- UI와 비즈니스 로직을 feature 단위로 분리
 
-### 6) 사용자 설정
+### 6. 인증 / 사용자 관리
 
-- 프로필 정보 확인 및 수정
-- 비밀번호 변경
-- 인증 기반 보호 페이지 접근 제어
+- 로그인, 회원가입, 로그아웃, 토큰 재발급
+- `/profile`에서 사용자 정보 수정, 비밀번호 변경
+- 인증 상태에 따라 public/private 페이지 접근 제어
+
+### 7. AI 연동 확장 포인트
+
+- 사용자 관련 AI 대화 API 라우트가 포함되어 있음
+- 프론트/백엔드 모두 OpenAI SDK 의존성이 연결되어 있어 확장 가능
 
 ---
 
@@ -73,243 +78,349 @@ Daily Log는 하루 회고, 할 일, 루틴, 로그, 칼로리 관리를 한 곳
 - **Next.js 15** (App Router)
 - **React 19**
 - **TypeScript**
-- **Tailwind CSS**
-- **React Query (@tanstack/react-query)**
+- **Tailwind CSS 4**
+- **@tanstack/react-query**
 - **Jotai**
-- **react-window**
-- **@dnd-kit**
+- **ECharts**
 - **notistack**
+- **Framer Motion**
+- **react-window / react-virtualized-auto-sizer**
+- **@dnd-kit**
+- **Capacitor**
 
 ### Backend
 
-- **NestJS**
+- **NestJS 11**
 - **Prisma**
 - **PostgreSQL**
 - **JWT / Passport**
-- **class-validator**
+- **class-validator / class-transformer**
+- **Swagger**
 
-### Environment
+### Workspace / Tooling
 
 - **pnpm workspace**
-- **Monorepo**
-- **Capacitor**
+- **ESLint**
+- **Jest**
 
 ---
 
-## 디렉터리 구조
+## 현재 디렉터리 구조
 
 ```text
 Daily-Log/
 ├── apps/
-│   ├── frontend/   # Next.js App Router 기반 클라이언트
-│   └── backend/    # NestJS API 서버
+│   ├── backend/
+│   │   ├── prisma/
+│   │   └── src/
+│   │       ├── auth/
+│   │       ├── calories/
+│   │       ├── log/
+│   │       ├── routine/
+│   │       ├── todos/
+│   │       └── users/
+│   └── frontend/
+│       ├── app/
+│       │   ├── api/
+│       │   ├── diet/
+│       │   ├── home/
+│       │   ├── log/
+│       │   ├── login/
+│       │   ├── profile/
+│       │   ├── routine/
+│       │   ├── signup/
+│       │   └── todo/
+│       ├── components/
+│       ├── features/
+│       ├── lib/
+│       ├── constants/
+│       └── types/
+├── docs/
 ├── package.json
 ├── pnpm-workspace.yaml
 └── README.md
 ```
 
-### 역할 분리
+---
 
-- **frontend**: UI, 사용자 인터랙션, 서버 상태 관리, 인증 쿠키 처리
-- **backend**: 인증, 사용자 정보, 로그 / 루틴 / 칼로리 관련 API
-- **database**: Prisma schema 기반 데이터 모델 관리
+## 프론트엔드 구조
+
+현재 프론트엔드는 **App Router + feature 기반 구조**를 중심으로 구성되어 있습니다.
+
+### app/
+
+라우팅과 페이지 엔트리 역할을 담당합니다.
+
+예시:
+
+- `app/home/page.tsx`
+- `app/diet/page.tsx`
+- `app/log/page.tsx`
+- `app/routine/page.tsx`
+- `app/todo/page.tsx`
+- `app/profile/page.tsx`
+- `app/login/page.tsx`
+- `app/signup/page.tsx`
+
+또한 `app/api/*` 아래에서 Next.js Route Handler가 백엔드 API와 통신하는 **중계 레이어** 역할을 합니다.
+
+### features/
+
+화면별 UI와 비즈니스 로직을 기능 단위로 나눠 관리합니다.
+
+예시:
+
+- `features/home`
+- `features/diet`
+- `features/log`
+- `features/routine`
+- `features/todo`
+- `features/profile`
+- `features/auth`
+
+일반적으로 feature 내부는 다음과 같이 구성됩니다.
+
+- `components/`: 화면 UI
+- `hooks/`: 페이지 전용 상태/요청 로직
+- `types.ts`: feature 전용 타입
+- `constants.ts`, `utils.ts`: 필요 시 분리
+
+### components/
+
+여러 feature에서 재사용되는 공통 UI를 관리합니다.
+
+- `atoms`
+- `molecules`
+- `organisms`
+- `providers`
+- `template`
+
+### lib/
+
+공통 유틸리티와 API 클라이언트 레이어를 둡니다.
+
+- `lib/api/server.ts`: Route Handler에서 백엔드와 통신하는 공통 fetch 래퍼
+- `lib/hooks`: 공용 훅
+- `lib/utils`: 범용 유틸리티
 
 ---
 
-## 프론트엔드 아키텍처 변경 사항
+## 인증 구조
 
-최근 프론트엔드 구조를 다음 방향으로 리팩터링했습니다.
+현재 인증은 **쿠키 기반 JWT 인증** 흐름으로 동작합니다.
 
-### 1. Access Token을 포함한 인증 정보를 쿠키 기반으로 일원화
+### 흐름 요약
 
-기존에는 Access Token을 브라우저 상태와 함께 다루는 흐름이 있었지만, 현재는 **Access Token / Refresh Token 모두 쿠키 기반**으로 전달되도록 정리했습니다.
+1. 사용자가 `/login`에서 로그인
+2. 프론트의 Route Handler가 백엔드 `/auth/login` 호출
+3. 백엔드가 `accessToken`, `refreshToken` 쿠키를 내려줌
+4. 이후 프론트는 `/api/*`를 통해 요청하고, 서버 레이어가 쿠키를 포함해 백엔드에 재전달
+5. 보호 페이지 접근은 `middleware.ts`에서 `refreshToken` 존재 여부 기준으로 제어
+6. 백엔드 요청이 401이면 `refresh` 요청 후 원 요청을 재시도
 
-- 클라이언트 요청은 `credentials: "include"` 기반으로 `/api/*`에 요청
-- Next.js Route Handler가 쿠키를 포함한 상태로 백엔드 API에 재전달
-- 백엔드에서 반환한 `Set-Cookie`를 다시 프론트 응답에 전달
-- middleware에서는 **refresh token 존재 여부**를 기준으로 public/private 페이지 접근 제어
-- 인증 만료 시 refresh 요청 후 재시도하는 흐름을 서버 레이어에 포함
+### 왜 이렇게 구성했는가
 
-이 구조를 통해 브라우저에서 토큰을 직접 조작하는 책임을 줄이고, **프론트와 백엔드 사이의 인증 처리 경계**를 더 명확하게 나눴습니다.
+- 브라우저에서 토큰을 직접 다루는 책임을 줄이기 위해
+- Next.js 서버 레이어에서 인증 처리 경계를 더 명확히 하기 위해
+- 클라이언트는 화면과 상호작용에 집중하고, 인증/쿠키 처리는 서버 계층에 위임하기 위해
 
-### 2. React Query + API Route Handler 기반 인프라 구축
+---
 
-기존 화면/컴포넌트 단위 데이터 요청 방식을 정리하고, **서버 상태는 React Query**, **백엔드 통신 중계는 Next.js API Route Handler**로 표준화했습니다.
+## 데이터 요청 구조
 
-구조는 아래와 같습니다.
+프론트엔드의 기본 요청 흐름은 아래와 같습니다.
 
 ```text
 Client Component
-  → React Query Hook
-    → /api/* Route Handler
+  → Feature Hook
+    → /app/api/* Route Handler
       → backendFetch
         → NestJS API
 ```
 
-이 구조로 통일하면서 얻은 점은 다음과 같습니다.
+이 구조의 장점:
 
-- 쿠키 처리 방식과 응답 처리 로직도 한곳에 모으기
-- queryKey / invalidateQueries 패턴으로 캐시 무효화 일관성 확보
-- QueryProvider에서 전역 에러 처리, 로딩 상태 추적, Devtools 연결 가능
-
-### 3. 각 페이지 첫 진입 시 SSR 데이터 프리페치 및 initialData 적용
-
-첫 진입 시 필요한 데이터는 App Router의 서버 컴포넌트 페이지에서 먼저 가져오고, 클라이언트 훅에는 `initialData`로 주입하는 패턴을 적용했습니다.
-
-적용 페이지 예시:
-
-- 홈
-- 로그
-- 투두
-- 루틴
-- 칼로리
-
-이 방식으로:
-
-- 첫 진입 시 빈 화면에서 클라이언트 fetch가 시작되는 구조를 줄이고
-- 초기 렌더링 시 바로 데이터가 보이도록 하며
-- 이후 상호작용과 데이터 갱신은 React Query가 담당하도록 분리했습니다.
-
-즉, **초기 로딩은 서버가 책임지고, 이후 서버 상태 동기화는 React Query가 담당하는 구조**입니다.
+- 쿠키 전달과 인증 재시도 로직을 한 곳에 모을 수 있음
+- 화면 코드에서 백엔드 URL과 인증 세부사항을 직접 다루지 않아도 됨
+- React Query와 결합해 캐싱/무효화 흐름을 일관되게 관리할 수 있음
 
 ---
 
-## 구현 포인트
+## 상태 관리 방식
 
-### 1. 대량 로그 조회 UX
+### 서버 상태
 
-로그 데이터는 누적될수록 목록 길이가 길어질 수 있기 때문에, 단순 리스트 렌더링보다 **탐색 경험과 렌더링 비용**을 함께 고려했습니다.
+**React Query**를 사용합니다.
 
-- 검색 조건(기간, 제목) 기반 필터링
-- 무한 스크롤 적용
-- 테이블 렌더링 비용을 줄이기 위한 가상화 처리
-- 엑셀 다운로드 기능 제공
+- 조회 캐싱
+- refetch 정책 관리
+- mutation 이후 무효화
+- 전역 fetch/mutation 상태 추적
 
-이 과정을 통해 단순히 “데이터를 보여주는 화면”이 아니라,  
-**사용자가 많은 기록을 빠르게 찾고 활용할 수 있는 화면**을 목표로 구현했습니다.
+`QueryProvider`에서는 다음 역할을 담당합니다.
 
-### 2. 인증 구조
+- 전역 QueryClient 설정
+- fetch/mutation 진행 중 상태를 전역 로딩 상태와 동기화
+- 401 에러 발생 시 로그인 페이지 리다이렉트 처리
+- React Query Devtools 연결
 
-사용자 인증은 **JWT + Refresh Token 기반의 쿠키 인증**으로 구성했습니다.
+### UI 상태
 
-- Access Token / Refresh Token을 쿠키로 관리
-- 로그인 이후 보호된 페이지 접근 제어
-- middleware에서 인증 상태 기반 라우팅 처리
-- Route Handler에서 백엔드 쿠키 응답을 재전달
-- 401 응답 시 refresh token 기반 토큰 재발급 후 원 요청 재시도
+**Jotai**를 사용합니다.
 
-단순 로그인 구현이 아니라, **App Router 환경에서 서버와 클라이언트가 함께 동작하는 인증 흐름**을 구성하는 데 초점을 맞췄습니다.
+- 전역 로딩 상태
+- 에러 메시지
+- alert / confirm UI 상태
 
-### 3. 서버 상태와 UI 상태 분리
-
-상태를 모두 전역 상태로 두기보다, 성격에 따라 구분했습니다.
-
-- **React Query**: 서버 상태, 캐싱, 재요청, 무효화
-- **Jotai**: 로딩바, 전역 에러 메시지, 알림/확인 모달 등 UI 상태
-
-이렇게 분리하면서 서버 데이터와 화면 제어 상태의 역할이 명확해졌고, 유지보수 시 변경 범위를 줄일 수 있었습니다.
-
-### 4. App Router 기반 설계
-
-Next.js App Router를 사용하면서 Server Component와 Client Component의 역할을 분리했습니다.
-
-- 페이지 단에서 SSR 초기 데이터 로딩
-- 인터랙션이 많은 영역은 Client Component로 분리
-- 데이터 패칭 책임은 훅과 Route Handler 계층으로 이동
-
-이를 통해 구조 복잡도를 줄이면서도, 초기 렌더링 성능과 상호작용성을 함께 고려했습니다.
+즉, **서버 상태와 UI 상태를 구분**해서 관리하고 있습니다.
 
 ---
 
-## 데이터 패칭 흐름
+## 백엔드 구조
 
-### 조회 흐름
+NestJS 모듈 기반으로 기능을 나누고 있습니다.
 
-1. 사용자가 페이지에 진입
-2. Server Component page에서 필요한 데이터를 먼저 조회
-3. 조회 결과를 Client UI에 `initialData`로 전달
-4. Client Component 내부의 React Query 훅이 같은 키로 서버 상태를 관리
-5. 이후 수정/재방문/재검증 시 캐시와 refetch 정책으로 데이터 동기화
+- `auth`: 로그인, 회원가입, 토큰 재발급
+- `users`: 사용자 정보 조회/수정, 비밀번호 변경, AI 관련 기능
+- `calories`: 식단/칼로리 관리
+- `log`: 로그 관리 및 엑셀 관련 기능
+- `routine`: 루틴 관리
+- `todos`: 할 일 관리
 
-### 수정 흐름
+공통 레이어 예시:
 
-1. 사용자가 폼 제출 / 수정 / 삭제 수행
-2. `useMutation` 기반 훅이 `/api/*` 호출
-3. Route Handler가 백엔드 API에 요청 전달
-4. 성공 시 관련 queryKey 무효화
-5. React Query가 최신 서버 상태 재조회
-
----
-
-## 트러블슈팅 / 설계 고민
-
-### 1. 왜 Route Handler를 중간 계층으로 두었는가
-
-기존에는 accessToken을 클라이언트 상태로 관리하고 있었기 때문에 서버 사이드에서 인증 정보를 활용한 데이터 패칭이 어려웠습니다.
-
-이후 accessToken을 쿠키 기반으로 전환하면서 서버에서도 인증 정보를 읽을 수 있게 되었고,
-이를 바탕으로 각 페이지의 첫 진입 시점에 SSR로 데이터를 프리페치한 뒤
-React Query의 `initialData`로 연결하는 구조를 적용하고자 했습니다.
-
-다만 클라이언트와 서버가 각각 백엔드와 직접 통신하게 두면
-인증 쿠키 처리와 요청 방식이 분산될 수 있다고 판단했습니다.
-그래서 Next.js Route Handler를 중간 계층으로 두고,
-프론트엔드에서는 일관된 방식으로 내부 API를 호출하도록 정리했습니다.
-
-결과적으로 Route Handler는 단순한 중계 계층이 아니라,
-SSR 초기 데이터 주입과 React Query 기반 데이터 패칭 구조를 안정적으로 운영하기 위한
-프론트엔드 내부 BFF 역할을 하도록 설계했습니다.
-
-### 2. 왜 SSR initialData 패턴을 적용했는가
-
-첫 진입 시 클라이언트에서만 데이터를 가져오면, 초기 화면이 비어 있거나 로딩 상태가 길어질 수 있습니다.  
-반면 서버에서 먼저 데이터를 가져와 `initialData`로 연결하면 초기 사용 경험이 더 자연스럽고, 이후 동기화는 React Query가 이어받을 수 있습니다.
-
-### 3. 왜 UI 상태와 서버 상태를 분리했는가
-
-토스트, 확인 모달, 전역 로딩바 같은 상태와 실제 API 데이터는 수명 주기와 관심사가 다릅니다.  
-그래서 Jotai는 UI 상태에 집중시키고, 서버 데이터는 React Query가 담당하도록 구분했습니다.
-
-### 4. 로그 목록에서 가상화를 적용한 이유
-
-로그 데이터가 많아질수록 전체 row를 한 번에 렌더링하면 성능 저하가 발생할 수 있기 때문에,  
-가시 영역만 렌더링하도록 구성해 렌더링 비용을 줄이도록 설계했습니다.
+- `guards/jwt.guard.ts`
+- `filters/global-exception.filter.ts`
+- `interceptors/response.interceptor.ts`
+- `prisma.service.ts`
 
 ---
 
 ## 실행 방법
 
-### 1) 패키지 설치
+## 1. 패키지 설치
 
 ```bash
 pnpm install
 ```
 
-### 2) 환경 변수 설정
+## 2. 환경변수 설정
 
-각 앱에 필요한 환경 변수를 설정합니다.
-
-예시:
+### backend
 
 ```bash
-# apps/backend/.env
-DATABASE_URL=
-JWT_SECRET=
-JWT_REFRESH_SECRET=
-
-# apps/frontend/.env.local
-API_URL=
-NEXT_PUBLIC_API_URL=
+cp apps/backend/.env.example apps/backend/.env
 ```
 
-> 프론트엔드는 Next.js Route Handler가 백엔드와 통신하므로 서버 환경 변수로 `API_URL`이 필요합니다.
+예시 항목:
 
-### 3) 개발 서버 실행
+- `DATABASE_URL`
+- `JWT_ACCESS_SECRET`
+- `JWT_REFRESH_SECRET`
+- `SIGN_UP_SECRET_KEY`
+- `GUEST_EMAIL`
+- `GUEST_PASSWORD`
+- `OPENAI_API_KEY`
+- `ALLOWED_ORIGINS`
+
+### frontend
+
+프론트엔드는 다음 환경변수를 사용합니다.
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+API_URL=http://localhost:4000
+```
+
+- `NEXT_PUBLIC_API_URL`: 클라이언트에서 접근할 프론트 API 경로
+- `API_URL`: Route Handler가 실제로 호출할 백엔드 서버 주소
+
+## 3. 데이터베이스 준비
+
+```bash
+pnpm --filter backend prisma generate
+pnpm --filter backend prisma migrate dev
+```
+
+## 4. 개발 서버 실행
+
+백엔드:
 
 ```bash
 pnpm dev:backend
+```
+
+프론트엔드:
+
+```bash
 pnpm dev:frontend
 ```
+
+기본적으로 다음 포트를 사용하게 됩니다.
+
+- frontend: `http://localhost:3000`
+- backend: `http://localhost:4000`
+
+---
+
+## 스크립트
+
+```bash
+pnpm dev:frontend
+pnpm dev:backend
+pnpm build:frontend
+pnpm build:backend
+```
+
+## 라우트 요약
+
+### 페이지 라우트
+
+- `/home`
+- `/diet`
+- `/log`
+- `/routine`
+- `/todo`
+- `/profile`
+- `/login`
+- `/signup`
+
+루트(`/`)는 사용자의 기본 홈 설정값(`defaultHome`)에 따라 이동합니다.
+
+### 프론트 API 라우트 예시
+
+- `/api/auth/login`
+- `/api/auth/signup`
+- `/api/auth/logout`
+- `/api/auth/refresh`
+- `/api/users/me`
+- `/api/users/ai-conversation`
+- `/api/log`
+- `/api/log/all`
+- `/api/log/excel`
+- `/api/todos`
+- `/api/routines`
+- `/api/calories`
+
+---
+
+## 이 프로젝트에서 중요하게 보는 포인트
+
+### 1. 구조화된 프론트엔드
+
+페이지가 늘어나더라도 `app`과 `features`의 책임을 분리해 유지보수하기 쉽게 구성했습니다.
+
+### 2. 인증 안정성
+
+클라이언트 메모리나 localStorage 중심 인증보다, 서버 중계 + 쿠키 인증 흐름을 사용해 보안과 책임 분리를 강화했습니다.
+
+### 3. 서버 상태 관리 일관성
+
+조회/수정/무효화 패턴을 React Query 중심으로 통일해 데이터 흐름을 예측 가능하게 만들었습니다.
+
+### 4. 확장 가능한 모노레포
+
+프론트엔드와 백엔드를 분리하면서도 하나의 저장소에서 관리해 기능 확장과 배포 준비에 유리한 구조를 만들었습니다.
 
 ---
 
@@ -331,21 +442,15 @@ pnpm dev:frontend
 
 ![칼로리 관리](./docs/images/calories.png)
 
-### 모바일 화면
+### 프로필 화면
 
-![모바일 화면](./docs/images/mobile.jpg)
+![프로필 화면](./docs/images/profile.png)
 
 ---
 
 ## 배포
 
 - Demo: [서비스 바로가기](https://daily-log-frontend-piof.vercel.app/)
-
----
-
-## 개선 예정 사항
-
-- 테스트 코드 보강
 
 ---
 
