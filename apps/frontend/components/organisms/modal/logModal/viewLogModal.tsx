@@ -69,13 +69,11 @@ const ViewLogModal = ({
       <div className="mt-1 space-y-4">
         {user ? (
           <div className="space-y-3">
-            {ObjKeys.map((objKey) => (
-              <InfoBlock
-                key={objKey}
-                label={objKey}
-                value={data?.todayLog?.[objKey] || ""}
-              />
-            ))}
+            {ObjKeys.map((objKey) => {
+              const value = data?.todayLog?.[objKey] || "";
+              if (!value) return null;
+              return <InfoBlock key={objKey} label={objKey} value={value} />;
+            })}
           </div>
         ) : (
           <div className="py-6">
