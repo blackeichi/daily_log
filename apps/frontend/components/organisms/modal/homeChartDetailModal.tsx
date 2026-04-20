@@ -5,7 +5,8 @@ import type { GetAllCalories, GetLogsType } from "@/types/api";
 import { useSetAtom } from "jotai";
 import { FaChevronRight, FaRegCalendarAlt, FaStar } from "react-icons/fa";
 import Title from "@/components/atoms/Title";
-import { OkCancelBtns } from "@/components/molecules/okCancelBtns";
+import Button from "@/components/atoms/button";
+import { GiCancel } from "react-icons/gi";
 
 type HomeChartDetailModalProps = {
   title: string;
@@ -115,13 +116,17 @@ export default function HomeChartDetailModal({
         )}
       </div>
 
-      <OkCancelBtns
-        onSubmit={onClose}
-        onCancel={onClose}
-        submitText="닫기"
-        cancelText="닫기"
-        className="my-2"
-      />
+      <div className={`flex w-full justify-end mt-4`}>
+        <Button
+          text={"닫기"}
+          icon={<GiCancel />}
+          type="button"
+          contained={false}
+          onClick={onClose}
+          width={120}
+          height={35}
+        />
+      </div>
     </div>
   );
 }
