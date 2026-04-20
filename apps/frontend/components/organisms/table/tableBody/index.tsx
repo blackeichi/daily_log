@@ -111,7 +111,7 @@ function TableBody<T>({
                 itemCount={itemCount}
                 itemSize={ROW_HEIGHT}
                 width={width}
-                className="w-full"
+                className="show_scrollbar w-full"
               >
                 {Row}
               </FixedSizeList>
