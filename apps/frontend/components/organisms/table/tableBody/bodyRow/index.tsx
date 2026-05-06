@@ -93,7 +93,12 @@ function BodyRow<T>({
 const MemoizedBodyRow = typedMemo(BodyRow, (prevProps, nextProps) => {
   return (
     prevProps.row === nextProps.row &&
-    prevProps.tableHeader === nextProps.tableHeader
+    prevProps.index === nextProps.index &&
+    prevProps.tableHeader === nextProps.tableHeader &&
+    prevProps.onClick === nextProps.onClick &&
+    prevProps.onEdit === nextProps.onEdit &&
+    prevProps.onDelete === nextProps.onDelete &&
+    prevProps.onDoubleClick === nextProps.onDoubleClick
   );
 });
 

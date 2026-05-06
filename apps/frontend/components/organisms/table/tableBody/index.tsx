@@ -133,7 +133,12 @@ const MemoizedTableBody = typedMemo(TableBody, (prevProps, nextProps) => {
   return (
     prevProps.tableData === nextProps.tableData &&
     prevProps.rowUniqueKey === nextProps.rowUniqueKey &&
-    prevProps.tableHeader === nextProps.tableHeader
+    prevProps.tableHeader === nextProps.tableHeader &&
+    prevProps.lastRow === nextProps.lastRow &&
+    prevProps.onClick === nextProps.onClick &&
+    prevProps.onEdit === nextProps.onEdit &&
+    prevProps.onDelete === nextProps.onDelete &&
+    prevProps.onDoubleClick === nextProps.onDoubleClick
   );
 });
 
