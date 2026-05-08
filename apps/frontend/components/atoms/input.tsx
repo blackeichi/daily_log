@@ -70,13 +70,14 @@ export const Input = ({
       }}
     >
       {label && (
-        <Text
+        <label
+          htmlFor={id}
           className={`absolute -top-2 left-1 z-10 flex items-center gap-1 bg-stone-100 px-1 text-stone-800 ${
             required ? "font-bold" : ""
           }`}
         >
           {label}
-        </Text>
+        </label>
       )}
       {title && (
         <Text className={`flex items-center gap-1 pl-0.5 font-bold`}>
@@ -110,6 +111,10 @@ export const Input = ({
           placeholder={isFocused && required && !value ? "" : placeholder}
           disabled={disabled}
           required={required}
+          aria-invalid={required && !value && isFocused ? true : undefined}
+          aria-describedby={
+            required && !value && isFocused ? `${id}-required-message` : undefined
+          }
           onFocus={() => {
             if (required) {
               setIsFocused(true);
@@ -119,9 +124,10 @@ export const Input = ({
           onBlur={(event) => event.target.blur()}
         />
         {isFocused && required && !value && (
-          <label
-            htmlFor={id}
+          <p
+            id={`${id}-required-message`}
             className={`absolute bottom-1/2 left-2 flex translate-y-1/2 items-center gap-1 text-red-500 transition-[bottom] duration-300 peer-focus:-bottom-12 text-xs cursor-text`}
+            role="alert"
           >
             <GoAlert />
             {label
@@ -129,7 +135,7 @@ export const Input = ({
               : title
                 ? `${title}은(는) 필수 입력사항입니다.`
                 : "필수 입력사항을 확인해주세요."}
-          </label>
+          </p>
         )}
       </div>
     </div>

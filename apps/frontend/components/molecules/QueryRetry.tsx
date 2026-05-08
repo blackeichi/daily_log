@@ -19,6 +19,8 @@ export default function QueryRetry({
   return (
     <div
       className={`flex min-h-40 w-full flex-col items-center justify-center gap-4 rounded-lg border border-stone-300 bg-white p-6 text-center shadow-sm ${className}`}
+      role="alert"
+      aria-live="assertive"
     >
       <div className="flex flex-col gap-1">
         <p className="font-semibold text-stone-800">{message}</p>
@@ -31,7 +33,7 @@ export default function QueryRetry({
         text={isRetrying ? "재시도 중..." : "다시 조회"}
         onClick={onRetry}
         isLoading={isRetrying}
-        icon={<IoReload />}
+        icon={<IoReload aria-hidden="true" />}
         height={38}
         width={120}
       />

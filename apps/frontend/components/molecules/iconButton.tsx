@@ -27,25 +27,29 @@ export default function IconButton({
   type?: "button" | "submit" | "reset";
   ariaLabel?: string;
 }) {
+  const accessibleLabel = ariaLabel || tooltip || text;
+
   return (
     <Tooltip tooltip={tooltip} className="w-fit">
       <button
-        className={`flex scale-100 items-center transition-all duration-75 justify-center border-0 outline-stone-500 border-[rgba(255,255,255,0.8)] ${
+        className={`flex scale-100 items-center transition-all duration-75 justify-center border-0 outline-stone-500 border-[rgba(255,255,255,0.8)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500 ${
           disabled
             ? "cursor-default"
             : `cursor-pointer hover:border-2 hover:outline`
         } ${className}`}
-        onClick={disabled ? () => {} : onClick}
+        onClick={disabled ? undefined : onClick}
         type={type}
+        disabled={disabled}
+        aria-disabled={disabled}
+        aria-label={accessibleLabel}
         style={{
           backgroundColor: disabled
             ? "lightGray"
             : (bgColor ?? COLOR_THEME.DARK_GRAY),
           color: color,
         }}
-        aria-label={ariaLabel}
       >
-        {icon && icon({ size })} {text}
+        {icon && <span aria-hidden="true">{icon({ size })}</span>} {text}
       </button>
     </Tooltip>
   );

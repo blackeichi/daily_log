@@ -135,10 +135,14 @@ function DataListItemComponent({
             color={COLOR_THEME.DARK_GRAY}
             onClick={handleDelete}
             size={18}
+            ariaLabel="항목 삭제"
           />
           <IoIosMenu
             size={22}
             className="cursor-grab w-7 touch-none"
+            aria-label="항목 순서 변경"
+            role="button"
+            tabIndex={dragEnabled ? 0 : -1}
             {...(dragEnabled ? listeners : {})}
           />
         </div>

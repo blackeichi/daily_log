@@ -39,16 +39,18 @@ export const AddNewCalorie = ({
             paddingRight: "20px",
           }}
         />
-        <div
-          className="absolute right-1.25 cursor-pointer z-10 flex items-center justify-center"
+        <button
+          type="button"
+          className="absolute right-1.25 cursor-pointer z-10 flex items-center justify-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500"
           onClick={() => {
             if (newCalorie) {
               setNewCalorie((prev) => prev * -1);
             }
           }}
+          aria-label="칼로리 양수/음수 전환"
         >
-          <BsPlusSlashMinus size={12} />
-        </div>
+          <BsPlusSlashMinus size={12} aria-hidden="true" />
+        </button>
       </div>
 
       <IconButton
@@ -70,6 +72,7 @@ export const AddNewCalorie = ({
           setNewCalorie(0);
         }}
         className="w-[24px] h-[24px] rounded-full ml-1 mb-1.5"
+        ariaLabel="음식 추가"
       />
     </div>
   );

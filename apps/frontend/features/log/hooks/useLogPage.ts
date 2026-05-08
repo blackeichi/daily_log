@@ -18,6 +18,10 @@ export const useLogPage = (initialData?: GetLogsType[]) => {
 
   const [startDate, endDate, setStartDate, setEndDate] = useDateRange();
   const [searchTitle, setSearchTitle] = useState("");
+
+  // 실제 검색에 사용되는 값들
+  const [searchedStartDate, setSearchedStartDate] = useState(startDate);
+  const [searchedEndDate, setSearchedEndDate] = useState(endDate);
   const [searchedTitle, setSearchedTitle] = useState("");
 
   const {
@@ -27,9 +31,9 @@ export const useLogPage = (initialData?: GetLogsType[]) => {
     isFetching,
     refetch: onGetLogs,
   } = useLogs(
-    startDate,
-    endDate,
-    searchTitle,
+    searchedStartDate,
+    searchedEndDate,
+    searchedTitle,
     initialData ? { initialData } : undefined,
   );
 
@@ -102,12 +106,15 @@ export const useLogPage = (initialData?: GetLogsType[]) => {
     data: excelData,
     isFetching: excelLoading,
     refetch: getExcelData,
-  } = useLogsForExcel(startDate, endDate, searchTitle);
+  } = useLogsForExcel(searchedStartDate, searchedEndDate, searchedTitle);
 
   useEffect(() => {
     if (!excelData) return;
 
-    const success = downloadExcel(excelData, `로그_${startDate}_${endDate}`);
+    const success = downloadExcel(
+      excelData,
+      `로그_${searchedStartDate}_${searchedEndDate}`,
+    );
 
     if (success) {
       setAlertMsg("엑셀 파일이 다운로드되었습니다.");
@@ -115,7 +122,7 @@ export const useLogPage = (initialData?: GetLogsType[]) => {
     }
 
     setErrorMsg("엑셀 다운로드 중 오류가 발생했습니다.");
-  }, [excelData, startDate, endDate, setAlertMsg, setErrorMsg]);
+  }, [excelData, searchedStartDate, searchedEndDate, setAlertMsg, setErrorMsg]);
 
   const handleGetExcelData = useCallback(() => {
     setConfirm({
@@ -127,9 +134,10 @@ export const useLogPage = (initialData?: GetLogsType[]) => {
   }, [getExcelData, setConfirm]);
 
   const handleSearch = useCallback(() => {
+    setSearchedStartDate(startDate);
+    setSearchedEndDate(endDate);
     setSearchedTitle(searchTitle);
-    onGetLogs();
-  }, [onGetLogs, searchTitle]);
+  }, [startDate, endDate, searchTitle]);
 
   const handleAddLog = useCallback(() => {
     setModal({

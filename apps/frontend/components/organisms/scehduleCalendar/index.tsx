@@ -68,7 +68,7 @@ const Calendar = ({
             onClick={handlePrevMonth}
             className="w-8 h-8"
             size={18}
-            ariaLabel="previous month button"
+            ariaLabel="이전 달 보기"
           />
           <CalendarHeader date={currentMonth} />
           <IconButton
@@ -76,7 +76,7 @@ const Calendar = ({
             onClick={handleNextMonth}
             className="w-8 h-8"
             size={18}
-            ariaLabel="next month button"
+            ariaLabel="다음 달 보기"
           />
         </div>
         <div className="grid grid-cols-7 text-center font-bold ">

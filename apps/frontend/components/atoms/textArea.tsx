@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 export const TextArea = ({
   id,
   value,
@@ -27,6 +29,8 @@ export const TextArea = ({
   defaultValue?: string;
   maxLength?: number;
 }) => {
+  const generatedId = useId();
+  const textareaId = id ?? `textarea-${generatedId}`;
   const onHandleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (setValue) {
       if (event.target.value.length > 300) return;
@@ -42,17 +46,18 @@ export const TextArea = ({
       }}
     >
       {label && (
-        <div
+        <label
+          htmlFor={textareaId}
           className={`absolute -top-2 left-1 z-20 flex items-center gap-1 bg-stone-100 px-1 text-xs ${
             disabled ? "text-stone-300" : "text-stone-800"
           } ${required ? "font-bold" : ""}`}
         >
           {label}
-        </div>
+        </label>
       )}
 
       <textarea
-        id={id}
+        id={textareaId}
         className={`z-10 w-full resize-none border border-stone-300 bg-transparent px-1.5 py-2.5 text-xs outline-0 focus:border-3 pr-2.5 ${
           required && !value ? "focus:border-red-500" : "focus:border-stone-600"
         }`}
@@ -61,6 +66,7 @@ export const TextArea = ({
         placeholder={placeholder}
         disabled={disabled}
         required={required}
+        aria-invalid={required && !value ? true : undefined}
         maxLength={maxLength}
         onChange={onChange || onHandleChange}
       />

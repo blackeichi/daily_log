@@ -63,6 +63,7 @@ export default function HomeChartDetailModal({
                     <FaStar
                       key={value}
                       size={12}
+                      aria-hidden="true"
                       className={
                         value <= (item.score ?? 0)
                           ? "text-yellow-400"

@@ -45,8 +45,12 @@ export const DateRange = ({
         width,
       }}
     >
-      <div
-        className={`w-full h-full relative flex items-center border border-stone-300 rounded-sm gap-2.5 pl-1.5 ${disabled ? "text-stone-300" : "text-stone-700"}`}
+      <button
+        type="button"
+        className={`w-full h-full relative flex items-center border border-stone-300 rounded-sm gap-2.5 pl-1.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500 ${disabled ? "text-stone-300" : "text-stone-700"}`}
+        disabled={disabled}
+        aria-label={`${fromPlaceholder}${toPlaceholder ? `부터 ${toPlaceholder}까지` : ""} 날짜 범위 선택`}
+        aria-expanded={isFocus}
         onClick={(event) => {
           if (!disabled) {
             const target = event.currentTarget.getBoundingClientRect();
@@ -84,10 +88,11 @@ export const DateRange = ({
         )}
         <div
           className={`absolute cursor-pointer ${disabled ? "text-stone-300" : "text-stone-700"} right-2 z-10`}
+          aria-hidden="true"
         >
           <FaCalendar />
         </div>
-      </div>
+      </button>
       {!disabled && isFocus && position && (
         <CalendarComponent
           position={position}
