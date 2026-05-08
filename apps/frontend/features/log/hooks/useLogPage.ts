@@ -23,6 +23,8 @@ export const useLogPage = (initialData?: GetLogsType[]) => {
   const {
     data,
     isLoading: loading,
+    isError,
+    isFetching,
     refetch: onGetLogs,
   } = useLogs(
     startDate,
@@ -188,6 +190,8 @@ export const useLogPage = (initialData?: GetLogsType[]) => {
 
   return {
     loading,
+    isError,
+    isRetrying: isFetching,
     displayedData,
     allData,
     isLoadingMore,
@@ -203,6 +207,7 @@ export const useLogPage = (initialData?: GetLogsType[]) => {
     excelLoading,
     handleGetExcelData,
     handleSearch,
+    refetchLogs: onGetLogs,
     handleAddLog,
     handleDeleteLog,
     handleEditLog,

@@ -23,14 +23,20 @@ export function useHomePage(initialMessage?: string) {
     .subtract(DATE_RANGE_DAYS, "days")
     .format("YYYY-MM-DD");
 
-  const { data: calories = [], isLoading: caloriesLoading } = useAllDiet(
-    startDate,
-    endDate,
-  );
-  const { data: logs = [], isLoading: logsLoading } = useLogs(
-    startDate,
-    endDate,
-  );
+  const {
+    data: calories = [],
+    isLoading: caloriesLoading,
+    isError: caloriesError,
+    isFetching: caloriesFetching,
+    refetch: refetchCalories,
+  } = useAllDiet(startDate, endDate);
+  const {
+    data: logs = [],
+    isLoading: logsLoading,
+    isError: logsError,
+    isFetching: logsFetching,
+    refetch: refetchLogs,
+  } = useLogs(startDate, endDate);
 
   const calorieStatusData = useMemo(() => {
     if (!user) return [];
@@ -93,6 +99,11 @@ export function useHomePage(initialMessage?: string) {
       };
     });
   }, [calories, startDate]);
+
+  const hasCalorieTrendData = useMemo(
+    () => calorieTrend.some((item) => item.totalCalorie !== null),
+    [calorieTrend],
+  );
 
   const summary = useMemo(() => {
     const recordedCalorieDays = calories.length;
@@ -257,15 +268,24 @@ export function useHomePage(initialMessage?: string) {
     [handleCalorieTrendClick],
   );
 
+  const refetchHomeData = useCallback(() => {
+    void refetchCalories();
+    void refetchLogs();
+  }, [refetchCalories, refetchLogs]);
+
   return {
     message,
     summary,
     isLoading: caloriesLoading || logsLoading,
+    isError: caloriesError || logsError,
+    isRetrying: caloriesFetching || logsFetching,
+    refetchHomeData,
     calorieStatusData,
     scoreDistributionData,
     calorieStatusOption,
     scoreDistributionOption,
     calorieTrendOption,
+    hasCalorieTrendData,
     calorieStatusEvents,
     scoreDistributionEvents,
     calorieTrendEvents,

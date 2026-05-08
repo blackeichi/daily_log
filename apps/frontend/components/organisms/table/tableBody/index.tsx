@@ -2,6 +2,7 @@ import BodyRow from "./bodyRow";
 import { TableBodyProps } from "@/types/tableT";
 import { TABLE_BODY, TABLE_HEADER } from "@/constants/system";
 import { LastRowComponent } from "./lastRowComponent";
+import { EmptyState } from "@/components/atoms/EmptyState";
 import { typedMemo } from "@/lib/utils/component";
 import { FixedSizeList } from "react-window";
 import { useCallback, useRef, useEffect } from "react";
@@ -18,6 +19,7 @@ function TableBody<T>({
   tableHeader,
   onDoubleClick,
   lastRow,
+  emptyMessage = "데이터가 없습니다.",
 }: TableBodyProps<T>) {
   const listRef = useRef<FixedSizeList>(null);
   const outerRef = useRef<HTMLDivElement>(null);
@@ -118,11 +120,7 @@ function TableBody<T>({
             )}
           </AutoSizer>
         ) : (
-          <div className="w-full h-11 flex items-center justify-center border-b border-b-stone-200">
-            <div className="flex justify-center h-full px-1 gap-1 items-center">
-              데이터가 없습니다.
-            </div>
-          </div>
+          <EmptyState title={emptyMessage} className="min-h-11 rounded-none" />
         )}
       </div>
     </div>

@@ -14,9 +14,13 @@ type ListName =
   | "breakLimitList";
 
 export const useTodo = (initialData?: GetTodosType) => {
-  const { data, isLoading } = useTodos(
-    initialData ? { initialData } : undefined,
-  );
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    refetch: refetchTodos,
+  } = useTodos(initialData ? { initialData } : undefined);
   const { mutate: createTodos } = useCreateTodos();
   const { mutate: updateTodos } = useUpdateTodos(data?.id ?? 0);
   const [isFirst, setIsFirst] = useState(false);
@@ -64,6 +68,9 @@ export const useTodo = (initialData?: GetTodosType) => {
   return {
     data: displayData,
     loading: isLoading,
+    isError,
+    isRetrying: isFetching,
+    refetchTodos,
     isFirst,
     handleCreateTodos,
     handleUpdateList,

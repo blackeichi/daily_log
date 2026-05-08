@@ -4,6 +4,8 @@ import { useCallback } from "react";
 import { useSetAtom } from "jotai";
 import { modalAtom } from "@/lib/atom";
 import { MODAL_STATE } from "@/constants/system";
+import QueryRetry from "@/components/molecules/QueryRetry";
+import { EmptyState } from "@/components/atoms/EmptyState";
 import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
 import { DietUIProps } from "../types";
 import { useDietPage } from "../hooks/useDietPage";
@@ -14,6 +16,10 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
   const {
     user,
     loading,
+    hasDietData,
+    isError,
+    isRetrying,
+    refetchDiet,
     calendarData,
     totalMinusCalorie,
     setDateRange,
@@ -32,6 +38,18 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
     [calendarData, setModal],
   );
 
+  if (isError) {
+    return (
+      <div className="h-full w-full pt-4">
+        <QueryRetry
+          message="식단 기록 조회에 실패했습니다."
+          onRetry={() => refetchDiet()}
+          isRetrying={isRetrying}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full">
       <ScheduleCalendar
@@ -43,7 +61,15 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
         onClick={handleCalendarClick}
       />
 
-      {!loading && user && (
+      {!loading && !hasDietData && (
+        <EmptyState
+          title="데이터가 없습니다."
+          description="식단을 추가해주세요."
+          className="mx-1 mb-5 mt-3 sm:mx-4"
+        />
+      )}
+
+      {!loading && hasDietData && user && (
         <div className="mx-1 mb-5 mt-1 flex flex-col gap-1 text-sm sm:mx-4">
           {totalMinusCalorie >= 0 ? (
             <>

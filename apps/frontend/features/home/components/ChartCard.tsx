@@ -1,4 +1,6 @@
 import { memo } from "react";
+import { ChartSkeleton } from "@/components/molecules/ChartSkeleton";
+import { EmptyState } from "@/components/atoms/EmptyState";
 import { CHART_CARD } from "../constants";
 
 const ChartCard = ({
@@ -7,6 +9,7 @@ const ChartCard = ({
   description,
   loading,
   empty,
+  emptyMessage = "최근 30일 데이터가 없습니다.",
   children,
 }: {
   title: string;
@@ -14,6 +17,7 @@ const ChartCard = ({
   description: string;
   loading: boolean;
   empty: boolean;
+  emptyMessage?: string;
   children: React.ReactNode;
 }) => {
   return (
@@ -29,13 +33,9 @@ const ChartCard = ({
       </div>
 
       {loading ? (
-        <div className="flex h-80 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-          통계를 불러오는 중...
-        </div>
+        <ChartSkeleton />
       ) : empty ? (
-        <div className="flex h-80 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-          최근 30일 데이터가 없습니다.
-        </div>
+        <EmptyState title={emptyMessage} className="h-80 bg-stone-50" />
       ) : (
         children
       )}
