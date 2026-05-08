@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 import { User } from "@/types/api";
+import { QUERY_TIMES } from "@/constants/timing";
 
 export const userKeys = {
   me: () => ["user-me"] as const,
@@ -12,16 +13,19 @@ export const userKeys = {
 export function useMe() {
   return useQuery({
     queryKey: userKeys.me(),
-    queryFn: () => apiClient<User>("/users/me"),
+    queryFn: ({ signal }) => apiClient<User>("/users/me", { signal }),
+    staleTime: QUERY_TIMES.USER.STALE,
+    gcTime: QUERY_TIMES.USER.GC,
   });
 }
 
 export function useAllData(date: string) {
   return useQuery({
     queryKey: userKeys.allData(date),
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       apiClient<{ log: Record<string, string> | null }>(
         `/users/all-data/${date}`,
+        { signal },
       ),
     enabled: !!date,
   });
@@ -55,8 +59,11 @@ export function useUpdateMe() {
 export function useGetAiConversation() {
   return useQuery({
     queryKey: ["ai-conversation"],
-    queryFn: () =>
-      apiClient<{ content: string; date: string }>("/users/ai-conversation"),
-    staleTime: 1000 * 60 * 60, // 1시간 동안 fresh 상태 유지
+    queryFn: ({ signal }) =>
+      apiClient<{ content: string; date: string }>("/users/ai-conversation", {
+        signal,
+      }),
+    staleTime: QUERY_TIMES.LONG.STALE,
+    gcTime: QUERY_TIMES.LONG.GC,
   });
 }

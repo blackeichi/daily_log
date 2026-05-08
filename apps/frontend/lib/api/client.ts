@@ -16,6 +16,11 @@ interface RequestOptions {
   body?: unknown;
   cache?: RequestCache;
   revalidate?: number | false;
+  /**
+   * React Query의 queryFn에서 전달되는 AbortSignal.
+   * 이 값을 fetch에 전달해야 컴포넌트 unmount/query 변경 시 진행 중인 요청이 실제로 취소된다.
+   */
+  signal?: AbortSignal;
 }
 
 /**
@@ -25,7 +30,7 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { method = "GET", body, cache, revalidate } = options;
+  const { method = "GET", body, cache, revalidate, signal } = options;
 
   const fetchOptions: RequestInit = {
     method,
@@ -33,9 +38,10 @@ export async function apiClient<T>(
       "Content-Type": "application/json",
     },
     credentials: "include", // 쿠키 자동 전송
+    signal: signal ?? null,
   };
 
-  if (body) {
+  if (body !== undefined) {
     fetchOptions.body = JSON.stringify(body);
   }
 

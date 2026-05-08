@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 import { GetAllCalories, GetCalorie } from "@/types/data";
+import { QUERY_TIMES } from "@/constants/timing";
 
 export const dietKeys = {
   all: (startDate: string, endDate: string) =>
@@ -17,9 +18,10 @@ export function useAllDiet(
 ) {
   return useQuery({
     queryKey: dietKeys.all(startDate, endDate),
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       apiClient<GetAllCalories[]>(
         `/calories/all?startDate=${startDate}&endDate=${endDate}`,
+        { signal },
       ),
     enabled: !!startDate && !!endDate,
     initialData: options?.initialData,
@@ -29,9 +31,11 @@ export function useAllDiet(
 export function useDiet(date?: string) {
   return useQuery({
     queryKey: dietKeys.detail(date ?? ""),
-    queryFn: () => apiClient<GetCalorie>(`/calories?date=${date ?? ""}`),
+    queryFn: ({ signal }) =>
+      apiClient<GetCalorie>(`/calories?date=${date ?? ""}`, { signal }),
     enabled: !!date,
-    gcTime: 0,
+    staleTime: QUERY_TIMES.REALTIME.STALE,
+    gcTime: QUERY_TIMES.REALTIME.GC,
   });
 }
 
