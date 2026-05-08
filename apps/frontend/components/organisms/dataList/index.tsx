@@ -1,30 +1,17 @@
+import { closestCenter, DndContext } from "@dnd-kit/core";
 import {
-  closestCenter,
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { memo, useEffect, useState } from "react";
+import { memo, useMemo } from "react";
 import { FaChevronUp, FaSave } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { MdEdit } from "react-icons/md";
-import { useDebounce } from "@/lib/hooks/useDebounce";
 import { GiCancel } from "react-icons/gi";
-import {
-  DataListItem,
-  type DataListItem as DataListItemType,
-} from "@/components/molecules/DataListItem";
-import { AddListItem } from "@/components/molecules/AddListItem";
-
-export type DataList = DataListItemType;
+import { DataListItemType } from "./dataList";
+import { AddListItem } from "./AddListItem";
+import { DataListItem } from "./DataListItem";
+import { useDataList } from "./hooks/useDataList";
 
 function DataListComponent({
   loading = false,
@@ -37,60 +24,73 @@ function DataListComponent({
   loading?: boolean;
   title: string;
   name: string;
-  defaultDataList: DataList[];
-  onSaveDataList: (val: DataList[]) => void;
+  defaultDataList: DataListItemType[];
+  onSaveDataList: (val: DataListItemType[]) => void;
   needCheckBox?: boolean;
 }) {
-  const debounce = useDebounce();
-  const [isOpen, setIsOpen] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [dataList, setDataList] = useState<DataList[]>(defaultDataList);
-  useEffect(() => {
-    setDataList(defaultDataList);
-  }, [defaultDataList]);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const {
+    dataList,
+    setDataList,
+    isOpen,
+    isEditing,
+    hasItems,
+    dragEnabled,
+    debounce,
+    sensors,
+    itemIds,
+    collapseTransition,
+    handleDragEnd,
+    handleSaveOrEdit,
+    handleCancelEdit,
+    handleToggleOpen,
+    handleChangeText,
+    handleDeleteItem,
+    handleChangeDone,
+  } = useDataList({
+    loading,
+    defaultDataList,
+    onSaveDataList,
+  });
 
-  // 센서 설정
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(TouchSensor, {
-      activationConstraint: { distance: 8, delay: 50 },
-    }),
+  const renderedItems = useMemo(
+    () =>
+      dataList.map((item, index) => (
+        <DataListItem
+          title={title}
+          key={item.id}
+          item={item}
+          index={index}
+          isEditing={isEditing}
+          enableDrag={dragEnabled}
+          debounce={debounce}
+          onChangeText={handleChangeText}
+          onDeleteItem={handleDeleteItem}
+          onChangeDone={handleChangeDone}
+          needCheckBox={needCheckBox}
+        />
+      )),
+    [
+      dataList,
+      title,
+      isEditing,
+      dragEnabled,
+      debounce,
+      handleChangeText,
+      handleDeleteItem,
+      handleChangeDone,
+      needCheckBox,
+    ],
   );
-  // 드래그 종료
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active.id !== over?.id) {
-      const oldIndex = dataList.findIndex((i) => i.id === active.id);
-      const newIndex = dataList.findIndex((i) => i.id === over?.id);
-      setDataList(arrayMove(dataList, oldIndex, newIndex));
-    }
-  };
-  const hasItems = dataList && dataList.length > 0;
-  const dragEnabled = isMounted && isEditing;
+
   return (
     <div className="flex flex-col w-full shadow-lg shadow-stone-500 rounded-lg overflow-hidden text-xs sm:text-sm">
-      {/* Header */}
-      <div
-        className={`bg-stone-700 w-full h-14 mb-1 text-white flex justify-between items-center px-2 shadow-md shadow-stone-500 z-10`}
-      >
+      <div className="bg-stone-700 w-full h-14 mb-1 text-white flex justify-between items-center px-2 shadow-md shadow-stone-500 z-10">
         <span>{name}</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
             className={`bg-white rounded-full justify-center items-center p-1 ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-            onClick={() => {
-              if (loading) return;
-              if (isEditing) {
-                onSaveDataList(dataList);
-                setIsEditing(false);
-              } else {
-                setIsEditing(true);
-              }
-            }}
+            onClick={handleSaveOrEdit}
             disabled={loading}
             aria-label={isEditing ? "저장하기" : "편집하기"}
           >
@@ -104,10 +104,7 @@ function DataListComponent({
             <button
               type="button"
               className="bg-white rounded-full justify-center items-center p-1 cursor-pointer"
-              onClick={() => {
-                setDataList(defaultDataList);
-                setIsEditing(false);
-              }}
+              onClick={handleCancelEdit}
               aria-label="편집 취소"
             >
               <GiCancel size={18} className="text-stone-700" />
@@ -117,10 +114,7 @@ function DataListComponent({
             <button
               type="button"
               className={`bg-white rounded-full justify-center items-center p-1 ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-              onClick={() => {
-                if (loading) return;
-                if (hasItems) setIsOpen((prev) => !prev);
-              }}
+              onClick={handleToggleOpen}
               disabled={loading}
               aria-label={isOpen ? "목록 접기" : "목록 펼치기"}
             >
@@ -134,9 +128,8 @@ function DataListComponent({
           )}
         </div>
       </div>
-      {/* Body - Collapsible */}
+
       {loading ? (
-        // 스켈레톤 UI
         <div className="flex flex-col gap-1">
           {[1, 2, 3].map((i) => (
             <div
@@ -153,10 +146,7 @@ function DataListComponent({
       ) : hasItems ? (
         <motion.div
           animate={{ maxHeight: isOpen ? 2000 : 0 }}
-          transition={{
-            duration: dataList?.length === 0 ? 0.1 : dataList?.length * 0.05,
-            ease: "easeInOut",
-          }}
+          transition={collapseTransition}
           className="overflow-hidden"
         >
           {dragEnabled ? (
@@ -166,44 +156,14 @@ function DataListComponent({
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={dataList.map((i) => i.id)}
+                items={itemIds}
                 strategy={verticalListSortingStrategy}
               >
-                {dataList.map((item, index) => (
-                  <DataListItem
-                    title={title}
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    dataList={dataList}
-                    setDataList={setDataList}
-                    isEditing={isEditing}
-                    enableDrag={dragEnabled}
-                    debounce={debounce}
-                    onSaveDataList={onSaveDataList}
-                    needCheckBox={needCheckBox}
-                  />
-                ))}
+                {renderedItems}
               </SortableContext>
             </DndContext>
           ) : (
-            <div>
-              {dataList.map((item, index) => (
-                <DataListItem
-                  title={title}
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  dataList={dataList}
-                  setDataList={setDataList}
-                  isEditing={isEditing}
-                  enableDrag={false}
-                  debounce={debounce}
-                  onSaveDataList={onSaveDataList}
-                  needCheckBox={needCheckBox}
-                />
-              ))}
-            </div>
+            <div>{renderedItems}</div>
           )}
         </motion.div>
       ) : (
@@ -222,4 +182,4 @@ function DataListComponent({
   );
 }
 
-export default memo(DataListComponent);
+export const DataList = memo(DataListComponent);
