@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { backendFetch } from "@/lib/api/server";
 import { GetAllCalories } from "@/types/data";
+import { ErrorBoundaryProvider } from "@/components/providers/ErrorBoundaryProvider";
 
 const DietUI = dynamic(() => import("../../features/diet/components/DietUI"), {
   loading: () => <div className="h-full w-full bg-stone-100" />,
@@ -35,10 +36,12 @@ export default async function DietPage() {
 
   return (
     <Suspense fallback={<div className="h-full w-full bg-stone-100" />}>
-      <DietUI
-        {...(initialData !== undefined ? { initialData } : {})}
-        initialDateRange={initialDateRange}
-      />
+      <ErrorBoundaryProvider>
+        <DietUI
+          {...(initialData !== undefined ? { initialData } : {})}
+          initialDateRange={initialDateRange}
+        />
+      </ErrorBoundaryProvider>
     </Suspense>
   );
 }

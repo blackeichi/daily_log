@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import { ErrorBoundaryProvider } from "@/components/providers/ErrorBoundaryProvider";
 
 const ProfileUI = dynamic(
   () => import("@/features/profile/components/ProfileUI"),
@@ -16,7 +17,9 @@ export const metadata: Metadata = {
 export default function ProfilePage() {
   return (
     <Suspense fallback={<div className="w-full h-full bg-stone-100" />}>
-      <ProfileUI />
+      <ErrorBoundaryProvider>
+        <ProfileUI />
+      </ErrorBoundaryProvider>
     </Suspense>
   );
 }
