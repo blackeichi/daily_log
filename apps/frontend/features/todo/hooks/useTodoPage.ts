@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   useTodos,
   useCreateTodos,
@@ -17,8 +17,8 @@ export const useTodo = (initialData?: GetTodosType) => {
   const { data, isLoading } = useTodos(
     initialData ? { initialData } : undefined,
   );
-  const createTodosMutation = useCreateTodos();
-  const updateTodosMutation = useUpdateTodos(data?.id ?? 0);
+  const { mutate: createTodos } = useCreateTodos();
+  const { mutate: updateTodos } = useUpdateTodos(data?.id ?? 0);
   const [isFirst, setIsFirst] = useState(false);
   const [localData, setLocalData] = useState<GetTodosType | null>(null);
 
@@ -29,25 +29,34 @@ export const useTodo = (initialData?: GetTodosType) => {
     }
   }, [data, isLoading]);
 
-  const handleUpdateList = (listName: ListName, newData: Todo[]) => {
-    // Optimistic update - 즉시 로컬 상태 업데이트
-    setLocalData((prevData) => {
-      if (!prevData) return prevData;
-      return {
-        ...prevData,
-        [listName]: newData,
-      };
-    });
-    // 그 다음 서버 요청
-    updateTodosMutation.mutate({
-      name: listName,
-      data: newData,
-    });
-  };
+  useEffect(() => {
+    if (data) {
+      setLocalData(data);
+    }
+  }, [data]);
 
-  const handleCreateTodos = () => {
-    createTodosMutation.mutate(undefined);
-  };
+  const handleUpdateList = useCallback(
+    (listName: ListName, newData: Todo[]) => {
+      // Optimistic update - 즉시 로컬 상태 업데이트
+      setLocalData((prevData) => {
+        if (!prevData) return prevData;
+        return {
+          ...prevData,
+          [listName]: newData,
+        };
+      });
+      // 그 다음 서버 요청
+      updateTodos({
+        name: listName,
+        data: newData,
+      });
+    },
+    [updateTodos],
+  );
+
+  const handleCreateTodos = useCallback(() => {
+    createTodos(undefined);
+  }, [createTodos]);
 
   // 표시할 데이터: localData > data 우선순위 (로컬에서 업데이트된 데이터 우선)
   const displayData = localData || data;

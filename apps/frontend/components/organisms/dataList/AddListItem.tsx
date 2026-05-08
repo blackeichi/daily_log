@@ -1,20 +1,14 @@
 import IconButton from "@/components/molecules/iconButton";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { Input } from "@/components/atoms/input";
 import { useSetAtom } from "jotai";
 import { errorAtom } from "@/lib/atom";
 import { COLOR_THEME } from "@/constants/system";
+import { DataListItemType } from "./dataList";
 
 const MAX_ITEMS = 30;
-
-export type DataListItem = {
-  id: number;
-  text: string;
-  isDone?: boolean;
-  type?: "todo" | "section" | undefined;
-};
 
 export const AddListItem = ({
   title,
@@ -22,42 +16,47 @@ export const AddListItem = ({
   setDataList,
 }: {
   title: string;
-  dataList: DataListItem[];
-  setDataList: (val: DataListItem[]) => void;
+  dataList: DataListItemType[];
+  setDataList: (val: DataListItemType[]) => void;
 }) => {
   const setError = useSetAtom(errorAtom);
   const [newData, setNewData] = useState("");
   const [open, setOpen] = useState(false);
   const [itemType, setItemType] = useState<"todo" | "section">("todo");
 
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newData.trim()) {
+        setError("할 일을 입력해주세요.");
+        return;
+      }
+      setDataList([
+        ...dataList,
+        itemType === "section"
+          ? {
+              id: Date.now(),
+              text: newData,
+              type: "section",
+            }
+          : {
+              id: Date.now(),
+              text: newData,
+              isDone: false,
+              type: "todo",
+            },
+      ]);
+      setNewData("");
+      setItemType("todo");
+      setOpen(false);
+    },
+    [newData, itemType, dataList, setDataList, setError],
+  );
+
   return (
     <form
       className="flex h-12 items-center bg-white shadow-sm shadow-stone-500 justify-center gap-1 px-1 pl-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!newData.trim()) {
-          setError("할 일을 입력해주세요.");
-          return;
-        }
-        setDataList([
-          ...dataList,
-          itemType === "section"
-            ? {
-                id: Date.now(),
-                text: newData,
-                type: "section",
-              }
-            : {
-                id: Date.now(),
-                text: newData,
-                isDone: false,
-                type: "todo",
-              },
-        ]);
-        setNewData("");
-        setItemType("todo");
-        setOpen(false);
-      }}
+      onSubmit={handleSubmit}
     >
       <motion.div
         initial={{ width: 0 }}
@@ -107,7 +106,7 @@ export const AddListItem = ({
         {open && (
           <IconButton
             text="추가"
-            onClick={() => {}}
+            onClick={handleSubmit}
             className="w-12 h-9 text-white text-xs rounded-sm gap-0.5"
             color="white"
             type="submit"

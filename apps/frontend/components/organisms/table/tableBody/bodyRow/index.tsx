@@ -90,11 +90,6 @@ function BodyRow<T>({
   );
 }
 
-const MemoizedBodyRow = typedMemo(BodyRow, (prevProps, nextProps) => {
-  return (
-    prevProps.row === nextProps.row &&
-    prevProps.tableHeader === nextProps.tableHeader
-  );
-});
+const MemoizedBodyRow = typedMemo(BodyRow);
 
 export default MemoizedBodyRow;

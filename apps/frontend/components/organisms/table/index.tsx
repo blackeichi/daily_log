@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import TableHeader from "./tableHeader";
 import TableBody from "./tableBody";
 import { TableProps } from "@/types/tableT";
-import { typedMemo } from "@/lib/utils/component";
 import { ComponentLoader } from "../../atoms/componentLoader";
+import { typedMemo } from "@/lib/utils/component";
 
 function Table<T>({
   data,
@@ -17,15 +17,12 @@ function Table<T>({
   rowUniqueKey = "id",
   lastRow,
 }: TableProps<T>) {
-  const [tableData, setTableData] = useState<T[]>(data || []);
-  useEffect(() => {
-    setTableData(data || []);
-  }, [data]);
+  const tableData = useMemo(() => data || [], [data]);
+
   return (
     <div
       className={`flex flex-col overflow-hidden rounded-md gap-1.5 border border-stone-300 h-full ${noHeader ? "" : "shadow-lg shadow-stone-500"}`}
     >
-      {/* Table Header */}
       {!noHeader && (
         <TableHeader<T>
           tableHeader={headers}
@@ -34,7 +31,6 @@ function Table<T>({
           {...(onDoubleClick && { onDoubleClick })}
         />
       )}
-      {/* Table Body */}
       {isLoading ? (
         <ComponentLoader />
       ) : (
@@ -54,12 +50,4 @@ function Table<T>({
     </div>
   );
 }
-const TableComponent = typedMemo(Table, (prevProps, nextProps) => {
-  return (
-    prevProps.data === nextProps.data &&
-    prevProps.headers === nextProps.headers &&
-    prevProps.isLoading === nextProps.isLoading
-  );
-});
-
-export default TableComponent;
+export default typedMemo(Table);
