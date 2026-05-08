@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 import { GetAllCalories, GetCalorie } from "@/types/data";
+import { QUERY_TIMES } from "@/constants/timing";
 
 export const dietKeys = {
   all: (startDate: string, endDate: string) =>
@@ -33,7 +34,8 @@ export function useDiet(date?: string) {
     queryFn: ({ signal }) =>
       apiClient<GetCalorie>(`/calories?date=${date ?? ""}`, { signal }),
     enabled: !!date,
-    gcTime: 0,
+    staleTime: QUERY_TIMES.REALTIME.STALE,
+    gcTime: QUERY_TIMES.REALTIME.GC,
   });
 }
 

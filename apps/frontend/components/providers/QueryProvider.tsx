@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { errorAtom, loadingState } from "@/lib/atom";
 import { ApiError } from "@/lib/api/client";
 import { IS_REDIRECTED } from "@/constants/routes";
+import { QUERY_TIMES } from "@/constants/timing";
 
 function GlobalLoadingSync() {
   const isFetching = useIsFetching();
@@ -61,8 +62,8 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         }),
         defaultOptions: {
           queries: {
-            staleTime: 1000 * 60, // 1분
-            gcTime: 1000 * 60 * 5, // 5분
+            staleTime: QUERY_TIMES.DAILY.STALE,
+            gcTime: QUERY_TIMES.DAILY.GC,
             refetchOnWindowFocus: false,
             refetchOnReconnect: true,
             retry: 1,

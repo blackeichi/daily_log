@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 import { GetLogsType, GetLogDetail } from "@/types/api";
+import { QUERY_TIMES } from "@/constants/timing";
 
 export const logKeys = {
   all: (startDate: string, endDate: string, searchTitle?: string) =>
@@ -36,7 +37,8 @@ export function useLog(id?: number) {
     queryFn: ({ signal }) =>
       apiClient<GetLogDetail>(`/log?id=${id ?? 0}`, { signal }),
     enabled: !!id,
-    gcTime: 0,
+    staleTime: QUERY_TIMES.REALTIME.STALE,
+    gcTime: QUERY_TIMES.REALTIME.GC,
   });
 }
 
@@ -53,6 +55,8 @@ export function useLogsForExcel(
     queryFn: ({ signal }) =>
       apiClient<GetLogsType[]>(`/log/excel?${params.toString()}`, { signal }),
     enabled: false, // 수동 trigger
+    staleTime: QUERY_TIMES.REALTIME.STALE,
+    gcTime: QUERY_TIMES.REALTIME.GC,
   });
 }
 
