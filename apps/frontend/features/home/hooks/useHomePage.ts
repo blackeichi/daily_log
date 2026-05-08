@@ -100,6 +100,11 @@ export function useHomePage(initialMessage?: string) {
     });
   }, [calories, startDate]);
 
+  const hasCalorieTrendData = useMemo(
+    () => calorieTrend.some((item) => item.totalCalorie !== null),
+    [calorieTrend],
+  );
+
   const summary = useMemo(() => {
     const recordedCalorieDays = calories.length;
     const recordedLogDays = logs.length;
@@ -280,6 +285,7 @@ export function useHomePage(initialMessage?: string) {
     calorieStatusOption,
     scoreDistributionOption,
     calorieTrendOption,
+    hasCalorieTrendData,
     calorieStatusEvents,
     scoreDistributionEvents,
     calorieTrendEvents,

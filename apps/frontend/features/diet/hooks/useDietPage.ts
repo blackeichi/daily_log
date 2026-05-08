@@ -77,6 +77,7 @@ export function useDietPage(
 
   return {
     user,
+    hasDietData: !!data?.length,
     loading: isLoading,
     isError,
     isRetrying: isFetching,

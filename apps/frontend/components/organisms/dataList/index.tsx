@@ -4,6 +4,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { memo, useMemo } from "react";
+import { EmptyState } from "@/components/atoms/EmptyState";
 import { FaChevronUp, FaSave } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { MdEdit } from "react-icons/md";
@@ -20,6 +21,7 @@ function DataListComponent({
   defaultDataList,
   onSaveDataList,
   needCheckBox = false,
+  emptyMessage = "조회할 목록이 없습니다.",
 }: {
   loading?: boolean;
   title: string;
@@ -27,6 +29,7 @@ function DataListComponent({
   defaultDataList: DataListItemType[];
   onSaveDataList: (val: DataListItemType[]) => void;
   needCheckBox?: boolean;
+  emptyMessage?: string;
 }) {
   const {
     dataList,
@@ -167,9 +170,10 @@ function DataListComponent({
           )}
         </motion.div>
       ) : (
-        <div className="flex h-10 sm:h-12 items-center bg-white shadow-sm shadow-stone-500 justify-center">
-          <span>조회할 목록이 없습니다.</span>
-        </div>
+        <EmptyState
+          title={emptyMessage}
+          className="min-h-12 rounded-none shadow-sm shadow-stone-500"
+        />
       )}
       {isEditing && !loading && (
         <AddListItem

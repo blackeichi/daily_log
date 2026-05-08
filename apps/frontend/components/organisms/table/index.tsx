@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import TableHeader from "./tableHeader";
 import TableBody from "./tableBody";
 import { TableProps } from "@/types/tableT";
-import { ComponentLoader } from "../../atoms/componentLoader";
+import { TableSkeleton } from "@/components/molecules/TableSkeleton";
 import { typedMemo } from "@/lib/utils/component";
 
 function Table<T>({
@@ -16,6 +16,7 @@ function Table<T>({
   onDoubleClick,
   rowUniqueKey = "id",
   lastRow,
+  emptyMessage,
 }: TableProps<T>) {
   const tableData = useMemo(() => data || [], [data]);
 
@@ -32,7 +33,7 @@ function Table<T>({
         />
       )}
       {isLoading ? (
-        <ComponentLoader />
+        <TableSkeleton />
       ) : (
         <div className="flex-1 overflow-hidden">
           <TableBody<T>
@@ -44,6 +45,7 @@ function Table<T>({
             rowUniqueKey={rowUniqueKey}
             {...(onDoubleClick && { onDoubleClick })}
             {...(lastRow && { lastRow })}
+            {...(emptyMessage && { emptyMessage })}
           />
         </div>
       )}

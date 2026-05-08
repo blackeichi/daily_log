@@ -19,6 +19,7 @@ export type TableProps<T> = {
   needIndex?: boolean;
   rowUniqueKey?: string;
   lastRow?: Record<string, unknown>;
+  emptyMessage?: string;
 } & funcProps<T>;
 
 export type TableHeaderProps<T> = {
@@ -30,6 +31,7 @@ export type TableBodyProps<T> = {
   rowUniqueKey: string;
   tableHeader: Header[];
   lastRow?: Record<string, unknown>;
+  emptyMessage?: string;
 } & funcProps<T>;
 
 export type TableRowProps<T> = {

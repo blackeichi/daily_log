@@ -5,6 +5,7 @@ import { useSetAtom } from "jotai";
 import { modalAtom } from "@/lib/atom";
 import { MODAL_STATE } from "@/constants/system";
 import QueryRetry from "@/components/molecules/QueryRetry";
+import { EmptyState } from "@/components/atoms/EmptyState";
 import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
 import { DietUIProps } from "../types";
 import { useDietPage } from "../hooks/useDietPage";
@@ -15,6 +16,7 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
   const {
     user,
     loading,
+    hasDietData,
     isError,
     isRetrying,
     refetchDiet,
@@ -59,7 +61,15 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
         onClick={handleCalendarClick}
       />
 
-      {!loading && user && (
+      {!loading && !hasDietData && (
+        <EmptyState
+          title="데이터가 없습니다."
+          description="식단을 추가해주세요."
+          className="mx-1 mb-5 mt-3 sm:mx-4"
+        />
+      )}
+
+      {!loading && hasDietData && user && (
         <div className="mx-1 mb-5 mt-1 flex flex-col gap-1 text-sm sm:mx-4">
           {totalMinusCalorie >= 0 ? (
             <>

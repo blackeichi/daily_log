@@ -135,6 +135,7 @@ export const LogUI = ({ initialData }: LogUIProps) => {
             onDelete={handleDeleteLog}
             onEdit={handleEditLog}
             onClick={handleViewLog}
+            emptyMessage="데이터가 없습니다. 로그를 추가해주세요."
           />
         )}
       </div>

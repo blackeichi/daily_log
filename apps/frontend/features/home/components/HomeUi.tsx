@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import QueryRetry from "@/components/molecules/QueryRetry";
+import { ChartSkeleton } from "@/components/molecules/ChartSkeleton";
+import { EmptyState } from "@/components/atoms/EmptyState";
 import { HomeUIProps } from "../types";
 import { useHomePage } from "../hooks/useHomePage";
 import ChartCard from "./ChartCard";
@@ -23,6 +25,7 @@ export default function HomeUI({ initialData }: HomeUIProps) {
     calorieStatusOption,
     scoreDistributionOption,
     calorieTrendOption,
+    hasCalorieTrendData,
     calorieStatusEvents,
     scoreDistributionEvents,
     calorieTrendEvents,
@@ -57,58 +60,63 @@ export default function HomeUI({ initialData }: HomeUIProps) {
           />
         ) : (
           <>
-        <section className="grid gap-6 lg:grid-cols-2">
-          <ChartCard
-            title="최근 30일 칼로리 상태 비율"
-            badge={`평균 섭취 칼로리 : ${summary.avgCalorie} kcal`}
-            description="목표 달성 / 일일섭취칼로리 달성 / 실패 비율을 확인할 수 있어요."
-            loading={isLoading}
-            empty={!calorieStatusData.some((item) => item.value > 0)}
-          >
-            <ReactECharts
-              option={calorieStatusOption}
-              style={{ height: 360 }}
-              onEvents={calorieStatusEvents}
-            />
-          </ChartCard>
+            <section className="grid gap-6 lg:grid-cols-2">
+              <ChartCard
+                title="최근 30일 칼로리 상태 비율"
+                badge={`평균 섭취 칼로리 : ${summary.avgCalorie} kcal`}
+                description="목표 달성 / 일일섭취칼로리 달성 / 실패 비율을 확인할 수 있어요."
+                loading={isLoading}
+                empty={!calorieStatusData.some((item) => item.value > 0)}
+              >
+                <ReactECharts
+                  option={calorieStatusOption}
+                  style={{ height: 360 }}
+                  onEvents={calorieStatusEvents}
+                />
+              </ChartCard>
 
-          <ChartCard
-            title="최근 30일 로그 점수 분포"
-            badge={`평균 기분 점수 : ${summary.avgScore}`}
-            description="각 점수 구간을 누르면 해당 로그 목록을 볼 수 있어요."
-            loading={isLoading}
-            empty={!scoreDistributionData.some((item) => item.value > 0)}
-          >
-            <ReactECharts
-              option={scoreDistributionOption}
-              style={{ height: 360 }}
-              onEvents={scoreDistributionEvents}
-            />
-          </ChartCard>
-        </section>
+              <ChartCard
+                title="최근 30일 로그 점수 분포"
+                badge={`평균 기분 점수 : ${summary.avgScore}`}
+                description="각 점수 구간을 누르면 해당 로그 목록을 볼 수 있어요."
+                loading={isLoading}
+                empty={!scoreDistributionData.some((item) => item.value > 0)}
+              >
+                <ReactECharts
+                  option={scoreDistributionOption}
+                  style={{ height: 360 }}
+                  onEvents={scoreDistributionEvents}
+                />
+              </ChartCard>
+            </section>
 
-        <section className={chartCardClassName}>
-          <div className="mb-4 flex flex-col gap-1">
-            <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
-              최근 30일 칼로리 추이
-            </h3>
-            <p className="text-sm text-stone-500">
-              특정 날짜 포인트를 누르면 해당 날짜 식단 기록을 바로 열 수 있어요.
-            </p>
-          </div>
+            <section className={chartCardClassName}>
+              <div className="mb-4 flex flex-col gap-1">
+                <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
+                  최근 30일 칼로리 추이
+                </h3>
+                <p className="text-sm text-stone-500">
+                  특정 날짜 포인트를 누르면 해당 날짜 식단 기록을 바로 열 수
+                  있어요.
+                </p>
+              </div>
 
-          {isLoading ? (
-            <div className="flex h-80 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-              통계를 불러오는 중...
-            </div>
-          ) : (
-            <ReactECharts
-              option={calorieTrendOption}
-              style={{ height: 320 }}
-              onEvents={calorieTrendEvents}
-            />
-          )}
-        </section>
+              {isLoading ? (
+                <ChartSkeleton />
+              ) : !hasCalorieTrendData ? (
+                <EmptyState
+                  title="최근 30일 데이터가 없습니다."
+                  description="식단을 추가하면 칼로리 추이를 확인할 수 있어요."
+                  className="h-80 bg-stone-50"
+                />
+              ) : (
+                <ReactECharts
+                  option={calorieTrendOption}
+                  style={{ height: 320 }}
+                  onEvents={calorieTrendEvents}
+                />
+              )}
+            </section>
           </>
         )}
       </div>
