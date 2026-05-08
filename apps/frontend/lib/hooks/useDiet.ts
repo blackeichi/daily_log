@@ -17,9 +17,10 @@ export function useAllDiet(
 ) {
   return useQuery({
     queryKey: dietKeys.all(startDate, endDate),
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       apiClient<GetAllCalories[]>(
         `/calories/all?startDate=${startDate}&endDate=${endDate}`,
+        { signal },
       ),
     enabled: !!startDate && !!endDate,
     initialData: options?.initialData,
@@ -29,7 +30,8 @@ export function useAllDiet(
 export function useDiet(date?: string) {
   return useQuery({
     queryKey: dietKeys.detail(date ?? ""),
-    queryFn: () => apiClient<GetCalorie>(`/calories?date=${date ?? ""}`),
+    queryFn: ({ signal }) =>
+      apiClient<GetCalorie>(`/calories?date=${date ?? ""}`, { signal }),
     enabled: !!date,
     gcTime: 0,
   });

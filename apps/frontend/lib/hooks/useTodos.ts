@@ -11,7 +11,7 @@ export const todoKeys = {
 export function useTodos(options?: { initialData?: GetTodosType }) {
   return useQuery({
     queryKey: todoKeys.all(),
-    queryFn: () => apiClient<GetTodosType>("/todos"),
+    queryFn: ({ signal }) => apiClient<GetTodosType>("/todos", { signal }),
     initialData: options?.initialData,
   });
 }

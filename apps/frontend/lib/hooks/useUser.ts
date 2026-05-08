@@ -12,16 +12,17 @@ export const userKeys = {
 export function useMe() {
   return useQuery({
     queryKey: userKeys.me(),
-    queryFn: () => apiClient<User>("/users/me"),
+    queryFn: ({ signal }) => apiClient<User>("/users/me", { signal }),
   });
 }
 
 export function useAllData(date: string) {
   return useQuery({
     queryKey: userKeys.allData(date),
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       apiClient<{ log: Record<string, string> | null }>(
         `/users/all-data/${date}`,
+        { signal },
       ),
     enabled: !!date,
   });
@@ -55,8 +56,10 @@ export function useUpdateMe() {
 export function useGetAiConversation() {
   return useQuery({
     queryKey: ["ai-conversation"],
-    queryFn: () =>
-      apiClient<{ content: string; date: string }>("/users/ai-conversation"),
+    queryFn: ({ signal }) =>
+      apiClient<{ content: string; date: string }>("/users/ai-conversation", {
+        signal,
+      }),
     staleTime: 1000 * 60 * 60, // 1시간 동안 fresh 상태 유지
   });
 }

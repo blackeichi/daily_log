@@ -11,7 +11,7 @@ export const routineKeys = {
 export function useRoutines(options?: { initialData?: Routine }) {
   return useQuery({
     queryKey: routineKeys.all(),
-    queryFn: () => apiClient<Routine>("/routines"),
+    queryFn: ({ signal }) => apiClient<Routine>("/routines", { signal }),
     initialData: options?.initialData,
   });
 }
