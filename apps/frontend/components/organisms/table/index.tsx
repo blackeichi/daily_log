@@ -1,8 +1,9 @@
-import { memo, useMemo } from "react";
+import { useMemo } from "react";
 import TableHeader from "./tableHeader";
 import TableBody from "./tableBody";
 import { TableProps } from "@/types/tableT";
 import { ComponentLoader } from "../../atoms/componentLoader";
+import { typedMemo } from "@/lib/utils/component";
 
 function Table<T>({
   data,
@@ -49,4 +50,4 @@ function Table<T>({
     </div>
   );
 }
-export default memo(Table);
+export default typedMemo(Table);
