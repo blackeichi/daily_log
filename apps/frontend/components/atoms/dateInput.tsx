@@ -1,7 +1,7 @@
 import DatePicker from "react-datepicker";
 import { ko } from "date-fns/locale";
 import { registerLocale } from "react-datepicker";
-import { useState } from "react";
+import { useId, useState } from "react";
 import moment from "moment";
 import { useSetAtom } from "jotai";
 import { errorAtom } from "@/lib/atom";
@@ -33,6 +33,8 @@ export default function DateInput({
   minDate?: string;
 }) {
   const setError = useSetAtom(errorAtom);
+  const generatedId = useId();
+  const dateInputId = id ?? `date-${generatedId}`;
   const [focused, setFocused] = useState(false);
   return (
     <div
@@ -65,19 +67,24 @@ export default function DateInput({
         }
       }}
       aria-label={label || "날짜 선택"}
+      aria-expanded={focused}
+      aria-controls={`${dateInputId}-date-input`}
     >
-      <div
-        className={`absolute -top-2 left-1 z-10 flex items-center gap-1 bg-stone-100 px-1 ${disabled ? "text-stone-400" : "text-stone-800"} ${
-          required ? "font-bold" : ""
-        }`}
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        {label}
-      </div>
+      {label && (
+        <label
+          htmlFor={`${dateInputId}-date-input`}
+          className={`absolute -top-2 left-1 z-10 flex items-center gap-1 bg-stone-100 px-1 ${disabled ? "text-stone-400" : "text-stone-800"} ${
+            required ? "font-bold" : ""
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {label}
+        </label>
+      )}
       <DatePicker
-        id={`${id}-date-input`}
+        id={`${dateInputId}-date-input`}
         locale="ko"
         selected={new Date(date)}
         onChange={(value) => {
@@ -97,6 +104,8 @@ export default function DateInput({
           disabled ? "bg-stone-100 text-stone-400" : ""
         }`}
         disabled={disabled}
+        required={required || false}
+        aria-invalid={required && !date ? "true" : "false"}
         autoComplete="off"
       />
     </div>

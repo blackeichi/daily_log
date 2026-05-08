@@ -112,6 +112,7 @@ export const AddListItem = ({
             type="submit"
             size={15}
             disabled={dataList.length >= MAX_ITEMS}
+            ariaLabel="항목 추가"
           />
         )}
         <IconButton
@@ -121,6 +122,7 @@ export const AddListItem = ({
           color={open ? COLOR_THEME.DARK_GRAY : "white"}
           bgColor={open ? "transparent" : COLOR_THEME.DARK_GRAY}
           size={15}
+          ariaLabel={open ? "추가 입력 닫기" : "추가 입력 열기"}
         />
       </div>
     </form>

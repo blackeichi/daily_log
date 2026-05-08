@@ -52,6 +52,7 @@ const ViewLogModal = ({
               <FaStar
                 key={value}
                 size={15}
+                aria-hidden="true"
                 className={
                   value <= (data?.score || 0)
                     ? "text-yellow-400"

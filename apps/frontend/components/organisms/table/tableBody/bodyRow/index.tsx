@@ -35,6 +35,16 @@ function BodyRow<T>({
           onDoubleClick(row as T, index);
         }
       }}
+      onKeyDown={(event) => {
+        if (!onClick) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick(row as T, index);
+        }
+      }}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? "행 상세 보기" : undefined}
     >
       <TableData
         row={row}
@@ -53,6 +63,7 @@ function BodyRow<T>({
             size={20}
             color={COLOR_THEME.DARK_GRAY}
             bgColor={COLOR_THEME.BG_COLOR}
+            ariaLabel="행 수정"
           />
         </div>
       )}
@@ -68,6 +79,7 @@ function BodyRow<T>({
             size={20}
             color={COLOR_THEME.DARK_GRAY}
             bgColor={COLOR_THEME.BG_COLOR}
+            ariaLabel="행 상세 보기"
           />
         </div>
       )}
@@ -83,6 +95,7 @@ function BodyRow<T>({
             size={15}
             color={COLOR_THEME.RED_COLOR}
             bgColor={COLOR_THEME.BG_COLOR}
+            ariaLabel="행 삭제"
           />
         </div>
       )}

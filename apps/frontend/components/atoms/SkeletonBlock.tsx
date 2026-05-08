@@ -5,7 +5,12 @@ type SkeletonBlockProps = {
 };
 
 function SkeletonBlockComponent({ className = "" }: SkeletonBlockProps) {
-  return <div className={`animate-pulse rounded bg-stone-200 ${className}`} />;
+  return (
+    <div
+      className={`animate-pulse rounded bg-stone-200 ${className}`}
+      aria-hidden="true"
+    />
+  );
 }
 
 export const SkeletonBlock = memo(SkeletonBlockComponent);

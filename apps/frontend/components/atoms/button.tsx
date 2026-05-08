@@ -29,26 +29,33 @@ export default function Button({
   style = {},
   icon,
   type = "button",
+  "aria-label": ariaLabel,
   ...rest
 }: ButtonProps) {
-  const [isTab, setIsTab] = useState<boolean>(false);
+  const [isPressed, setIsPressed] = useState<boolean>(false);
+  const isDisabled = disabled || isLoading;
+  const accessibleLabel =
+    ariaLabel ?? (isLoading && text ? `${text} 처리 중` : text);
+
   return (
     <button
       {...rest}
-      className={`flex cursor-pointer items-center justify-center outline-[3px] transition-all text-xs gap-2 ${
+      className={`flex cursor-pointer items-center justify-center outline-[3px] transition-all text-xs gap-2 focus-visible:outline focus-visible:outline-3 focus-visible:outline-stone-500 ${
         contained
           ? "bg-stone-700 text-white hover:bg-stone-800"
           : "border border-stone-400 bg-white text-stone-800 hover:bg-stone-200"
       } ${
-        isTab ? "outline-[rgba(0,0,0,0.2)]" : "outline-[rgba(0,0,0,0)]"
+        isPressed ? "outline-[rgba(0,0,0,0.2)]" : "outline-[rgba(0,0,0,0)]"
       } disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400`}
       type={type}
-      disabled={disabled || isLoading}
-      tabIndex={-1}
-      onClick={!disabled && !isLoading ? onClick : undefined}
-      onMouseDown={() => setIsTab(true)}
-      onMouseUp={() => setIsTab(false)}
-      onMouseLeave={() => setIsTab(false)}
+      disabled={isDisabled}
+      aria-disabled={isDisabled}
+      aria-busy={isLoading || undefined}
+      aria-label={accessibleLabel}
+      onClick={!isDisabled ? onClick : undefined}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onMouseLeave={() => setIsPressed(false)}
       style={{
         ...style,
         ...(style?.backgroundColor
@@ -63,11 +70,14 @@ export default function Button({
       }}
     >
       {isLoading ? (
-        <ClipLoader
-          size={12}
-          aria-label="Loading Button"
-          color={contained ? "white" : "black"}
-        />
+        <>
+          <ClipLoader
+            size={12}
+            aria-hidden="true"
+            color={contained ? "white" : "black"}
+          />
+          <span className="sr-only">처리 중</span>
+        </>
       ) : (
         <>
           {icon && icon}

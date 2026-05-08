@@ -99,13 +99,16 @@ const ActualUI = ({
               key={value}
               type="button"
               onClick={() => setScore(value)}
-              className="transition-all hover:scale-110"
+              className="rounded-sm transition-all hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500"
+              aria-label={`${value}점 선택`}
+              aria-pressed={score === value}
             >
               <FaStar
                 size={24}
                 className={`${
                   value <= score ? "text-yellow-400" : "text-gray-300"
                 } transition-colors`}
+                aria-hidden="true"
               />
             </button>
           ))}
