@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { backendFetch } from "@/lib/api/server";
+import { ErrorBoundaryProvider } from "@/components/providers/ErrorBoundaryProvider";
 
 const HomeUI = dynamic(() => import("../../features/home/components/HomeUi"), {
   loading: () => <div className="w-full h-full bg-stone-100" />,
@@ -20,7 +21,9 @@ export default async function HomePage() {
 
   return (
     <Suspense fallback={<div className="w-full h-full bg-stone-100" />}>
-      <HomeUI {...(initialData !== undefined ? { initialData } : {})} />
+      <ErrorBoundaryProvider>
+        <HomeUI {...(initialData !== undefined ? { initialData } : {})} />
+      </ErrorBoundaryProvider>
     </Suspense>
   );
 }

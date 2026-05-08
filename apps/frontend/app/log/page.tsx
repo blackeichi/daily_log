@@ -4,6 +4,7 @@ import moment from "moment";
 import { backendFetch } from "@/lib/api/server";
 import { GetLogsType } from "@/types/data";
 import { LogUI } from "@/features/log/components/LogUI";
+import { ErrorBoundaryProvider } from "@/components/providers/ErrorBoundaryProvider";
 
 export const metadata: Metadata = {
   title: "로그",
@@ -26,7 +27,9 @@ export default async function LogPage() {
   return (
     <div className="h-full w-full">
       <Suspense fallback={<div className="h-full w-full bg-stone-100" />}>
-        <LogUI {...(initialData !== undefined ? { initialData } : {})} />
+        <ErrorBoundaryProvider>
+          <LogUI {...(initialData !== undefined ? { initialData } : {})} />
+        </ErrorBoundaryProvider>
       </Suspense>
     </div>
   );

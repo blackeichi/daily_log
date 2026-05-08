@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { backendFetch } from "@/lib/api/server";
 import { Routine } from "@/types/api";
+import { ErrorBoundaryProvider } from "@/components/providers/ErrorBoundaryProvider";
 
 const RoutineUI = dynamic(
   () => import("@/features/routine/components/RoutineUI"),
@@ -24,7 +25,9 @@ export default async function RoutinePage() {
 
   return (
     <Suspense fallback={<div className="w-full h-full bg-stone-100" />}>
-      <RoutineUI {...(initialData !== undefined ? { initialData } : {})} />
+      <ErrorBoundaryProvider>
+        <RoutineUI {...(initialData !== undefined ? { initialData } : {})} />
+      </ErrorBoundaryProvider>
     </Suspense>
   );
 }
