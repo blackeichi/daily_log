@@ -4,9 +4,13 @@ import { Routine } from "@/types/api";
 import { ListName, RoutineData, RoutineItem } from "../types";
 
 export const useRoutine = (initialData?: Routine) => {
-  const { data, isLoading } = useRoutines(
-    initialData ? { initialData } : undefined,
-  );
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    refetch: refetchRoutines,
+  } = useRoutines(initialData ? { initialData } : undefined);
   const { mutate: updateRoutines } = useUpdateRoutines();
   const [localData, setLocalData] = useState<RoutineData | null>(null);
 
@@ -42,6 +46,9 @@ export const useRoutine = (initialData?: Routine) => {
 
   return {
     data: displayData,
+    isError,
+    isRetrying: isFetching,
+    refetchRoutines,
     handleUpdateList,
     loading: isLoading,
   };

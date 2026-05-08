@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useSetAtom } from "jotai";
 import { modalAtom } from "@/lib/atom";
 import { MODAL_STATE } from "@/constants/system";
+import QueryRetry from "@/components/molecules/QueryRetry";
 import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
 import { DietUIProps } from "../types";
 import { useDietPage } from "../hooks/useDietPage";
@@ -14,6 +15,9 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
   const {
     user,
     loading,
+    isError,
+    isRetrying,
+    refetchDiet,
     calendarData,
     totalMinusCalorie,
     setDateRange,
@@ -31,6 +35,18 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
     },
     [calendarData, setModal],
   );
+
+  if (isError) {
+    return (
+      <div className="h-full w-full pt-4">
+        <QueryRetry
+          message="식단 기록 조회에 실패했습니다."
+          onRetry={() => refetchDiet()}
+          isRetrying={isRetrying}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full w-full">

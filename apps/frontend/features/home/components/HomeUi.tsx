@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import QueryRetry from "@/components/molecules/QueryRetry";
 import { HomeUIProps } from "../types";
 import { useHomePage } from "../hooks/useHomePage";
 import ChartCard from "./ChartCard";
@@ -14,6 +15,9 @@ export default function HomeUI({ initialData }: HomeUIProps) {
     message,
     summary,
     isLoading,
+    isError,
+    isRetrying,
+    refetchHomeData,
     calorieStatusData,
     scoreDistributionData,
     calorieStatusOption,
@@ -45,6 +49,14 @@ export default function HomeUI({ initialData }: HomeUIProps) {
           </div>
         </section>
 
+        {isError ? (
+          <QueryRetry
+            message="홈 통계 조회에 실패했습니다."
+            onRetry={refetchHomeData}
+            isRetrying={isRetrying}
+          />
+        ) : (
+          <>
         <section className="grid gap-6 lg:grid-cols-2">
           <ChartCard
             title="최근 30일 칼로리 상태 비율"
@@ -97,6 +109,8 @@ export default function HomeUI({ initialData }: HomeUIProps) {
             />
           )}
         </section>
+          </>
+        )}
       </div>
     </div>
   );

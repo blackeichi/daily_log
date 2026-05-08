@@ -5,6 +5,7 @@ import { FaRegCalendarPlus } from "react-icons/fa";
 import { IoIosSearch } from "react-icons/io";
 import { Input } from "@/components/atoms/input";
 import IconButton from "@/components/molecules/iconButton";
+import QueryRetry from "@/components/molecules/QueryRetry";
 import { DateRange } from "@/components/organisms/dateRange";
 import TableComponent from "@/components/organisms/table";
 import { COLOR_THEME } from "@/constants/system";
@@ -16,6 +17,8 @@ import { useLogPage } from "../hooks/useLogPage";
 export const LogUI = ({ initialData }: LogUIProps) => {
   const {
     loading,
+    isError,
+    isRetrying,
     displayedData,
     allData,
     isLoadingMore,
@@ -31,6 +34,7 @@ export const LogUI = ({ initialData }: LogUIProps) => {
     excelLoading,
     handleGetExcelData,
     handleSearch,
+    refetchLogs,
     handleAddLog,
     handleDeleteLog,
     handleEditLog,
@@ -116,14 +120,23 @@ export const LogUI = ({ initialData }: LogUIProps) => {
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <TableComponent<GetLogsType>
-          data={displayedData}
-          isLoading={loading}
-          headers={LOG_TABLE_HEADERS}
-          onDelete={handleDeleteLog}
-          onEdit={handleEditLog}
-          onClick={handleViewLog}
-        />
+        {isError ? (
+          <QueryRetry
+            message="로그 조회에 실패했습니다."
+            onRetry={() => refetchLogs()}
+            isRetrying={isRetrying}
+            className="h-full"
+          />
+        ) : (
+          <TableComponent<GetLogsType>
+            data={displayedData}
+            isLoading={loading}
+            headers={LOG_TABLE_HEADERS}
+            onDelete={handleDeleteLog}
+            onEdit={handleEditLog}
+            onClick={handleViewLog}
+          />
+        )}
       </div>
 
       {hasMoreData && (

@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@/components/atoms/button";
+import QueryRetry from "@/components/molecules/QueryRetry";
 import { GetTodosType, Todo } from "@/types/api";
 import { useTodo } from "../hooks/useTodoPage";
 import { DataList } from "@/components/organisms/dataList";
@@ -26,8 +27,28 @@ export default function TodoUI({
 }: {
   initialData?: GetTodosType;
 }) {
-  const { data, loading, isFirst, handleCreateTodos, handleUpdateList } =
-    useTodo(initialData);
+  const {
+    data,
+    loading,
+    isError,
+    isRetrying,
+    refetchTodos,
+    isFirst,
+    handleCreateTodos,
+    handleUpdateList,
+  } = useTodo(initialData);
+
+  if (isError) {
+    return (
+      <div className="w-full max-w-[800px] pt-4">
+        <QueryRetry
+          message="투두 조회에 실패했습니다."
+          onRetry={() => refetchTodos()}
+          isRetrying={isRetrying}
+        />
+      </div>
+    );
+  }
 
   if (isFirst)
     return (

@@ -25,7 +25,13 @@ export function useDietPage(
     dateRange[0] === initialDateRange[0] &&
     dateRange[1] === initialDateRange[1];
 
-  const { data, isLoading } = useAllDiet(
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    refetch: refetchDiet,
+  } = useAllDiet(
     dateRange ? dateRange[0] : "",
     dateRange ? dateRange[1] : "",
     isInitialRange && initialData !== undefined ? { initialData } : undefined,
@@ -72,6 +78,9 @@ export function useDietPage(
   return {
     user,
     loading: isLoading,
+    isError,
+    isRetrying: isFetching,
+    refetchDiet,
     calendarData,
     totalMinusCalorie,
     setDateRange,
