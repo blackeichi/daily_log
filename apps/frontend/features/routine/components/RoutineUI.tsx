@@ -1,8 +1,8 @@
 "use client";
 
-import DataList from "@/components/organisms/dataList";
 import { Routine } from "@/types/api";
 import { useRoutine } from "../hooks/useRoutinePage";
+import { DataList } from "@/components/organisms/dataList";
 
 const lists = ["dailyRoutines", "weeklyRoutines", "monthlyRoutines"] as const;
 

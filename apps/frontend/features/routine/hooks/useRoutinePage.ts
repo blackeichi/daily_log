@@ -1,5 +1,5 @@
 import { useRoutines, useUpdateRoutines } from "@/lib/hooks/useRoutines";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Routine } from "@/types/api";
 import { ListName, RoutineData, RoutineItem } from "../types";
 
@@ -7,7 +7,7 @@ export const useRoutine = (initialData?: Routine) => {
   const { data, isLoading } = useRoutines(
     initialData ? { initialData } : undefined,
   );
-  const updateRoutinesMutation = useUpdateRoutines();
+  const { mutate: updateRoutines } = useUpdateRoutines();
   const [localData, setLocalData] = useState<RoutineData | null>(null);
 
   // 서버 데이터를 로컬 상태로 동기화
@@ -18,21 +18,24 @@ export const useRoutine = (initialData?: Routine) => {
   }, [data]);
 
   // Optimistic update
-  const handleUpdateList = (listName: ListName, newData: RoutineItem[]) => {
-    // 즉시 UI 업데이트
-    setLocalData((prevData) => {
-      if (!prevData) return prevData;
-      return {
-        ...prevData,
-        [listName]: newData,
-      };
-    });
-    // 그 다음 서버 요청
-    updateRoutinesMutation.mutate({
-      name: listName,
-      data: newData,
-    });
-  };
+  const handleUpdateList = useCallback(
+    (listName: ListName, newData: RoutineItem[]) => {
+      // 즉시 UI 업데이트
+      setLocalData((prevData) => {
+        if (!prevData) return prevData;
+        return {
+          ...prevData,
+          [listName]: newData,
+        };
+      });
+      // 그 다음 서버 요청
+      updateRoutines({
+        name: listName,
+        data: newData,
+      });
+    },
+    [updateRoutines],
+  );
 
   // 표시할 데이터: localData > data 우선순위
   const displayData = localData || data;

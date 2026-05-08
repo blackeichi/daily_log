@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MdDelete } from "react-icons/md";
 import { IoIosMenu } from "react-icons/io";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { COLOR_THEME } from "@/constants/system";
 import { DEBOUNCE_DELAYS } from "@/constants/timing";
 import { useSetAtom } from "jotai";
@@ -10,40 +10,34 @@ import { confirmAtom } from "@/lib/atom";
 import CheckBox from "@/components/atoms/checkBox";
 import IconButton from "@/components/molecules/iconButton";
 import { Input } from "@/components/atoms/input";
+import { DataListItemType } from "./dataList";
 
-export type DataListItem = {
-  id: number;
-  text: string;
-  isDone?: boolean;
-  type?: "todo" | "section" | undefined;
-};
-
-export function DataListItem({
+function DataListItemComponent({
   title,
   item,
   index,
-  dataList,
-  setDataList,
   isEditing,
   enableDrag = false,
   debounce,
-  onSaveDataList,
+  onChangeText,
+  onDeleteItem,
+  onChangeDone,
   needCheckBox,
 }: {
   title: string;
-  item: DataListItem;
+  item: DataListItemType;
   index: number;
-  dataList: DataListItem[];
-  setDataList: (val: DataListItem[], delay?: number) => void;
   isEditing: boolean;
   enableDrag?: boolean;
   debounce: (func: () => void, delay: number) => void;
-  onSaveDataList: (val: DataListItem[]) => void;
+  onChangeText: (index: number, text: string) => void;
+  onDeleteItem: (index: number) => void;
+  onChangeDone: (index: number, isDone: boolean) => void;
   needCheckBox: boolean;
 }) {
   const setConfirmMgs = useSetAtom(confirmAtom);
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: item.id });
+    useSortable({ id: item.id, disabled: !enableDrag || !isEditing });
   const style = useMemo(
     () => ({
       transform: CSS.Transform.toString(transform),
@@ -51,27 +45,23 @@ export function DataListItem({
     }),
     [transform, transition],
   );
-  const [checked, setChecked] = useState(item.isDone || false);
-  const [isDone, setIsDone] = useState(item.isDone || false);
   const isSection = item?.type === "section";
   const dragEnabled = isEditing && enableDrag;
 
-  const handleCheckboxChange = useCallback((val: boolean) => {
-    setChecked(val);
-    setIsDone(val);
-  }, []);
+  const handleCheckboxChange = useCallback(
+    (val: boolean) => {
+      onChangeDone(index, val);
+    },
+    [index, onChangeDone],
+  );
 
   const handleInputChange = useCallback(
     (val: string) => {
-      const newList = [...dataList];
-      if (newList[index]) {
-        newList[index].text = val;
-        debounce(() => {
-          setDataList(newList);
-        }, DEBOUNCE_DELAYS.INPUT);
-      }
+      debounce(() => {
+        onChangeText(index, val);
+      }, DEBOUNCE_DELAYS.INPUT);
     },
-    [dataList, index, debounce, setDataList],
+    [debounce, index, onChangeText],
   );
 
   const handleDelete = useCallback(() => {
@@ -79,35 +69,10 @@ export function DataListItem({
       title: "항목 삭제",
       message: `"${item.text}" 를 삭제하시겠습니까?`,
       confirmEvent: () => {
-        const newList = [...dataList];
-        newList.splice(index, 1);
-        setDataList(newList, 0);
+        onDeleteItem(index);
       },
     });
-  }, [item.text, dataList, index, setDataList, setConfirmMgs]);
-
-  useEffect(() => {
-    if (!isSection && needCheckBox && isDone !== item.isDone) {
-      const newList = [...dataList];
-      if (newList[index]) {
-        newList[index].isDone = isDone;
-        setDataList(newList);
-        debounce(() => {
-          onSaveDataList(newList);
-        }, DEBOUNCE_DELAYS.CHECKBOX);
-      }
-    }
-  }, [
-    isDone,
-    needCheckBox,
-    isSection,
-    item.isDone,
-    dataList,
-    index,
-    setDataList,
-    debounce,
-    onSaveDataList,
-  ]);
+  }, [item.text, index, onDeleteItem, setConfirmMgs]);
 
   return (
     <form
@@ -122,7 +87,7 @@ export function DataListItem({
       {!isEditing && needCheckBox && !isSection && (
         <CheckBox
           id={item.id.toString()}
-          value={checked}
+          value={item.isDone || false}
           setValue={handleCheckboxChange}
         />
       )}
@@ -137,7 +102,7 @@ export function DataListItem({
             className={
               isSection
                 ? "font-semibold tracking-wide text-stone-800"
-                : checked
+                : item.isDone
                   ? "line-through"
                   : ""
             }
@@ -181,3 +146,5 @@ export function DataListItem({
     </form>
   );
 }
+
+export const DataListItem = memo(DataListItemComponent);
