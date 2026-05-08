@@ -19,15 +19,22 @@ export function useLogs(
   searchTitle?: string,
   options?: { initialData?: GetLogsType[] },
 ) {
+  const trimmedSearchTitle = searchTitle?.trim() ?? "";
+
   const params = new URLSearchParams({ startDate, endDate });
-  if (searchTitle?.trim()) params.append("searchTitle", searchTitle.trim());
+
+  if (trimmedSearchTitle) {
+    params.append("searchTitle", trimmedSearchTitle);
+  }
 
   return useQuery({
-    queryKey: logKeys.all(startDate, endDate, searchTitle),
+    queryKey: logKeys.all(startDate, endDate, trimmedSearchTitle),
     queryFn: ({ signal }) =>
       apiClient<GetLogsType[]>(`/log/all?${params.toString()}`, { signal }),
     enabled: !!startDate && !!endDate,
     initialData: options?.initialData,
+    staleTime: QUERY_TIMES.REALTIME.STALE,
+    gcTime: QUERY_TIMES.REALTIME.GC,
   });
 }
 
