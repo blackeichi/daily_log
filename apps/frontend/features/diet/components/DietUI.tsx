@@ -1,9 +1,5 @@
 "use client";
 
-import { useCallback } from "react";
-import { useSetAtom } from "jotai";
-import { modalAtom } from "@/lib/atom";
-import { MODAL_STATE } from "@/constants/system";
 import QueryRetry from "@/components/molecules/QueryRetry";
 import { EmptyState } from "@/components/atoms/EmptyState";
 import { ScheduleCalendar } from "@/components/organisms/scehduleCalendar";
@@ -11,8 +7,6 @@ import { DietUIProps } from "../types";
 import { useDietPage } from "../hooks/useDietPage";
 
 export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
-  const setModal = useSetAtom(modalAtom);
-
   const {
     user,
     loading,
@@ -24,19 +18,8 @@ export default function DietUI({ initialData, initialDateRange }: DietUIProps) {
     totalMinusCalorie,
     setDateRange,
     setTargetMonth,
+    handleCalendarClick,
   } = useDietPage(initialData, initialDateRange);
-
-  const handleCalendarClick = useCallback(
-    (clickedDate: string) => {
-      setModal({
-        data: clickedDate,
-        id: calendarData[clickedDate]
-          ? MODAL_STATE.EDIT_CALORIES
-          : MODAL_STATE.ADD_CALORIES,
-      });
-    },
-    [calendarData, setModal],
-  );
 
   if (isError) {
     return (

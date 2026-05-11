@@ -5,6 +5,7 @@ export class ApiError extends Error {
     message: string,
     public statusCode: number,
     public errors?: string[],
+    public exposeMessage = true,
   ) {
     super(message);
     this.name = "ApiError";
@@ -37,7 +38,7 @@ export async function apiClient<T>(
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include", // 쿠키 자동 전송
+    credentials: "include",
     signal: signal ?? null,
   };
 
@@ -53,18 +54,29 @@ export async function apiClient<T>(
     fetchOptions.next = { revalidate };
   }
 
-  const res = await fetch(`/api${endpoint}`, fetchOptions);
+  let res: Response;
 
-  // 에러 처리
-  // 401은 Route Handler의 backendFetch에서 이미 refresh 시도했으므로
-  // 여기서는 그냥 에러로 처리하여 handleGlobalError로 전달
+  try {
+    res = await fetch(`/api${endpoint}`, fetchOptions);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+
+    throw new ApiError("네트워크 연결을 확인해주세요.", 0, undefined, false);
+  }
+
   if (!res.ok) {
     let errorMessage = "요청 처리 중 오류가 발생했습니다.";
     let errors: string[] | undefined;
+    let exposeMessage = false;
 
     try {
       const errorData = (await res.json()) as ApiErrorResponse;
+
       if (errorData?.message) {
+        exposeMessage = true;
+
         if (Array.isArray(errorData.message)) {
           errors = errorData.message;
           errorMessage = errorData.message.join(", ");
@@ -73,12 +85,13 @@ export async function apiClient<T>(
         }
       }
     } catch {
-      // JSON 파싱 실패시 기본 메시지 유지
+      exposeMessage = false;
     }
-    throw new ApiError(errorMessage, res.status, errors);
+
+    throw new ApiError(errorMessage, res.status, errors, exposeMessage);
   }
 
-  // 정상 응답
   const responseData = (await res.json()) as ApiResponse<T>;
+
   return responseData?.data ?? (responseData as T);
 }
