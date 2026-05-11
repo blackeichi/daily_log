@@ -34,7 +34,7 @@ export default function Tooltip({
         createPortal(
           <div
             id="tooltip"
-            className={`fixed z-[60] max-w-[45vw] min-w-20 max-h-[45vh] rounded-sm bg-[rgba(0,0,0,0.85)] p-2.5 text-xs sm:text-sm text-white ${positionStyle} flex flex-col flex-wrap gap-1 items-center`}
+            className={`fixed z-[60] max-w-[45vw] min-w-20 max-h-[45vh] rounded-sm bg-[rgba(0,0,0,0.85)] p-2.5 text-xs text-white ${positionStyle} flex flex-col flex-wrap gap-1 items-center`}
             style={{
               left: `${isHovered.x}px`,
               top: `${isHovered.y}px`,

@@ -10,9 +10,40 @@ import { DateRange } from "@/components/organisms/dateRange";
 import TableComponent from "@/components/organisms/table";
 import { COLOR_THEME } from "@/constants/system";
 import { GetLogsType } from "@/types/data";
-import { LOG_ITEMS_PER_PAGE, LOG_TABLE_HEADERS } from "../constants";
 import { LogUIProps } from "../types";
 import { useLogPage } from "../hooks/useLogPage";
+import Tooltip from "@/components/atoms/tooltip";
+import { EMOJI_BY_SCORE, LOG_ITEMS_PER_PAGE } from "../constants";
+
+const logTableHeaders = [
+  { id: "logDate", label: "날짜", width: 110 },
+  {
+    id: "title",
+    label: "제목",
+    width: 300,
+    grow: 1,
+    render: (row: GetLogsType) => (
+      <Tooltip
+        tooltip={row.title}
+        className="flex h-full w-full min-w-0 items-center overflow-hidden select-none"
+      >
+        <span className="block w-full min-w-0 overflow-hidden rounded-lg p-1 text-nowrap text-ellipsis transition-[background-color]">
+          {row.title}
+        </span>
+      </Tooltip>
+    ),
+  },
+  {
+    id: "score",
+    label: "평가",
+    width: 80,
+    render: (row: GetLogsType) => (
+      <div className="flex items-center text-base sm:text-lg w-full">
+        {EMOJI_BY_SCORE[row.score as number] || ""}
+      </div>
+    ),
+  },
+];
 
 export const LogUI = ({ initialData }: LogUIProps) => {
   const {
@@ -131,7 +162,7 @@ export const LogUI = ({ initialData }: LogUIProps) => {
           <TableComponent<GetLogsType>
             data={displayedData}
             isLoading={loading}
-            headers={LOG_TABLE_HEADERS}
+            headers={logTableHeaders}
             onDelete={handleDeleteLog}
             onEdit={handleEditLog}
             onClick={handleViewLog}
@@ -143,7 +174,7 @@ export const LogUI = ({ initialData }: LogUIProps) => {
       {hasMoreData && (
         <div
           ref={loadMoreRef}
-          className="flex items-center justify-center py-8"
+          className="flex items-center justify-center py-3"
         >
           {isLoadingMore ? (
             <div className="flex items-center gap-2 text-gray-500">
