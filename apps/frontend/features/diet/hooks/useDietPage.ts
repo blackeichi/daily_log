@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { isSameMonth } from "date-fns";
-import { useAtomValue } from "jotai";
-import { userAtom } from "@/lib/atom";
+import { useAtomValue, useSetAtom } from "jotai";
+import { modalAtom, userAtom } from "@/lib/atom";
 import { useAllDiet } from "@/lib/hooks/useDiet";
 import { DietCalendarData, GetAllCalories } from "@/types/data";
+import { MODAL_STATE } from "@/constants/system";
 
 export function useDietPage(
   initialData?: GetAllCalories[],
   initialDateRange?: [string, string],
 ) {
   const user = useAtomValue(userAtom);
+  const setModal = useSetAtom(modalAtom);
 
   const [dateRange, setDateRange] = useState<[string, string] | null>(
     initialDateRange ?? null,
@@ -75,6 +77,18 @@ export function useDietPage(
     return total;
   }, [calendarData, targetMonth, user]);
 
+  const handleCalendarClick = useCallback(
+    (clickedDate: string) => {
+      setModal({
+        data: clickedDate,
+        id: calendarData[clickedDate]
+          ? MODAL_STATE.EDIT_CALORIES
+          : MODAL_STATE.ADD_CALORIES,
+      });
+    },
+    [calendarData, setModal],
+  );
+
   return {
     user,
     hasDietData: !!data?.length,
@@ -86,5 +100,6 @@ export function useDietPage(
     totalMinusCalorie,
     setDateRange,
     setTargetMonth,
+    handleCalendarClick,
   };
 }
