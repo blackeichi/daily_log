@@ -3,7 +3,7 @@ import { Input } from "@/components/atoms/input";
 import IconButton from "@/components/molecules/iconButton";
 import { COLOR_THEME, DEFAULT_LOG_OBJS } from "@/constants/system";
 import { User } from "@/types/data";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { useUpdateMe } from "@/lib/hooks/useUser";
@@ -46,7 +46,7 @@ export const UpdateUserInfo = ({
       setLogCategories(user.defaultLogObj);
     }
   }, [user]);
-  let newCategory = "";
+  const newCategory = useRef<string>("");
   return (
     <>
       <div className="w-full p-4 border border-stone-300 rounded-xl max-w-[600px] flex flex-col gap-3">
@@ -128,27 +128,33 @@ export const UpdateUserInfo = ({
             </>
           ) : (
             logCategories.map((logObj, index) => (
-              <div className="flex items-center gap-2" key={logObj}>
+              <div
+                className="flex items-center gap-2"
+                key={`log-category-${index}`}
+              >
                 <Input
-                  id={logObj}
-                  defaultValue={logObj}
+                  id={`log-category-${index}`}
+                  value={logObj}
                   setValue={(val: string) => {
-                    const newLogCategories = [...logCategories];
-                    newLogCategories[index] = val;
-                    setLogCategories(newLogCategories);
+                    setLogCategories((prev) => {
+                      const next = [...prev];
+                      next[index] = val;
+                      return next;
+                    });
                   }}
                   height={30}
                   width="100%"
                 />
+
                 <IconButton
                   icon={MdDelete}
                   className="w-7 h-7 rounded-full"
                   bgColor="transparent"
                   color={COLOR_THEME.DARK_GRAY}
                   onClick={() => {
-                    const newLogCategories = [...logCategories];
-                    newLogCategories.splice(index, 1);
-                    setLogCategories(newLogCategories);
+                    setLogCategories((prev) =>
+                      prev.filter((_, i) => i !== index),
+                    );
                   }}
                   size={18}
                   disabled={!user}
@@ -163,7 +169,7 @@ export const UpdateUserInfo = ({
             id={`add_logObj`}
             defaultValue={""}
             setValue={(val: string) => {
-              newCategory = val;
+              newCategory.current = val;
             }}
             height={30}
             width="100%"
@@ -176,8 +182,8 @@ export const UpdateUserInfo = ({
             bgColor="transparent"
             color={COLOR_THEME.DARK_GRAY}
             onClick={() => {
-              setLogCategories([...logCategories, newCategory]);
-              newCategory = "";
+              setLogCategories([...logCategories, newCategory.current]);
+              newCategory.current = "";
             }}
             size={15}
             disabled={!user}
