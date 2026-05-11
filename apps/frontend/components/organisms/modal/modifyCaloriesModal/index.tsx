@@ -15,9 +15,9 @@ import { EditCalorie } from "./EditCalorie";
 import { useSetAtom } from "jotai";
 import { errorAtom } from "@/lib/atom";
 
-const headers = [
-  { id: "name", label: "음식", width: 1 },
-  { id: "cal", label: "칼로리", width: 1 },
+const dietTableHeaders = [
+  { id: "name", label: "음식", width: 100, grow: 1 },
+  { id: "cal", label: "칼로리", width: 100, grow: 1 },
 ];
 
 const ModifyCaloriesModal = ({
@@ -87,10 +87,9 @@ const ActualUI = ({
       <div className="w-full my-1" style={{ height: "300px" }}>
         <TableComponent<Eaten>
           data={eatenList}
-          isLoading={Boolean(openEdit)}
-          headers={headers}
+          isLoading={false}
+          headers={dietTableHeaders}
           rowUniqueKey="index"
-          noHeader
           onDelete={(_, idx) => {
             setEatenList((prev) =>
               prev
@@ -98,7 +97,7 @@ const ActualUI = ({
                 .map((e, i) => ({ ...e, index: i + 1 })),
             );
           }}
-          onDoubleClick={(row) => {
+          onEdit={(row) => {
             setOpenEdit(row);
           }}
           lastRow={{
