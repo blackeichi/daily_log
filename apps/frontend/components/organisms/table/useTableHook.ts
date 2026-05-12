@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 
@@ -36,7 +36,16 @@ export function useTableHook<T>({
 
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
+
+  const [bodyScrollElement, setBodyScrollElement] =
+    useState<HTMLDivElement | null>(null);
+
   const isSyncingScroll = useRef(false);
+
+  const setBodyOuterRef = useCallback((node: HTMLDivElement | null) => {
+    bodyScrollRef.current = node;
+    setBodyScrollElement(node);
+  }, []);
 
   const actions = useMemo<TableAction<T>[]>(() => {
     const nextActions: TableAction<T>[] = [];
@@ -110,19 +119,29 @@ export function useTableHook<T>({
   );
 
   useEffect(() => {
-    const body = bodyScrollRef.current;
-    if (!body) return;
+    if (!bodyScrollElement) return;
+
+    let lastScrollLeft = bodyScrollElement.scrollLeft;
 
     const handleBodyScroll = () => {
-      syncScroll("body", body.scrollLeft);
+      const nextScrollLeft = bodyScrollElement.scrollLeft;
+
+      if (lastScrollLeft === nextScrollLeft) {
+        return;
+      }
+
+      lastScrollLeft = nextScrollLeft;
+      syncScroll("body", nextScrollLeft);
     };
 
-    body.addEventListener("scroll", handleBodyScroll, { passive: true });
+    bodyScrollElement.addEventListener("scroll", handleBodyScroll, {
+      passive: true,
+    });
 
     return () => {
-      body.removeEventListener("scroll", handleBodyScroll);
+      bodyScrollElement.removeEventListener("scroll", handleBodyScroll);
     };
-  }, [syncScroll, items.length]);
+  }, [bodyScrollElement, syncScroll]);
 
   const listData = useMemo<VirtualRowData<T>>(
     () => ({
@@ -143,7 +162,7 @@ export function useTableHook<T>({
     tableMinWidth,
     listData,
     headerScrollRef,
-    bodyScrollRef,
+    setBodyOuterRef,
     syncScroll,
   };
 }

@@ -38,7 +38,7 @@ function Table<T>({
     tableMinWidth,
     listData,
     headerScrollRef,
-    bodyScrollRef,
+    setBodyOuterRef,
     syncScroll,
   } = useTableHook<T>({
     data,
@@ -108,7 +108,7 @@ function Table<T>({
           <AutoSizer>
             {({ height, width }: { height: number; width: number }) => (
               <FixedSizeList
-                outerRef={bodyScrollRef}
+                outerRef={setBodyOuterRef}
                 height={height}
                 width={width}
                 itemCount={items.length}
