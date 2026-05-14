@@ -1,4 +1,4 @@
-import { LoadingComponent } from "@/components/template/LoadingComponent";
+import { LoadingComponent } from "@/components/atoms/LoadingComponent";
 
 export default function Loading() {
   return <LoadingComponent />;

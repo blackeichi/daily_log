@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import MenuList from "./menuList";
 import { useMe } from "@/lib/hooks/useUser";
 import { userAtom } from "@/lib/atom";
 import { useSetAtom } from "jotai";
+import MenuList from "../molecules/menuList";
 
 export const PrivateLayout = ({ children }: { children: React.ReactNode }) => {
   const { data: userData } = useMe();

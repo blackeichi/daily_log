@@ -3,7 +3,7 @@
 import { PrivateLayout } from "./privateLayout";
 import { usePathname } from "next/navigation";
 import { ROUTE } from "@/constants/routes";
-import Modal from "../../organisms/modal";
+import { ModalComponent } from "../organisms/modal";
 
 export const PageLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -11,7 +11,7 @@ export const PageLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="w-full h-full overflow-y-scroll">
-      <Modal />
+      <ModalComponent />
       {isAuthPage ? (
         <main id="main-content" className="w-full h-full">
           {children}

@@ -1,8 +1,8 @@
 import { memo, useEffect, useId, useState } from "react";
-import { HeaderLogo } from "../../atoms/headerLogo";
 import { MENU_LIST, ROUTE } from "@/constants/routes";
 import Link from "next/link";
 import { CiMenuKebab } from "react-icons/ci";
+import { HeaderLogo } from "../atoms/headerLogo";
 
 const MenuList = () => {
   const [hasScroll, setHasScroll] = useState(false);

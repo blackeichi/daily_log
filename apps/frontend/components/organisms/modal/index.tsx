@@ -75,4 +75,4 @@ const Modal = () => {
   );
 };
 
-export default memo(Modal);
+export const ModalComponent = memo(Modal);
