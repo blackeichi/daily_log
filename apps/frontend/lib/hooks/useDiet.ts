@@ -89,3 +89,19 @@ export function useUpdateDiet(id: number) {
     },
   });
 }
+
+export function useDeleteDiet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { id: number }) =>
+      apiClient<{ message: string }>("/calories", {
+        method: "DELETE",
+        body: data,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["diet-all"] });
+      queryClient.invalidateQueries({ queryKey: ["diet"] });
+    },
+  });
+}

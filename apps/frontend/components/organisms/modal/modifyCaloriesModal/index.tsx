@@ -1,6 +1,7 @@
 import {
   useDiet as useDietQuery,
   useCreateDiet,
+  useDeleteDiet,
   useUpdateDiet,
 } from "@/lib/hooks/useDiet";
 import { Eaten, GetCalorie } from "@/types/data";
@@ -13,7 +14,9 @@ import TableComponent from "../../table";
 import { AddNewCalorie } from "./AddNewCalorie";
 import { EditCalorie } from "./EditCalorie";
 import { useSetAtom } from "jotai";
-import { errorAtom } from "@/lib/atom";
+import { alertAtom, confirmAtom, errorAtom } from "@/lib/atom";
+import Button from "@/components/atoms/button";
+import { FaTrash } from "react-icons/fa";
 
 const dietTableHeaders = [
   { id: "name", label: "음식", width: 100, grow: 1 },
@@ -49,7 +52,11 @@ const ActualUI = ({
 }) => {
   const createDietMutation = useCreateDiet();
   const updateDietMutation = useUpdateDiet(data?.id ?? 0);
-  const loading = createDietMutation.isPending || updateDietMutation.isPending;
+  const deleteDietMutation = useDeleteDiet();
+  const loading =
+    createDietMutation.isPending ||
+    updateDietMutation.isPending ||
+    deleteDietMutation.isPending;
   const onModifyDiet = (dietData: {
     eatenList?: { name: string; cal: number }[];
     memo?: string;
@@ -63,9 +70,32 @@ const ActualUI = ({
     });
   };
   const setError = useSetAtom(errorAtom);
+  const setAlert = useSetAtom(alertAtom);
+  const setConfirm = useSetAtom(confirmAtom);
   const [memo, setMemo] = useState(data?.memo || "");
   const [eatenList, setEatenList] = useState<Eaten[]>(data?.eatenList || []);
   const [openEdit, setOpenEdit] = useState<Eaten | null>(null);
+
+  const onDeleteDiet = () => {
+    if (!data?.id) return;
+
+    setConfirm({
+      title: "식단 기록 삭제",
+      message: "정말로 해당 날짜의 식단 기록을 삭제하시겠습니까?",
+      confirmEvent: () => {
+        deleteDietMutation.mutate(
+          { id: data.id },
+          {
+            onSuccess: () => {
+              setAlert("식단 기록이 삭제되었습니다.");
+              onClose();
+            },
+          },
+        );
+      },
+    });
+  };
+
   return (
     <div className={MODAL_BOX} style={{ gap: "15px" }}>
       {openEdit && (
@@ -128,6 +158,19 @@ const ActualUI = ({
         onCancel={onClose}
         isLoading={loading}
       />
+      {data?.id && (
+        <Button
+          text="삭제"
+          icon={<FaTrash />}
+          contained={false}
+          onClick={onDeleteDiet}
+          width="100%"
+          height={35}
+          isLoading={deleteDietMutation.isPending}
+          style={{ color: "#b91c1c" }}
+          aria-label="식단 기록 삭제"
+        />
+      )}
     </div>
   );
 };

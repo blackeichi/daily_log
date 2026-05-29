@@ -3,6 +3,7 @@ import { backendFetch, handleRouteError, createResponse } from "@/lib/api/server
 
 // GET /api/calories?date=
 // POST /api/calories
+// DELETE /api/calories  (body: { id })
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -21,6 +22,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { data, cookies: setCookies } = await backendFetch("/calories", {
       method: "POST",
+      body,
+    });
+    return createResponse(data, setCookies);
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { data, cookies: setCookies } = await backendFetch("/calories", {
+      method: "DELETE",
       body,
     });
     return createResponse(data, setCookies);
