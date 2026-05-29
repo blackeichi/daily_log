@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MdDelete } from "react-icons/md";
 import { IoIosMenu } from "react-icons/io";
+import { FaLock, FaUnlock } from "react-icons/fa";
 import { memo, useCallback, useMemo } from "react";
 import { COLOR_THEME } from "@/constants/system";
 import { DEBOUNCE_DELAYS } from "@/constants/timing";
@@ -21,8 +22,10 @@ function DataListItemComponent({
   debounce,
   onChangeText,
   onDeleteItem,
+  onToggleDisabled,
   onChangeDone,
   needCheckBox,
+  needDisableButton,
 }: {
   title: string;
   item: DataListItemType;
@@ -32,12 +35,17 @@ function DataListItemComponent({
   debounce: (func: () => void, delay: number) => void;
   onChangeText: (index: number, text: string) => void;
   onDeleteItem: (index: number) => void;
+  onToggleDisabled: (index: number) => void;
   onChangeDone: (index: number, isDone: boolean) => void;
   needCheckBox: boolean;
+  needDisableButton: boolean;
 }) {
   const setConfirmMgs = useSetAtom(confirmAtom);
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: item.id, disabled: !enableDrag || !isEditing });
+    useSortable({
+      id: item.id,
+      disabled: !enableDrag || !isEditing || !!item.isDisabled,
+    });
   const style = useMemo(
     () => ({
       transform: CSS.Transform.toString(transform),
@@ -46,7 +54,7 @@ function DataListItemComponent({
     [transform, transition],
   );
   const isSection = item?.type === "section";
-  const dragEnabled = isEditing && enableDrag;
+  const dragEnabled = isEditing && enableDrag && !item.isDisabled;
 
   const handleCheckboxChange = useCallback(
     (val: boolean) => {
@@ -54,6 +62,10 @@ function DataListItemComponent({
     },
     [index, onChangeDone],
   );
+
+  const handleToggleDisabled = useCallback(() => {
+    onToggleDisabled(index);
+  }, [index, onToggleDisabled]);
 
   const handleInputChange = useCallback(
     (val: string) => {
@@ -81,7 +93,7 @@ function DataListItemComponent({
       {...(dragEnabled ? attributes : {})}
       className={`flex min-h-12 items-center shadow-xs shadow-stone-500 pl-3 pr-1 py-1 ${
         isSection ? "bg-stone-200 border-l-4 border-stone-600" : "bg-white"
-      }`}
+      } ${item.isDisabled ? "opacity-60" : ""}`}
       onSubmit={(e) => e.preventDefault()}
     >
       {!isEditing && needCheckBox && !isSection && (
@@ -89,6 +101,7 @@ function DataListItemComponent({
           id={item.id.toString()}
           value={item.isDone || false}
           setValue={handleCheckboxChange}
+          disabled={!!item.isDisabled}
         />
       )}
       {!isEditing ? (
@@ -117,6 +130,7 @@ function DataListItemComponent({
             defaultValue={item.text}
             setValue={handleInputChange}
             width="100%"
+            disabled={!!item.isDisabled}
             placeholder={
               isSection
                 ? "섹터 제목을 입력하세요."
@@ -125,6 +139,18 @@ function DataListItemComponent({
             maxLength={300}
           />
         </div>
+      )}
+      {needDisableButton && !isEditing && !isSection && (
+        <IconButton
+          icon={item.isDisabled ? FaLock : FaUnlock}
+          className="w-7 h-7 rounded-full ml-2"
+          bgColor="transparent"
+          color={item.isDisabled ? "#b91c1c" : COLOR_THEME.DARK_GRAY}
+          onClick={handleToggleDisabled}
+          size={15}
+          tooltip={item.isDisabled ? "항목 활성화" : "항목 비활성화"}
+          ariaLabel={item.isDisabled ? "항목 활성화" : "항목 비활성화"}
+        />
       )}
       {isEditing && (
         <div className="flex gap-0.5 z-10 items-center ml-2">
@@ -135,11 +161,12 @@ function DataListItemComponent({
             color={COLOR_THEME.DARK_GRAY}
             onClick={handleDelete}
             size={18}
+            disabled={!!item.isDisabled}
             ariaLabel="항목 삭제"
           />
           <IoIosMenu
             size={22}
-            className="cursor-grab w-7 touch-none"
+            className={`${item.isDisabled ? "cursor-not-allowed opacity-40" : "cursor-grab"} w-7 touch-none`}
             aria-label="항목 순서 변경"
             role="button"
             tabIndex={dragEnabled ? 0 : -1}

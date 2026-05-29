@@ -21,6 +21,8 @@ function DataListComponent({
   defaultDataList,
   onSaveDataList,
   needCheckBox = false,
+  storageKey,
+  needDisableButton = false,
   emptyMessage = "조회할 목록이 없습니다.",
 }: {
   loading?: boolean;
@@ -29,6 +31,8 @@ function DataListComponent({
   defaultDataList: DataListItemType[];
   onSaveDataList: (val: DataListItemType[]) => void;
   needCheckBox?: boolean;
+  storageKey?: string | undefined;
+  needDisableButton?: boolean;
   emptyMessage?: string;
 }) {
   const {
@@ -48,11 +52,13 @@ function DataListComponent({
     handleToggleOpen,
     handleChangeText,
     handleDeleteItem,
+    handleToggleDisabled,
     handleChangeDone,
   } = useDataList({
     loading,
     defaultDataList,
     onSaveDataList,
+    storageKey,
   });
 
   const renderedItems = useMemo(
@@ -68,8 +74,10 @@ function DataListComponent({
           debounce={debounce}
           onChangeText={handleChangeText}
           onDeleteItem={handleDeleteItem}
+          onToggleDisabled={handleToggleDisabled}
           onChangeDone={handleChangeDone}
           needCheckBox={needCheckBox}
+          needDisableButton={needDisableButton}
         />
       )),
     [
@@ -80,8 +88,10 @@ function DataListComponent({
       debounce,
       handleChangeText,
       handleDeleteItem,
+      handleToggleDisabled,
       handleChangeDone,
       needCheckBox,
+      needDisableButton,
     ],
   );
 

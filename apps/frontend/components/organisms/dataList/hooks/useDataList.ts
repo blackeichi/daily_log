@@ -13,12 +13,16 @@ import { DEBOUNCE_DELAYS } from "@/constants/timing";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import type { DataListItemType, UseDataListParams } from "../dataList";
 
+const DATA_LIST_OPEN_STORAGE_PREFIX = "DAILY_LOG_DATA_LIST_OPEN";
+
 export function useDataList({
   loading,
   defaultDataList,
   onSaveDataList,
+  storageKey,
 }: UseDataListParams) {
   const debounce = useDebounce();
+  const saveDebounce = useDebounce();
 
   const [isOpen, setIsOpen] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -32,6 +36,22 @@ export function useDataList({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!storageKey) return;
+
+    try {
+      const savedValue = localStorage.getItem(
+        `${DATA_LIST_OPEN_STORAGE_PREFIX}:${storageKey}`,
+      );
+
+      if (savedValue !== null) {
+        setIsOpen(JSON.parse(savedValue));
+      }
+    } catch {
+      setIsOpen(true);
+    }
+  }, [storageKey]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -77,14 +97,29 @@ export function useDataList({
   const handleToggleOpen = useCallback(() => {
     if (loading || dataList.length === 0) return;
 
-    setIsOpen((prev) => !prev);
-  }, [dataList.length, loading]);
+    setIsOpen((prev) => {
+      const next = !prev;
+
+      if (storageKey) {
+        try {
+          localStorage.setItem(
+            `${DATA_LIST_OPEN_STORAGE_PREFIX}:${storageKey}`,
+            JSON.stringify(next),
+          );
+        } catch {
+          // Ignore storage failures so the in-memory toggle still works.
+        }
+      }
+
+      return next;
+    });
+  }, [dataList.length, loading, storageKey]);
 
   const handleChangeText = useCallback((index: number, text: string) => {
     setDataList((prev) => {
       const target = prev[index];
 
-      if (!target || target.text === text) return prev;
+      if (!target || target.isDisabled || target.text === text) return prev;
 
       const next = [...prev];
       next[index] = { ...target, text };
@@ -95,7 +130,7 @@ export function useDataList({
 
   const handleDeleteItem = useCallback((index: number) => {
     setDataList((prev) => {
-      if (!prev[index]) return prev;
+      if (!prev[index] || prev[index].isDisabled) return prev;
 
       const next = [...prev];
       next.splice(index, 1);
@@ -104,6 +139,31 @@ export function useDataList({
     });
   }, []);
 
+  const handleToggleDisabled = useCallback(
+    (index: number) => {
+      let nextList: DataListItemType[] | null = null;
+
+      setDataList((prev) => {
+        const target = prev[index];
+
+        if (!target || target.type === "section") return prev;
+
+        const next = [...prev];
+        next[index] = { ...target, isDisabled: !target.isDisabled };
+        nextList = next;
+
+        return next;
+      });
+
+      saveDebounce(() => {
+        if (nextList) {
+          onSaveDataList(nextList);
+        }
+      }, DEBOUNCE_DELAYS.CHECKBOX);
+    },
+    [onSaveDataList, saveDebounce],
+  );
+
   const handleChangeDone = useCallback(
     (index: number, isDone: boolean) => {
       let nextList: DataListItemType[] | null = null;
@@ -111,7 +171,9 @@ export function useDataList({
       setDataList((prev) => {
         const target = prev[index];
 
-        if (!target || target.isDone === isDone) return prev;
+        if (!target || target.isDisabled || target.isDone === isDone) {
+          return prev;
+        }
 
         const next = [...prev];
         next[index] = { ...target, isDone };
@@ -120,13 +182,13 @@ export function useDataList({
         return next;
       });
 
-      debounce(() => {
+      saveDebounce(() => {
         if (nextList) {
           onSaveDataList(nextList);
         }
       }, DEBOUNCE_DELAYS.CHECKBOX);
     },
-    [debounce, onSaveDataList],
+    [onSaveDataList, saveDebounce],
   );
 
   const hasItems = dataList.length > 0;
@@ -161,6 +223,7 @@ export function useDataList({
     handleToggleOpen,
     handleChangeText,
     handleDeleteItem,
+    handleToggleDisabled,
     handleChangeDone,
   };
 }

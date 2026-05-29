@@ -32,6 +32,7 @@ export type Todo = {
   id: number;
   text: string;
   isDone: boolean;
+  isDisabled?: boolean;
 };
 
 export type GetTodosType = {

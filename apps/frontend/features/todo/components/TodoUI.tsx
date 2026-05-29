@@ -71,6 +71,8 @@ export default function TodoUI({
           defaultDataList={data?.[listName] || []}
           onSaveDataList={(val) => handleUpdateList(listName, val as Todo[])}
           needCheckBox
+          needDisableButton
+          storageKey={`todo:${listName}`}
           emptyMessage="데이터가 없습니다. Todo를 추가해주세요."
         />
       ))}

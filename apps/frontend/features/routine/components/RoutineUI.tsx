@@ -45,6 +45,7 @@ export default function RoutineUI({ initialData }: { initialData?: Routine }) {
           name={LIST_NAMES[listName]}
           defaultDataList={data?.[listName] || []}
           onSaveDataList={(val) => handleUpdateList(listName, val)}
+          storageKey={`routine:${listName}`}
           emptyMessage="데이터가 없습니다. 루틴을 추가해주세요."
         />
       ))}
