@@ -15,7 +15,7 @@ import { AddNewCalorie } from "./AddNewCalorie";
 import { EditCalorie } from "./EditCalorie";
 import { useSetAtom } from "jotai";
 import { alertAtom, confirmAtom, errorAtom } from "@/lib/atom";
-import Button from "@/components/atoms/button";
+import IconButton from "@/components/molecules/iconButton";
 import { FaTrash } from "react-icons/fa";
 
 const dietTableHeaders = [
@@ -112,6 +112,19 @@ const ActualUI = ({
           식단
           <span className="text-sm text-stone-500 font-normal">({date})</span>
         </div>
+        {data?.id && (
+          <IconButton
+            icon={FaTrash}
+            onClick={onDeleteDiet}
+            disabled={deleteDietMutation.isPending}
+            className="h-8 w-8 rounded-full"
+            bgColor="transparent"
+            color="#b91c1c"
+            size={15}
+            tooltip="식단 기록 삭제"
+            ariaLabel="식단 기록 삭제"
+          />
+        )}
       </span>
       <AddNewCalorie setEatenList={setEatenList} setError={setError} />
       <div className="w-full my-1" style={{ height: "300px" }}>
@@ -158,19 +171,6 @@ const ActualUI = ({
         onCancel={onClose}
         isLoading={loading}
       />
-      {data?.id && (
-        <Button
-          text="삭제"
-          icon={<FaTrash />}
-          contained={false}
-          onClick={onDeleteDiet}
-          width="100%"
-          height={35}
-          isLoading={deleteDietMutation.isPending}
-          style={{ color: "#b91c1c" }}
-          aria-label="식단 기록 삭제"
-        />
-      )}
     </div>
   );
 };
