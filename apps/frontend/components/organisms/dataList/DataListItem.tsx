@@ -101,7 +101,6 @@ function DataListItemComponent({
           id={item.id.toString()}
           value={item.isDone || false}
           setValue={handleCheckboxChange}
-          disabled={!!item.isDisabled}
         />
       )}
       {!isEditing ? (

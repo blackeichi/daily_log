@@ -171,7 +171,7 @@ export function useDataList({
       setDataList((prev) => {
         const target = prev[index];
 
-        if (!target || target.isDisabled || target.isDone === isDone) {
+        if (!target || target.isDone === isDone) {
           return prev;
         }
 
