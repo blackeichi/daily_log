@@ -6,6 +6,7 @@ export const ROUTE = {
   DIET: "/diet",
   LOG: "/log",
   ROUTINE: "/routine",
+  POMODORO: "/pomodoro",
   PROFILE: "/profile",
   // ENGLISH: "/english",
 };
@@ -16,6 +17,7 @@ export const MENU_LIST = [
   { id: "TODO", name: "📋 To-Do", href: ROUTE.TODO },
   { id: "LOG", name: "📓 로그", href: ROUTE.LOG },
   { id: "DIET", name: "📅 DIET", href: ROUTE.DIET },
+  { id: "POMODORO", name: "⏱ 포모도로", href: ROUTE.POMODORO },
   // { id: "ENGLISH", name: "🗽 ENGLISH", href: ROUTE.ENGLISH },
   { id: "PROFILE", name: "🪪 프로필", href: ROUTE.PROFILE },
 ];
