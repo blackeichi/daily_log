@@ -6,6 +6,8 @@ import {
   ValidateNested,
   IsNumber,
   IsDateString,
+  IsInt,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -63,4 +65,24 @@ export class UpdateCaloriesDto {
   @IsOptional()
   @IsNumber()
   totalCalorie?: number;
+
+  @ApiProperty({
+    description: '해당 날짜의 목표 칼로리',
+    required: false,
+    example: 1800,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  goalCalorie?: number;
+
+  @ApiProperty({
+    description: '해당 날짜의 최대 칼로리',
+    required: false,
+    example: 2400,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  maximumCalorie?: number;
 }

@@ -107,6 +107,8 @@ model Calorie {
   eatenList Json
   memo      String   @db.VarChar(200)
   totalCalorie Int
+  goalCalorie Int
+  maximumCalorie Int
   date   String
   createdAt DateTime @default(now())
   isSuccess Boolean @default(true)

@@ -22,6 +22,8 @@ export class CaloriesService {
         id: true,
         memo: true,
         totalCalorie: true,
+        goalCalorie: true,
+        maximumCalorie: true,
         date: true,
         isSuccess: true,
       },
@@ -31,7 +33,7 @@ export class CaloriesService {
     });
   }
   async getCalorie(userId: number, date: string) {
-    const calorie = this.prisma.calorie.findFirst({
+    const calorie = await this.prisma.calorie.findFirst({
       where: { userId, date },
     });
     if (!calorie) {
@@ -50,22 +52,29 @@ export class CaloriesService {
     }
     const user = await this.prisma.user.findUnique({
       where: { id: id },
-      select: { maximumCalorie: true },
+      select: { goalCalorie: true, maximumCalorie: true },
     });
     if (!user) {
       throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
-    const totalCalorie = dto.totalCalorie || 0;
+    const totalCalorie = dto.totalCalorie ?? 0;
+    const goalCalorie = dto.goalCalorie ?? user.goalCalorie;
+    const maximumCalorie = dto.maximumCalorie ?? user.maximumCalorie;
+    this.validateCalorieLimits(goalCalorie, maximumCalorie);
+
     const data = await this.prisma.calorie.create({
       data: {
         userId: id,
         memo: dto.memo || '',
         totalCalorie: totalCalorie,
+        goalCalorie,
+        maximumCalorie,
         date: dto.date || new Date().toISOString().split('T')[0],
-        isSuccess: totalCalorie <= user.maximumCalorie ? true : false,
-        eatenList: dto.eatenList
-          ? JSON.parse(JSON.stringify(dto.eatenList))
-          : [],
+        isSuccess: totalCalorie <= maximumCalorie,
+        eatenList: (dto.eatenList ?? []).map((item) => ({
+          name: item.name,
+          cal: item.cal,
+        })),
       },
       include: { user: true },
     });
@@ -82,24 +91,24 @@ export class CaloriesService {
     if (!existingCalorie || existingCalorie.userId !== userId) {
       throw new BadRequestException('수정 권한이 없습니다.');
     }
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { maximumCalorie: true },
-    });
-    if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    }
-    const totalCalorie = dto.totalCalorie || 0;
+    const totalCalorie = dto.totalCalorie ?? 0;
+    const goalCalorie = dto.goalCalorie ?? existingCalorie.goalCalorie;
+    const maximumCalorie = dto.maximumCalorie ?? existingCalorie.maximumCalorie;
+    this.validateCalorieLimits(goalCalorie, maximumCalorie);
+
     const data = await this.prisma.calorie.update({
       where: { id: calorieId },
       data: {
         memo: dto.memo || '',
         totalCalorie: totalCalorie,
+        goalCalorie,
+        maximumCalorie,
         date: dto.date || existingCalorie.date,
-        isSuccess: totalCalorie <= user.maximumCalorie ? true : false,
-        eatenList: dto.eatenList
-          ? JSON.parse(JSON.stringify(dto.eatenList))
-          : [],
+        isSuccess: totalCalorie <= maximumCalorie,
+        eatenList: (dto.eatenList ?? []).map((item) => ({
+          name: item.name,
+          cal: item.cal,
+        })),
       },
       include: { user: true },
     });
@@ -122,5 +131,22 @@ export class CaloriesService {
 
     await this.prisma.calorie.delete({ where: { id: calorieId } });
     return { message: '성공적으로 칼로리 기록이 삭제되었습니다.' };
+  }
+
+  private validateCalorieLimits(goalCalorie: number, maximumCalorie: number) {
+    if (
+      !Number.isInteger(goalCalorie) ||
+      !Number.isInteger(maximumCalorie) ||
+      goalCalorie < 0 ||
+      maximumCalorie < 0
+    ) {
+      throw new BadRequestException('칼로리 기준은 0 이상의 정수여야 합니다.');
+    }
+
+    if (goalCalorie > maximumCalorie) {
+      throw new BadRequestException(
+        '목표 칼로리는 최대 칼로리보다 클 수 없습니다.',
+      );
+    }
   }
 }
