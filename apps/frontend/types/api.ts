@@ -64,6 +64,8 @@ export type GetAllCalories = {
   id: number;
   memo: string;
   totalCalorie: number;
+  goalCalorie: number;
+  maximumCalorie: number;
   date: string;
   isSuccess: boolean;
 };
@@ -73,6 +75,8 @@ export type GetCalorie = {
   eatenList: { name: string; cal: number; index: number }[];
   memo: string;
   totalCalorie: number;
+  goalCalorie: number;
+  maximumCalorie: number;
   date: string;
   isSuccess: boolean;
 };
@@ -107,6 +111,8 @@ export type UpdateCaloriesRequest = {
   memo?: string;
   date?: string;
   totalCalorie?: number;
+  goalCalorie?: number;
+  maximumCalorie?: number;
 };
 
 export type UpdateTodoRequest = {

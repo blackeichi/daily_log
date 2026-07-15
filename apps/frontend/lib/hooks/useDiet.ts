@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 import { GetAllCalories, GetCalorie } from "@/types/data";
+import type { UpdateCaloriesRequest } from "@/types/api";
 import { QUERY_TIMES } from "@/constants/timing";
 
 export const dietKeys = {
@@ -43,11 +44,9 @@ export function useCreateDiet() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
-      eatenList?: { name: string; cal: number }[];
-      memo?: string;
-      date?: string;
-    }): Promise<{ message: string; data: GetCalorie }> => {
+    mutationFn: async (
+      data: UpdateCaloriesRequest,
+    ): Promise<{ message: string; data: GetCalorie }> => {
       const response = await apiClient<{ message: string; data: GetCalorie }>(
         "/calories",
         {
@@ -75,11 +74,7 @@ export function useUpdateDiet(id: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: {
-      eatenList?: { name: string; cal: number }[];
-      memo?: string;
-      date?: string;
-    }) =>
+    mutationFn: (data: UpdateCaloriesRequest) =>
       apiClient<{
         message: string;
         data: GetCalorie;

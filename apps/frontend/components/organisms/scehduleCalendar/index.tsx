@@ -15,11 +15,21 @@ const dateColorMap = {
   otherMonth: "bg-stone-100 text-stone-500 hover:bg-stone-200",
 };
 
-const getEmoji = (calorie: number | undefined, user?: User | null) => {
-  if (calorie === undefined || !user) return null;
-  if (calorie <= user.goalCalorie)
+const getEmoji = (
+  calorie: number | undefined,
+  goalCalorie: number | undefined,
+  maximumCalorie: number | undefined,
+  user?: User | null,
+) => {
+  if (calorie === undefined) return null;
+
+  const goal = goalCalorie ?? user?.goalCalorie;
+  const maximum = maximumCalorie ?? user?.maximumCalorie;
+  if (goal === undefined || maximum === undefined) return null;
+
+  if (calorie <= goal)
     return <IoMdTrophy className="text-yellow-500 text-base sm:text-lg" />;
-  if (calorie <= user.maximumCalorie)
+  if (calorie <= maximum)
     return <FaRegCheckCircle className="text-green-500 text-base sm:text-lg" />;
   return <TbPigMoney className="text-pink-400 text-base sm:text-lg" />;
 };
@@ -38,6 +48,8 @@ const Calendar = ({
       emotion?: string;
       text?: string;
       calorie?: number;
+      goalCalorie?: number;
+      maximumCalorie?: number;
     };
   };
   loading?: boolean;
@@ -96,7 +108,12 @@ const Calendar = ({
                 const dayOfWeek = getDayOfWeek(day);
                 const textColor = getTextColor(dayOfWeek);
                 const value = calendarData[dateStr];
-                const emoji = getEmoji(value?.calorie, user);
+                const emoji = getEmoji(
+                  value?.calorie,
+                  value?.goalCalorie,
+                  value?.maximumCalorie,
+                  user,
+                );
 
                 return (
                   <button

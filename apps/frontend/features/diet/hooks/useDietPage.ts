@@ -48,6 +48,8 @@ export function useDietPage(
       nextCalendarData[item.date] = {
         isChecked: item.isSuccess,
         calorie: item.totalCalorie,
+        goalCalorie: item.goalCalorie,
+        maximumCalorie: item.maximumCalorie,
       };
     });
 
@@ -61,8 +63,6 @@ export function useDietPage(
   }, [data, transformedCalendarData]);
 
   const totalMinusCalorie = useMemo(() => {
-    if (!user) return 0;
-
     let total = 0;
 
     Object.keys(calendarData).forEach((dateString) => {
@@ -70,12 +70,12 @@ export function useDietPage(
       if (!item) return;
 
       if (isSameMonth(new Date(dateString), targetMonth)) {
-        total += user.maximumCalorie - item.calorie;
+        total += item.maximumCalorie - item.calorie;
       }
     });
 
     return total;
-  }, [calendarData, targetMonth, user]);
+  }, [calendarData, targetMonth]);
 
   const handleCalendarClick = useCallback(
     (clickedDate: string) => {

@@ -5,16 +5,17 @@ import {
   useUpdateDiet,
 } from "@/lib/hooks/useDiet";
 import { Eaten, GetCalorie } from "@/types/data";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FcCalendar } from "react-icons/fc";
 import { MODAL_BOX } from "@/constants/styles";
 import { TextArea } from "@/components/atoms/textArea";
+import { Input } from "@/components/atoms/input";
 import { OkCancelBtns } from "@/components/molecules/okCancelBtns";
 import TableComponent from "../../table";
 import { AddNewCalorie } from "./AddNewCalorie";
 import { EditCalorie } from "./EditCalorie";
-import { useSetAtom } from "jotai";
-import { alertAtom, confirmAtom, errorAtom } from "@/lib/atom";
+import { useAtomValue, useSetAtom } from "jotai";
+import { alertAtom, confirmAtom, errorAtom, userAtom } from "@/lib/atom";
 import IconButton from "@/components/molecules/iconButton";
 import { FaTrash } from "react-icons/fa";
 
@@ -61,6 +62,8 @@ const ActualUI = ({
     eatenList?: { name: string; cal: number }[];
     memo?: string;
     date?: string;
+    goalCalorie?: number;
+    maximumCalorie?: number;
   }) => {
     const mutation = data?.id ? updateDietMutation : createDietMutation;
     mutation.mutate(dietData, {
@@ -72,9 +75,25 @@ const ActualUI = ({
   const setError = useSetAtom(errorAtom);
   const setAlert = useSetAtom(alertAtom);
   const setConfirm = useSetAtom(confirmAtom);
+  const user = useAtomValue(userAtom);
   const [memo, setMemo] = useState(data?.memo || "");
   const [eatenList, setEatenList] = useState<Eaten[]>(data?.eatenList || []);
+  const [goalCalorie, setGoalCalorie] = useState(
+    data?.goalCalorie ?? user?.goalCalorie ?? 0,
+  );
+  const [maximumCalorie, setMaximumCalorie] = useState(
+    data?.maximumCalorie ?? user?.maximumCalorie ?? 0,
+  );
+  const hasInitializedLimitsRef = useRef(!!data || !!user);
   const [openEdit, setOpenEdit] = useState<Eaten | null>(null);
+
+  useEffect(() => {
+    if (data || !user || hasInitializedLimitsRef.current) return;
+
+    setGoalCalorie(user.goalCalorie);
+    setMaximumCalorie(user.maximumCalorie);
+    hasInitializedLimitsRef.current = true;
+  }, [data, user]);
 
   const onDeleteDiet = () => {
     if (!data?.id) return;
@@ -126,6 +145,28 @@ const ActualUI = ({
           />
         )}
       </span>
+      <div className="grid w-full grid-cols-2 gap-3">
+        <Input
+          id="daily_goal_calorie_input"
+          value={goalCalorie}
+          setValue={setGoalCalorie}
+          type="number"
+          label="목표 칼로리"
+          width="100%"
+          min={0}
+          max={100000}
+        />
+        <Input
+          id="daily_maximum_calorie_input"
+          value={maximumCalorie}
+          setValue={setMaximumCalorie}
+          type="number"
+          label="최대 칼로리"
+          width="100%"
+          min={0}
+          max={100000}
+        />
+      </div>
       <AddNewCalorie setEatenList={setEatenList} setError={setError} />
       <div className="w-full my-1" style={{ height: "300px" }}>
         <TableComponent<Eaten>
@@ -160,11 +201,18 @@ const ActualUI = ({
       <OkCancelBtns
         submitText="저장"
         onSubmit={() => {
+          if (goalCalorie > maximumCalorie) {
+            setError("목표 칼로리는 최대 칼로리보다 클 수 없습니다.");
+            return;
+          }
+
           const newList = eatenList.filter((e) => e.name.trim() !== "");
           onModifyDiet({
             memo,
             eatenList: newList,
             date,
+            goalCalorie: Number(goalCalorie),
+            maximumCalorie: Number(maximumCalorie),
           });
         }}
         cancelText="닫기"

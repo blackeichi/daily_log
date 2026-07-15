@@ -12,7 +12,12 @@ export type {
 } from "./api";
 
 export type DietCalendarData = {
-  [key: string]: { isChecked: boolean; calorie: number };
+  [key: string]: {
+    isChecked: boolean;
+    calorie: number;
+    goalCalorie: number;
+    maximumCalorie: number;
+  };
 };
 
 export type EachRoutineT = {

@@ -3,8 +3,8 @@
 import moment from "moment";
 import { useCallback, useMemo } from "react";
 import type { EChartsOption } from "echarts";
-import { useAtomValue, useSetAtom } from "jotai";
-import { modalAtom, userAtom } from "@/lib/atom";
+import { useSetAtom } from "jotai";
+import { modalAtom } from "@/lib/atom";
 import { useAllDiet } from "@/lib/hooks/useDiet";
 import { useLogs } from "@/lib/hooks/useLog";
 import { MODAL_STATE } from "@/constants/system";
@@ -15,7 +15,6 @@ import { donutBaseOption, getCalorieStatus, getNumericValue } from "../utils";
 export function useHomePage(initialMessage?: string) {
   const message = initialMessage?.trim() || DEFAULT_MESSAGE;
 
-  const user = useAtomValue(userAtom);
   const setModal = useSetAtom(modalAtom);
 
   const endDate = moment().format("YYYY-MM-DD");
@@ -39,8 +38,6 @@ export function useHomePage(initialMessage?: string) {
   } = useLogs(startDate, endDate);
 
   const calorieStatusData = useMemo(() => {
-    if (!user) return [];
-
     const counts: Record<CalorieStatusLabel, number> = {
       "목표 달성": 0,
       "일일섭취칼로리 달성": 0,
@@ -50,8 +47,8 @@ export function useHomePage(initialMessage?: string) {
     calories.forEach((item) => {
       const status = getCalorieStatus(
         item.totalCalorie,
-        user.goalCalorie,
-        user.maximumCalorie,
+        item.goalCalorie,
+        item.maximumCalorie,
       );
       counts[status] += 1;
     });
@@ -59,7 +56,7 @@ export function useHomePage(initialMessage?: string) {
     return (Object.entries(counts) as [CalorieStatusLabel, number][]).map(
       ([name, value]) => ({ name, value }),
     );
-  }, [calories, user]);
+  }, [calories]);
 
   const scoreDistributionData = useMemo(() => {
     const counts: Record<ScoreLabel, number> = {
@@ -96,6 +93,8 @@ export function useHomePage(initialMessage?: string) {
         date,
         shortDate: moment(date).format("MM/DD"),
         totalCalorie: item?.totalCalorie ?? null,
+        goalCalorie: item?.goalCalorie ?? null,
+        maximumCalorie: item?.maximumCalorie ?? null,
       };
     });
   }, [calories, startDate]);
@@ -147,17 +146,28 @@ export function useHomePage(initialMessage?: string) {
       tooltip: {
         trigger: "axis",
         formatter: (params: unknown) => {
-          const list = params as Array<{ axisValue?: string; data?: unknown }>;
+          const list = params as Array<{
+            axisValue?: string;
+            data?: unknown;
+            marker?: string;
+            seriesName?: string;
+          }>;
           const first = list?.[0];
-          const value = getNumericValue(first?.data);
-          const hasValue = first?.data !== null && first?.data !== undefined;
+          const values = list
+            .filter(
+              (item) => item.data !== null && item.data !== undefined,
+            )
+            .map(
+              (item) =>
+                `${item.marker ?? ""}${item.seriesName ?? ""}: ${getNumericValue(item.data)} kcal`,
+            );
 
           return `${first?.axisValue ?? ""}<br/>${
-            hasValue ? value : "기록 없음"
+            values.length ? values.join("<br/>") : "기록 없음"
           }`;
         },
       },
-      grid: { left: 36, right: 20, top: 30, bottom: 40 },
+      grid: { left: 36, right: 20, top: 30, bottom: 60 },
       xAxis: {
         type: "category",
         data: calorieTrend.map((item) => item.shortDate),
@@ -165,6 +175,9 @@ export function useHomePage(initialMessage?: string) {
       },
       yAxis: {
         type: "value",
+      },
+      legend: {
+        bottom: 0,
       },
       series: [
         {
@@ -174,30 +187,35 @@ export function useHomePage(initialMessage?: string) {
           connectNulls: false,
           data: calorieTrend.map((item) => item.totalCalorie),
           symbolSize: 8,
-          markLine: user
-            ? {
-                silent: true,
-                data: [
-                  { yAxis: user.goalCalorie, name: "goal" },
-                  { yAxis: user.maximumCalorie, name: "maximum" },
-                ],
-              }
-            : undefined,
+        },
+        {
+          name: "목표 칼로리",
+          type: "line",
+          connectNulls: false,
+          data: calorieTrend.map((item) => item.goalCalorie),
+          symbol: "none",
+          lineStyle: { type: "dashed" },
+        },
+        {
+          name: "최대 칼로리",
+          type: "line",
+          connectNulls: false,
+          data: calorieTrend.map((item) => item.maximumCalorie),
+          symbol: "none",
+          lineStyle: { type: "dotted" },
         },
       ],
     } as EChartsOption;
-  }, [calorieTrend, user]);
+  }, [calorieTrend]);
 
   const openCalorieStatusModal = useCallback(
     (label: CalorieStatusLabel) => {
-      if (!user) return;
-
       const filtered = calories.filter((item) => {
         return (
           getCalorieStatus(
             item.totalCalorie,
-            user.goalCalorie,
-            user.maximumCalorie,
+            item.goalCalorie,
+            item.maximumCalorie,
           ) === label
         );
       });
@@ -211,7 +229,7 @@ export function useHomePage(initialMessage?: string) {
         },
       });
     },
-    [user, calories, setModal],
+    [calories, setModal],
   );
 
   const openScoreModal = useCallback(

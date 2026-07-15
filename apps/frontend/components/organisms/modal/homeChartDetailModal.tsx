@@ -101,6 +101,10 @@ export default function HomeChartDetailModal({
                   <div className="mt-1 text-sm text-stone-500 line-clamp-2">
                     {item.memo || "메모 없음"}
                   </div>
+                  <div className="mt-2 text-xs text-stone-500">
+                    목표 {item.goalCalorie} kcal · 최대 {item.maximumCalorie}{" "}
+                    kcal
+                  </div>
                 </div>
 
                 <div className="rounded-full px-3 py-1 text-sm font-medium bg-stone-100 text-stone-700">
