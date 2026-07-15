@@ -77,7 +77,12 @@ const ActualUI = ({
   const setConfirm = useSetAtom(confirmAtom);
   const user = useAtomValue(userAtom);
   const [memo, setMemo] = useState(data?.memo || "");
-  const [eatenList, setEatenList] = useState<Eaten[]>(data?.eatenList || []);
+  const [eatenList, setEatenList] = useState<Eaten[]>(
+    (data?.eatenList || []).map((item, index) => ({
+      ...item,
+      index: index + 1,
+    })),
+  );
   const [goalCalorie, setGoalCalorie] = useState(
     data?.goalCalorie ?? user?.goalCalorie ?? 0,
   );
@@ -145,28 +150,6 @@ const ActualUI = ({
           />
         )}
       </span>
-      <div className="grid w-full grid-cols-2 gap-3">
-        <Input
-          id="daily_goal_calorie_input"
-          value={goalCalorie}
-          setValue={setGoalCalorie}
-          type="number"
-          label="목표 칼로리"
-          width="100%"
-          min={0}
-          max={100000}
-        />
-        <Input
-          id="daily_maximum_calorie_input"
-          value={maximumCalorie}
-          setValue={setMaximumCalorie}
-          type="number"
-          label="최대 칼로리"
-          width="100%"
-          min={0}
-          max={100000}
-        />
-      </div>
       <AddNewCalorie setEatenList={setEatenList} setError={setError} />
       <div className="w-full my-1" style={{ height: "300px" }}>
         <TableComponent<Eaten>
@@ -189,6 +172,28 @@ const ActualUI = ({
             cal: eatenList.reduce((acc, e) => Number(acc) + Number(e.cal), 0),
             index: 9999,
           }}
+        />
+      </div>
+      <div className="grid w-full grid-cols-2 gap-3">
+        <Input
+          id="daily_goal_calorie_input"
+          value={goalCalorie}
+          setValue={setGoalCalorie}
+          type="number"
+          label="목표 칼로리"
+          width="100%"
+          min={0}
+          max={100000}
+        />
+        <Input
+          id="daily_maximum_calorie_input"
+          value={maximumCalorie}
+          setValue={setMaximumCalorie}
+          type="number"
+          label="최대 칼로리"
+          width="100%"
+          min={0}
+          max={100000}
         />
       </div>
       <TextArea

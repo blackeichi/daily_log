@@ -66,6 +66,7 @@ export function useCreateDiet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diet-all"] });
+      queryClient.invalidateQueries({ queryKey: ["diet"] });
     },
   });
 }
@@ -81,6 +82,7 @@ export function useUpdateDiet(id: number) {
       }>(`/calories/${id}`, { method: "PUT", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diet-all"] });
+      queryClient.invalidateQueries({ queryKey: ["diet"] });
     },
   });
 }

@@ -60,14 +60,13 @@ export const EditCalorie = ({
           onSubmit={() => {
             if (!name || !cal)
               return setError("음식명과 칼로리를 모두 입력해주세요.");
-            setEatenList((prev) => {
-              const newList = [...prev];
-              const target = newList[row.index - 1];
-              if (!target) return prev;
-              target.name = name;
-              target.cal = cal;
-              return newList;
-            });
+            setEatenList((prev) =>
+              prev.map((item) =>
+                item.index === row.index
+                  ? { ...item, name, cal: Number(cal) }
+                  : item,
+              ),
+            );
             setOpenEdit(null);
           }}
         />
