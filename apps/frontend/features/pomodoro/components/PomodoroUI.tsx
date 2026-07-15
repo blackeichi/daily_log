@@ -15,6 +15,7 @@ import { MdTimer } from "react-icons/md";
 type TimerMode = "focus" | "break";
 type TimerStatus = "idle" | "running" | "paused";
 type NotificationState = "unsupported" | "default" | "granted" | "denied";
+type NotificationFeedback = "sent" | "failed" | null;
 
 const DEFAULT_FOCUS_MINUTES = 25;
 const DEFAULT_BREAK_MINUTES = 5;
@@ -41,11 +42,15 @@ function formatTime(totalSeconds: number) {
 }
 
 function getNotificationState(): NotificationState {
-  if (typeof window === "undefined" || !("Notification" in window)) {
+  if (
+    typeof window === "undefined" ||
+    !window.isSecureContext ||
+    !("Notification" in window)
+  ) {
     return "unsupported";
   }
 
-  return Notification.permission;
+  return window.Notification.permission;
 }
 
 export default function PomodoroUI() {
@@ -58,9 +63,13 @@ export default function PomodoroUI() {
   );
   const [notificationState, setNotificationState] =
     useState<NotificationState>("default");
+  const [notificationFeedback, setNotificationFeedback] =
+    useState<NotificationFeedback>(null);
 
   const endTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const serviceWorkerRegistrationRef =
+    useRef<ServiceWorkerRegistration | null>(null);
 
   const currentDurationSeconds = useMemo(
     () => minutesToSeconds(mode === "focus" ? focusMinutes : breakMinutes),
@@ -89,18 +98,70 @@ export default function PomodoroUI() {
     }
   }, []);
 
+  const getServiceWorkerRegistration = useCallback(async () => {
+    if (!("serviceWorker" in navigator) || !window.isSecureContext) {
+      return null;
+    }
+
+    if (serviceWorkerRegistrationRef.current) {
+      return serviceWorkerRegistrationRef.current;
+    }
+
+    try {
+      await navigator.serviceWorker.register(
+        "/pomodoro-notification-sw.js",
+      );
+      const registration = await navigator.serviceWorker.ready;
+      serviceWorkerRegistrationRef.current = registration;
+      return registration;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const showSystemNotification = useCallback(
+    async (title: string, body: string, tag: string) => {
+      if (getNotificationState() !== "granted") return false;
+
+      const registration = await getServiceWorkerRegistration();
+      if (registration) {
+        try {
+          await registration.showNotification(title, {
+            body,
+            tag,
+            icon: "/icon.png",
+            data: { url: "/pomodoro" },
+          });
+          return true;
+        } catch {
+          // Fall back to the page Notification API for older browsers.
+        }
+      }
+
+      try {
+        new window.Notification(title, {
+          body,
+          tag,
+          icon: "/icon.png",
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [getServiceWorkerRegistration],
+  );
+
   const sendNotification = useCallback(
-    (finishedMode: TimerMode) => {
+    async (finishedMode: TimerMode) => {
       const nextLabel = finishedMode === "focus" ? "휴식" : "집중";
       const title =
         finishedMode === "focus" ? "집중 시간이 끝났어요" : "휴식 시간이 끝났어요";
       const body = `${nextLabel} 시간으로 전환할 차례입니다.`;
 
-      if (getNotificationState() === "granted") {
-        new Notification(title, {
-          body,
-          tag: "daily-log-pomodoro",
-        });
+      if (
+        await showSystemNotification(title, body, "daily-log-pomodoro-finished")
+      ) {
         return;
       }
 
@@ -108,7 +169,7 @@ export default function PomodoroUI() {
         window.alert(`${title}\n${body}`);
       }
     },
-    [],
+    [showSystemNotification],
   );
 
   const completeTimer = useCallback(() => {
@@ -123,7 +184,7 @@ export default function PomodoroUI() {
     setStatus("idle");
     setMode(nextMode);
     setRemainingSeconds(nextSeconds);
-    sendNotification(finishedMode);
+    void sendNotification(finishedMode);
   }, [breakMinutes, clearTimer, focusMinutes, mode, sendNotification]);
 
   const tick = useCallback(() => {
@@ -143,6 +204,7 @@ export default function PomodoroUI() {
 
   useEffect(() => {
     setNotificationState(getNotificationState());
+    void getServiceWorkerRegistration();
 
     try {
       const savedSettings = localStorage.getItem(STORAGE_KEY);
@@ -167,6 +229,20 @@ export default function PomodoroUI() {
       setBreakMinutes(DEFAULT_BREAK_MINUTES);
       setRemainingSeconds(minutesToSeconds(DEFAULT_FOCUS_MINUTES));
     }
+  }, [getServiceWorkerRegistration]);
+
+  useEffect(() => {
+    const syncNotificationState = () => {
+      setNotificationState(getNotificationState());
+    };
+
+    window.addEventListener("focus", syncNotificationState);
+    document.addEventListener("visibilitychange", syncNotificationState);
+
+    return () => {
+      window.removeEventListener("focus", syncNotificationState);
+      document.removeEventListener("visibilitychange", syncNotificationState);
+    };
   }, []);
 
   useEffect(() => {
@@ -227,15 +303,29 @@ export default function PomodoroUI() {
     completeTimer();
   }, [completeTimer]);
 
-  const requestNotificationPermission = useCallback(async () => {
-    if (!("Notification" in window)) {
+  const handleNotificationAction = useCallback(async () => {
+    setNotificationFeedback(null);
+
+    if (getNotificationState() === "unsupported") {
       setNotificationState("unsupported");
       return;
     }
 
-    const permission = await Notification.requestPermission();
+    const permission =
+      window.Notification.permission === "default"
+        ? await window.Notification.requestPermission()
+        : window.Notification.permission;
     setNotificationState(permission);
-  }, []);
+
+    if (permission !== "granted") return;
+
+    const sent = await showSystemNotification(
+      "포모도로 알림 테스트",
+      "이 알림이 보이면 타이머 종료 알림을 받을 수 있습니다.",
+      "daily-log-pomodoro-test",
+    );
+    setNotificationFeedback(sent ? "sent" : "failed");
+  }, [showSystemNotification]);
 
   const handleChangeFocusMinutes = useCallback(
     (value: string) => {
@@ -279,9 +369,8 @@ export default function PomodoroUI() {
         <button
           type="button"
           className="flex h-9 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm text-stone-700 transition-colors hover:bg-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500 disabled:cursor-not-allowed disabled:text-stone-400"
-          onClick={requestNotificationPermission}
+          onClick={handleNotificationAction}
           disabled={
-            notificationState === "granted" ||
             notificationState === "denied" ||
             notificationState === "unsupported"
           }
@@ -292,7 +381,7 @@ export default function PomodoroUI() {
             <FaBellSlash size={14} aria-hidden="true" />
           )}
           {notificationState === "granted"
-            ? "알림 허용됨"
+            ? "알림 테스트"
             : notificationState === "denied"
               ? "알림 차단됨"
               : notificationState === "unsupported"
@@ -412,8 +501,29 @@ export default function PomodoroUI() {
 
       {notificationState === "denied" && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          브라우저에서 알림이 차단되어 있습니다. 사이트 설정에서 알림을 허용하면
-          Windows와 macOS에서 브라우저 알림을 받을 수 있습니다.
+          브라우저에서 알림이 차단되어 있습니다. Safari 또는 Chrome의 사이트
+          설정에서 이 사이트의 알림을 허용해 주세요.
+        </p>
+      )}
+
+      {notificationState === "unsupported" && (
+        <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          이 환경에서는 시스템 알림을 사용할 수 없습니다. HTTPS 주소 또는
+          localhost에서 최신 Safari나 Chrome으로 접속해 주세요.
+        </p>
+      )}
+
+      {notificationFeedback === "sent" && (
+        <p className="rounded-md border border-stone-300 bg-white p-3 text-sm text-stone-600">
+          테스트 알림을 전송했습니다. 보이지 않는다면 macOS 시스템 설정의
+          알림에서 현재 브라우저의 알림 허용 여부를 확인해 주세요.
+        </p>
+      )}
+
+      {notificationFeedback === "failed" && (
+        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          알림 전송에 실패했습니다. 브라우저의 사이트 알림 권한을 다시 확인해
+          주세요.
         </p>
       )}
     </div>
