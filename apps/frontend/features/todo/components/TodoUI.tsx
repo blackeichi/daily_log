@@ -5,6 +5,7 @@ import QueryRetry from "@/components/molecules/QueryRetry";
 import { GetTodosType, Todo } from "@/types/api";
 import { useTodo } from "../hooks/useTodoPage";
 import { DataList } from "@/components/organisms/dataList";
+import { TodayMemoButton } from "./TodayMemoButton";
 
 const lists = [
   "todayList",
@@ -74,6 +75,9 @@ export default function TodoUI({
           needDisableButton
           storageKey={`todo:${listName}`}
           emptyMessage="데이터가 없습니다. Todo를 추가해주세요."
+          titleAction={
+            listName === "todayList" ? <TodayMemoButton /> : undefined
+          }
         />
       ))}
     </div>

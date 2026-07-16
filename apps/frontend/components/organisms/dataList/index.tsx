@@ -24,6 +24,7 @@ function DataListComponent({
   storageKey,
   needDisableButton = false,
   emptyMessage = "조회할 목록이 없습니다.",
+  titleAction,
 }: {
   loading?: boolean;
   title: string;
@@ -34,6 +35,7 @@ function DataListComponent({
   storageKey?: string | undefined;
   needDisableButton?: boolean;
   emptyMessage?: string;
+  titleAction?: React.ReactNode;
 }) {
   const {
     dataList,
@@ -98,7 +100,10 @@ function DataListComponent({
   return (
     <div className="flex flex-col w-full shadow-lg shadow-stone-500 rounded-lg overflow-hidden text-xs sm:text-sm">
       <div className="bg-stone-700 w-full h-14 mb-1 text-white flex justify-between items-center px-2 shadow-md shadow-stone-500 z-10">
-        <span>{name}</span>
+        <div className="flex min-w-0 items-center gap-1">
+          <span>{name}</span>
+          {titleAction}
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
