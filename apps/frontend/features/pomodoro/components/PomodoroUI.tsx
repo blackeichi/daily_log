@@ -120,7 +120,7 @@ export default function PomodoroUI() {
   }, []);
 
   const showSystemNotification = useCallback(
-    async (title: string, body: string, tag: string) => {
+    async (title: string, body: string) => {
       if (getNotificationState() !== "granted") return false;
 
       const registration = await getServiceWorkerRegistration();
@@ -128,9 +128,10 @@ export default function PomodoroUI() {
         try {
           await registration.showNotification(title, {
             body,
-            tag,
             icon: "/icon.png",
-            data: { url: "/pomodoro" },
+            data: { url: "/pomodoro", createdAt: Date.now() },
+            requireInteraction: true,
+            silent: false,
           });
           return true;
         } catch {
@@ -141,8 +142,9 @@ export default function PomodoroUI() {
       try {
         new window.Notification(title, {
           body,
-          tag,
           icon: "/icon.png",
+          requireInteraction: true,
+          silent: false,
         });
         return true;
       } catch {
@@ -159,9 +161,7 @@ export default function PomodoroUI() {
         finishedMode === "focus" ? "집중 시간이 끝났어요" : "휴식 시간이 끝났어요";
       const body = `${nextLabel} 시간으로 전환할 차례입니다.`;
 
-      if (
-        await showSystemNotification(title, body, "daily-log-pomodoro-finished")
-      ) {
+      if (await showSystemNotification(title, body)) {
         return;
       }
 
@@ -322,7 +322,6 @@ export default function PomodoroUI() {
     const sent = await showSystemNotification(
       "포모도로 알림 테스트",
       "이 알림이 보이면 타이머 종료 알림을 받을 수 있습니다.",
-      "daily-log-pomodoro-test",
     );
     setNotificationFeedback(sent ? "sent" : "failed");
   }, [showSystemNotification]);
@@ -515,8 +514,8 @@ export default function PomodoroUI() {
 
       {notificationFeedback === "sent" && (
         <p className="rounded-md border border-stone-300 bg-white p-3 text-sm text-stone-600">
-          테스트 알림을 전송했습니다. 보이지 않는다면 macOS 시스템 설정의
-          알림에서 현재 브라우저의 알림 허용 여부를 확인해 주세요.
+          테스트 알림을 전송했습니다. 보이지 않는다면 운영체제 알림 설정에서
+          현재 브라우저의 알림 허용 여부와 집중 모드를 확인해 주세요.
         </p>
       )}
 
