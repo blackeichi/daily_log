@@ -15,7 +15,6 @@ import { MdTimer } from "react-icons/md";
 type TimerMode = "focus" | "break";
 type TimerStatus = "idle" | "running" | "paused";
 type NotificationState = "unsupported" | "default" | "granted" | "denied";
-type NotificationFeedback = "sent" | "failed" | null;
 
 const DEFAULT_FOCUS_MINUTES = 25;
 const DEFAULT_BREAK_MINUTES = 5;
@@ -63,8 +62,6 @@ export default function PomodoroUI() {
   );
   const [notificationState, setNotificationState] =
     useState<NotificationState>("default");
-  const [notificationFeedback, setNotificationFeedback] =
-    useState<NotificationFeedback>(null);
 
   const endTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -303,9 +300,7 @@ export default function PomodoroUI() {
     completeTimer();
   }, [completeTimer]);
 
-  const handleNotificationAction = useCallback(async () => {
-    setNotificationFeedback(null);
-
+  const requestNotificationPermission = useCallback(async () => {
     if (getNotificationState() === "unsupported") {
       setNotificationState("unsupported");
       return;
@@ -316,15 +311,7 @@ export default function PomodoroUI() {
         ? await window.Notification.requestPermission()
         : window.Notification.permission;
     setNotificationState(permission);
-
-    if (permission !== "granted") return;
-
-    const sent = await showSystemNotification(
-      "포모도로 알림 테스트",
-      "이 알림이 보이면 타이머 종료 알림을 받을 수 있습니다.",
-    );
-    setNotificationFeedback(sent ? "sent" : "failed");
-  }, [showSystemNotification]);
+  }, []);
 
   const handleChangeFocusMinutes = useCallback(
     (value: string) => {
@@ -368,8 +355,9 @@ export default function PomodoroUI() {
         <button
           type="button"
           className="flex h-9 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm text-stone-700 transition-colors hover:bg-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500 disabled:cursor-not-allowed disabled:text-stone-400"
-          onClick={handleNotificationAction}
+          onClick={requestNotificationPermission}
           disabled={
+            notificationState === "granted" ||
             notificationState === "denied" ||
             notificationState === "unsupported"
           }
@@ -380,7 +368,7 @@ export default function PomodoroUI() {
             <FaBellSlash size={14} aria-hidden="true" />
           )}
           {notificationState === "granted"
-            ? "알림 테스트"
+            ? "알림 허용됨"
             : notificationState === "denied"
               ? "알림 차단됨"
               : notificationState === "unsupported"
@@ -512,19 +500,6 @@ export default function PomodoroUI() {
         </p>
       )}
 
-      {notificationFeedback === "sent" && (
-        <p className="rounded-md border border-stone-300 bg-white p-3 text-sm text-stone-600">
-          테스트 알림을 전송했습니다. 보이지 않는다면 운영체제 알림 설정에서
-          현재 브라우저의 알림 허용 여부와 집중 모드를 확인해 주세요.
-        </p>
-      )}
-
-      {notificationFeedback === "failed" && (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          알림 전송에 실패했습니다. 브라우저의 사이트 알림 권한을 다시 확인해
-          주세요.
-        </p>
-      )}
     </div>
   );
 }
