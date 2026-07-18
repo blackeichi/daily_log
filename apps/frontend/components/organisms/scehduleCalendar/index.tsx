@@ -132,7 +132,7 @@ const Calendar = ({
                       if (!loading && isCurrentMonth) onClick(dateStr);
                     }}
                     disabled={!isCurrentMonth || loading}
-                    aria-label={`${format(day, "yyyy\ub144 M\uc6d4 d\uc77c")} ${value?.emotion || ""}`}
+                    aria-label={`${format(day, "yyyy\ub144 M\uc6d4 d\uc77c")} ${value?.text || ""} ${value?.emotion || ""}`}
                   >
                     {loading ? (
                       // 스켈레톤 UI

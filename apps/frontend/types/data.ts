@@ -17,6 +17,7 @@ export type DietCalendarData = {
     calorie: number;
     goalCalorie: number;
     maximumCalorie: number;
+    text?: string;
   };
 };
 

@@ -45,11 +45,14 @@ export function useDietPage(
     const nextCalendarData: DietCalendarData = {};
 
     data.forEach((item) => {
+      const memo = item.memo.trim();
+
       nextCalendarData[item.date] = {
         isChecked: item.isSuccess,
         calorie: item.totalCalorie,
         goalCalorie: item.goalCalorie,
         maximumCalorie: item.maximumCalorie,
+        ...(memo ? { text: memo } : {}),
       };
     });
 
