@@ -42,6 +42,29 @@ export class LogService {
       take: 1000,
     });
   }
+  async getExcelData(
+    id: number,
+    startDate: string,
+    endDate: string,
+    searchTitle?: string,
+  ) {
+    const [logs, todos] = await Promise.all([
+      this.getAllLogs(id, startDate, endDate, searchTitle, true),
+      this.prisma.todo.findUnique({
+        where: { userId: id },
+        select: {
+          id: true,
+          todayList: true,
+          weekList: true,
+          monthList: true,
+          yearList: true,
+          breakLimitList: true,
+        },
+      }),
+    ]);
+
+    return { logs, todos };
+  }
   async getLog(id: number) {
     const log = await this.prisma.log.findUnique({
       where: { id: id },

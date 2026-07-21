@@ -89,13 +89,11 @@ export class LogController {
         '시작 날짜와 종료 날짜를 모두 제공해야 합니다.',
       );
     }
-    // 엑셀 다운로드용 - 페이지네이션 없이 모든 데이터 반환
-    return this.logService.getAllLogs(
+    return this.logService.getExcelData(
       req.user.sub,
       startDate,
       endDate,
       searchTitle,
-      true,
     );
   }
 }

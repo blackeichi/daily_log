@@ -44,7 +44,7 @@ function DataListItemComponent({
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
       id: item.id,
-      disabled: !enableDrag || !isEditing || !!item.isDisabled,
+      disabled: !enableDrag || !isEditing,
     });
   const style = useMemo(
     () => ({
@@ -54,7 +54,7 @@ function DataListItemComponent({
     [transform, transition],
   );
   const isSection = item?.type === "section";
-  const dragEnabled = isEditing && enableDrag && !item.isDisabled;
+  const dragEnabled = isEditing && enableDrag;
 
   const handleCheckboxChange = useCallback(
     (val: boolean) => {
@@ -165,7 +165,7 @@ function DataListItemComponent({
           />
           <IoIosMenu
             size={22}
-            className={`${item.isDisabled ? "cursor-not-allowed opacity-40" : "cursor-grab"} w-7 touch-none`}
+            className="w-7 cursor-grab touch-none"
             aria-label="항목 순서 변경"
             role="button"
             tabIndex={dragEnabled ? 0 : -1}

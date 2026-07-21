@@ -33,6 +33,7 @@ export type Todo = {
   text: string;
   isDone: boolean;
   isDisabled?: boolean;
+  type?: "todo" | "section";
 };
 
 export type GetTodosType = {
@@ -50,6 +51,11 @@ export type GetLogsType = {
   logDate: string;
   todayLog: Record<string, string>;
   score?: number;
+};
+
+export type GetLogExcelData = {
+  logs: GetLogsType[];
+  todos: GetTodosType | null;
 };
 
 export type GetLogDetail = {

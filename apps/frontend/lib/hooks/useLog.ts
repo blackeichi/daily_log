@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
-import { GetLogsType, GetLogDetail } from "@/types/api";
+import type { GetLogDetail, GetLogExcelData, GetLogsType } from "@/types/api";
 import { QUERY_TIMES } from "@/constants/timing";
 
 export const logKeys = {
@@ -60,7 +60,7 @@ export function useLogsForExcel(
   return useQuery({
     queryKey: logKeys.excel(startDate, endDate, searchTitle),
     queryFn: ({ signal }) =>
-      apiClient<GetLogsType[]>(`/log/excel?${params.toString()}`, { signal }),
+      apiClient<GetLogExcelData>(`/log/excel?${params.toString()}`, { signal }),
     enabled: false, // 수동 trigger
     staleTime: QUERY_TIMES.REALTIME.STALE,
     gcTime: QUERY_TIMES.REALTIME.GC,

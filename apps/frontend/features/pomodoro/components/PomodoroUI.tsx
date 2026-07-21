@@ -169,7 +169,7 @@ export default function PomodoroUI() {
     [showSystemNotification],
   );
 
-  const completeTimer = useCallback(() => {
+  const completeTimer = useCallback((shouldNotify = true) => {
     const finishedMode = mode;
     const nextMode: TimerMode = finishedMode === "focus" ? "break" : "focus";
     const nextSeconds = minutesToSeconds(
@@ -181,7 +181,9 @@ export default function PomodoroUI() {
     setStatus("idle");
     setMode(nextMode);
     setRemainingSeconds(nextSeconds);
-    void sendNotification(finishedMode);
+    if (shouldNotify) {
+      void sendNotification(finishedMode);
+    }
   }, [breakMinutes, clearTimer, focusMinutes, mode, sendNotification]);
 
   const tick = useCallback(() => {
@@ -297,7 +299,7 @@ export default function PomodoroUI() {
   }, [clearTimer, currentDurationSeconds]);
 
   const skipTimer = useCallback(() => {
-    completeTimer();
+    completeTimer(false);
   }, [completeTimer]);
 
   const requestNotificationPermission = useCallback(async () => {
