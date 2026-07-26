@@ -148,6 +148,7 @@ const ActualUI = ({
             width="100%"
             height={100}
             label={objKey}
+            maxLength={3000}
           />
         ))
       ) : (

@@ -31,9 +31,10 @@ export const TextArea = ({
 }) => {
   const generatedId = useId();
   const textareaId = id ?? `textarea-${generatedId}`;
+  const resolvedMaxLength = maxLength ?? 300;
   const onHandleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (setValue) {
-      if (event.target.value.length > 300) return;
+      if (event.target.value.length > resolvedMaxLength) return;
       setValue(event.target.value);
     }
   };
@@ -67,7 +68,7 @@ export const TextArea = ({
         disabled={disabled}
         required={required}
         aria-invalid={required && !value ? true : undefined}
-        maxLength={maxLength}
+        maxLength={resolvedMaxLength}
         onChange={onChange || onHandleChange}
       />
     </div>
