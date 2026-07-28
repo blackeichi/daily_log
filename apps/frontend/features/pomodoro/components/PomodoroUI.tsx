@@ -127,7 +127,7 @@ export default function PomodoroUI() {
             body,
             icon: "/icon.png",
             data: { url: "/pomodoro", createdAt: Date.now() },
-            requireInteraction: true,
+            requireInteraction: false,
             silent: false,
           });
           return true;
@@ -140,7 +140,7 @@ export default function PomodoroUI() {
         new window.Notification(title, {
           body,
           icon: "/icon.png",
-          requireInteraction: true,
+          requireInteraction: false,
           silent: false,
         });
         return true;
