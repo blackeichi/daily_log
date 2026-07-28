@@ -126,6 +126,11 @@ export type UpdateTodoRequest = {
   data: Todo[];
 };
 
+export type UpdateAllTodosRequest = Pick<
+  GetTodosType,
+  "todayList" | "weekList" | "monthList" | "yearList" | "breakLimitList"
+>;
+
 export type UpdateRoutineRequest = {
   name: "dailyRoutines" | "weeklyRoutines" | "monthlyRoutines";
   data: { id: number; text: string }[];

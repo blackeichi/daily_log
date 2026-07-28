@@ -7,7 +7,7 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { type Transition } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DEBOUNCE_DELAYS } from "@/constants/timing";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -19,6 +19,9 @@ export function useDataList({
   loading,
   defaultDataList,
   onSaveDataList,
+  onDataListChange,
+  deferSave = false,
+  saveVersion,
   storageKey,
 }: UseDataListParams) {
   const debounce = useDebounce();
@@ -28,10 +31,29 @@ export function useDataList({
   const [isEditing, setIsEditing] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [dataList, setDataList] = useState<DataListItemType[]>(defaultDataList);
+  const dataListRef = useRef(defaultDataList);
+  const editSnapshotRef = useRef<DataListItemType[] | null>(null);
+  const previousSaveVersionRef = useRef(saveVersion);
 
   useEffect(() => {
+    dataListRef.current = defaultDataList;
     setDataList(defaultDataList);
   }, [defaultDataList]);
+
+  useEffect(() => {
+    if (
+      saveVersion === undefined ||
+      previousSaveVersionRef.current === saveVersion
+    ) {
+      return;
+    }
+
+    previousSaveVersionRef.current = saveVersion;
+    editSnapshotRef.current = null;
+    dataListRef.current = defaultDataList;
+    setDataList(defaultDataList);
+    setIsEditing(false);
+  }, [defaultDataList, saveVersion]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -62,37 +84,51 @@ export function useDataList({
 
   const itemIds = useMemo(() => dataList.map((item) => item.id), [dataList]);
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+  const updateDataList = useCallback(
+    (next: DataListItemType[]) => {
+      dataListRef.current = next;
+      setDataList(next);
+      onDataListChange?.(next);
+    },
+    [onDataListChange],
+  );
 
-    if (!over || active.id === over.id) return;
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
 
-    setDataList((prev) => {
+      if (!over || active.id === over.id) return;
+
+      const prev = dataListRef.current;
       const oldIndex = prev.findIndex((item) => item.id === active.id);
       const newIndex = prev.findIndex((item) => item.id === over.id);
 
-      if (oldIndex < 0 || newIndex < 0) return prev;
+      if (oldIndex < 0 || newIndex < 0) return;
 
-      return arrayMove(prev, oldIndex, newIndex);
-    });
-  }, []);
+      updateDataList(arrayMove(prev, oldIndex, newIndex));
+    },
+    [updateDataList],
+  );
 
   const handleSaveOrEdit = useCallback(() => {
     if (loading) return;
 
     if (isEditing) {
-      onSaveDataList(dataList);
+      onSaveDataList(dataListRef.current);
+      editSnapshotRef.current = null;
       setIsEditing(false);
       return;
     }
 
+    editSnapshotRef.current = dataListRef.current;
     setIsEditing(true);
-  }, [dataList, isEditing, loading, onSaveDataList]);
+  }, [isEditing, loading, onSaveDataList]);
 
   const handleCancelEdit = useCallback(() => {
-    setDataList(defaultDataList);
+    updateDataList(editSnapshotRef.current ?? defaultDataList);
+    editSnapshotRef.current = null;
     setIsEditing(false);
-  }, [defaultDataList]);
+  }, [defaultDataList, updateDataList]);
 
   const handleToggleOpen = useCallback(() => {
     if (loading || dataList.length === 0) return;
@@ -115,80 +151,68 @@ export function useDataList({
     });
   }, [dataList.length, loading, storageKey]);
 
-  const handleChangeText = useCallback((index: number, text: string) => {
-    setDataList((prev) => {
+  const handleChangeText = useCallback(
+    (index: number, text: string) => {
+      const prev = dataListRef.current;
       const target = prev[index];
 
-      if (!target || target.isDisabled || target.text === text) return prev;
+      if (!target || target.isDisabled || target.text === text) return;
 
       const next = [...prev];
       next[index] = { ...target, text };
 
-      return next;
-    });
-  }, []);
+      updateDataList(next);
+    },
+    [updateDataList],
+  );
 
-  const handleDeleteItem = useCallback((index: number) => {
-    setDataList((prev) => {
-      if (!prev[index] || prev[index].isDisabled) return prev;
+  const handleDeleteItem = useCallback(
+    (index: number) => {
+      const prev = dataListRef.current;
+      if (!prev[index] || prev[index].isDisabled) return;
 
       const next = [...prev];
       next.splice(index, 1);
 
-      return next;
-    });
-  }, []);
+      updateDataList(next);
+    },
+    [updateDataList],
+  );
 
   const handleToggleDisabled = useCallback(
     (index: number) => {
-      let nextList: DataListItemType[] | null = null;
+      const prev = dataListRef.current;
+      const target = prev[index];
 
-      setDataList((prev) => {
-        const target = prev[index];
+      if (!target || target.type === "section") return;
 
-        if (!target || target.type === "section") return prev;
+      const next = [...prev];
+      next[index] = { ...target, isDisabled: !target.isDisabled };
+      updateDataList(next);
 
-        const next = [...prev];
-        next[index] = { ...target, isDisabled: !target.isDisabled };
-        nextList = next;
-
-        return next;
-      });
-
-      saveDebounce(() => {
-        if (nextList) {
-          onSaveDataList(nextList);
-        }
-      }, DEBOUNCE_DELAYS.CHECKBOX);
+      if (!deferSave) {
+        saveDebounce(() => onSaveDataList(next), DEBOUNCE_DELAYS.CHECKBOX);
+      }
     },
-    [onSaveDataList, saveDebounce],
+    [deferSave, onSaveDataList, saveDebounce, updateDataList],
   );
 
   const handleChangeDone = useCallback(
     (index: number, isDone: boolean) => {
-      let nextList: DataListItemType[] | null = null;
+      const prev = dataListRef.current;
+      const target = prev[index];
 
-      setDataList((prev) => {
-        const target = prev[index];
+      if (!target || target.isDone === isDone) return;
 
-        if (!target || target.isDone === isDone) {
-          return prev;
-        }
+      const next = [...prev];
+      next[index] = { ...target, isDone };
+      updateDataList(next);
 
-        const next = [...prev];
-        next[index] = { ...target, isDone };
-        nextList = next;
-
-        return next;
-      });
-
-      saveDebounce(() => {
-        if (nextList) {
-          onSaveDataList(nextList);
-        }
-      }, DEBOUNCE_DELAYS.CHECKBOX);
+      if (!deferSave) {
+        saveDebounce(() => onSaveDataList(next), DEBOUNCE_DELAYS.CHECKBOX);
+      }
     },
-    [onSaveDataList, saveDebounce],
+    [deferSave, onSaveDataList, saveDebounce, updateDataList],
   );
 
   const hasItems = dataList.length > 0;
@@ -205,7 +229,7 @@ export function useDataList({
 
   return {
     dataList,
-    setDataList,
+    setDataList: updateDataList,
 
     isOpen,
     isEditing,

@@ -1,6 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { UpdateTodoDto } from './dto/update-todo.dto';
+
+type TodoListsPayload = {
+  todayList: any[];
+  weekList: any[];
+  monthList: any[];
+  yearList: any[];
+  breakLimitList: any[];
+};
 
 @Injectable()
 export class TodosService {
@@ -49,5 +56,23 @@ export class TodosService {
       include: { user: true },
     });
     return updatedTodo;
+  }
+
+  async updateAllTodos(todoId: number, id: number, data: TodoListsPayload) {
+    const existingTodo = await this.prisma.todo.findUnique({
+      where: { id: todoId },
+    });
+
+    if (!existingTodo || existingTodo.userId !== id) {
+      throw new BadRequestException(
+        '비정상적인 접근입니다. 업데이트할 수 없습니다.',
+      );
+    }
+
+    return this.prisma.todo.update({
+      where: { id: todoId },
+      data,
+      include: { user: true },
+    });
   }
 }

@@ -2,7 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
-import { GetTodosType, UpdateTodoRequest } from "@/types/api";
+import type {
+  GetTodosType,
+  UpdateAllTodosRequest,
+  UpdateTodoRequest,
+} from "@/types/api";
 
 export const todoKeys = {
   all: () => ["todos"] as const,
@@ -36,6 +40,21 @@ export function useUpdateTodos(id: number) {
       apiClient<GetTodosType>(`/todos/${id}`, { method: "PUT", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: todoKeys.all() });
+    },
+  });
+}
+
+export function useUpdateAllTodos(id: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateAllTodosRequest) =>
+      apiClient<GetTodosType>(`/todos/${id}/all`, {
+        method: "PUT",
+        body: data,
+      }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(todoKeys.all(), data);
     },
   });
 }

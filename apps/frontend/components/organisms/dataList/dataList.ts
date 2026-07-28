@@ -10,5 +10,8 @@ export type UseDataListParams = {
   loading: boolean;
   defaultDataList: DataListItemType[];
   onSaveDataList: (val: DataListItemType[]) => void;
+  onDataListChange?: ((val: DataListItemType[]) => void) | undefined;
+  deferSave?: boolean;
+  saveVersion?: number | undefined;
   storageKey?: string | undefined;
 };

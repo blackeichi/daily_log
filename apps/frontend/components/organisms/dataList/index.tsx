@@ -5,7 +5,7 @@ import {
 } from "@dnd-kit/sortable";
 import { memo, useMemo } from "react";
 import { EmptyState } from "@/components/atoms/EmptyState";
-import { FaChevronUp, FaSave } from "react-icons/fa";
+import { FaCheck, FaChevronUp, FaSave } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { MdEdit } from "react-icons/md";
 import { GiCancel } from "react-icons/gi";
@@ -20,6 +20,9 @@ function DataListComponent({
   name,
   defaultDataList,
   onSaveDataList,
+  onDataListChange,
+  deferSave = false,
+  saveVersion,
   needCheckBox = false,
   storageKey,
   needDisableButton = false,
@@ -31,6 +34,9 @@ function DataListComponent({
   name: string;
   defaultDataList: DataListItemType[];
   onSaveDataList: (val: DataListItemType[]) => void;
+  onDataListChange?: (val: DataListItemType[]) => void;
+  deferSave?: boolean;
+  saveVersion?: number;
   needCheckBox?: boolean;
   storageKey?: string | undefined;
   needDisableButton?: boolean;
@@ -60,6 +66,9 @@ function DataListComponent({
     loading,
     defaultDataList,
     onSaveDataList,
+    onDataListChange,
+    deferSave,
+    saveVersion,
     storageKey,
   });
 
@@ -74,6 +83,7 @@ function DataListComponent({
           isEditing={isEditing}
           enableDrag={dragEnabled}
           debounce={debounce}
+          immediateTextChange={deferSave}
           onChangeText={handleChangeText}
           onDeleteItem={handleDeleteItem}
           onToggleDisabled={handleToggleDisabled}
@@ -110,10 +120,16 @@ function DataListComponent({
             className={`bg-white rounded-full justify-center items-center p-1 ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
             onClick={handleSaveOrEdit}
             disabled={loading}
-            aria-label={isEditing ? "저장하기" : "편집하기"}
+            aria-label={
+              isEditing ? (deferSave ? "편집 완료" : "저장하기") : "편집하기"
+            }
           >
             {isEditing ? (
-              <FaSave size={18} className="text-stone-700" />
+              deferSave ? (
+                <FaCheck size={18} className="text-stone-700" />
+              ) : (
+                <FaSave size={18} className="text-stone-700" />
+              )
             ) : (
               <MdEdit size={18} className="text-stone-700" />
             )}

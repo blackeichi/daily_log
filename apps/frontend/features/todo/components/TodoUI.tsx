@@ -2,10 +2,11 @@
 
 import Button from "@/components/atoms/button";
 import QueryRetry from "@/components/molecules/QueryRetry";
-import { GetTodosType, Todo } from "@/types/api";
+import type { GetTodosType, Todo } from "@/types/api";
 import { useTodo } from "../hooks/useTodoPage";
 import { DataList } from "@/components/organisms/dataList";
 import { TodayMemoButton } from "./TodayMemoButton";
+import { FaSave, FaSpinner } from "react-icons/fa";
 
 const lists = [
   "todayList",
@@ -35,8 +36,12 @@ export default function TodoUI({
     isRetrying,
     refetchTodos,
     isFirst,
+    hasChanges,
+    isSaving,
+    saveVersion,
     handleCreateTodos,
     handleUpdateList,
+    handleSaveTodos,
   } = useTodo(initialData);
 
   if (isError) {
@@ -71,6 +76,9 @@ export default function TodoUI({
           name={LIST_NAMES[listName]}
           defaultDataList={data?.[listName] || []}
           onSaveDataList={(val) => handleUpdateList(listName, val as Todo[])}
+          onDataListChange={(val) => handleUpdateList(listName, val as Todo[])}
+          deferSave
+          saveVersion={saveVersion}
           needCheckBox
           needDisableButton
           storageKey={`todo:${listName}`}
@@ -80,6 +88,22 @@ export default function TodoUI({
           }
         />
       ))}
+      {hasChanges && (
+        <button
+          type="button"
+          className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-stone-700 text-white shadow-lg shadow-stone-500 transition-colors hover:bg-stone-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-600 disabled:cursor-wait disabled:bg-stone-400 sm:bottom-8 sm:right-8"
+          onClick={handleSaveTodos}
+          disabled={isSaving}
+          aria-label="모든 Todo 변경사항 저장"
+          title="모든 Todo 변경사항 저장"
+        >
+          {isSaving ? (
+            <FaSpinner className="animate-spin" size={18} aria-hidden="true" />
+          ) : (
+            <FaSave size={18} aria-hidden="true" />
+          )}
+        </button>
+      )}
     </div>
   );
 }

@@ -20,6 +20,7 @@ function DataListItemComponent({
   isEditing,
   enableDrag = false,
   debounce,
+  immediateTextChange = false,
   onChangeText,
   onDeleteItem,
   onToggleDisabled,
@@ -33,6 +34,7 @@ function DataListItemComponent({
   isEditing: boolean;
   enableDrag?: boolean;
   debounce: (func: () => void, delay: number) => void;
+  immediateTextChange?: boolean;
   onChangeText: (index: number, text: string) => void;
   onDeleteItem: (index: number) => void;
   onToggleDisabled: (index: number) => void;
@@ -69,11 +71,16 @@ function DataListItemComponent({
 
   const handleInputChange = useCallback(
     (val: string) => {
+      if (immediateTextChange) {
+        onChangeText(index, val);
+        return;
+      }
+
       debounce(() => {
         onChangeText(index, val);
       }, DEBOUNCE_DELAYS.INPUT);
     },
-    [debounce, index, onChangeText],
+    [debounce, immediateTextChange, index, onChangeText],
   );
 
   const handleDelete = useCallback(() => {
