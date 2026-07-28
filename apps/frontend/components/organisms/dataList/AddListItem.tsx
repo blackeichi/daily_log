@@ -14,10 +14,12 @@ export const AddListItem = ({
   title,
   dataList,
   setDataList,
+  maxLength,
 }: {
   title: string;
   dataList: DataListItemType[];
   setDataList: (val: DataListItemType[]) => void;
+  maxLength?: number | undefined;
 }) => {
   const setError = useSetAtom(errorAtom);
   const [newData, setNewData] = useState("");
@@ -98,7 +100,7 @@ export const AddListItem = ({
                 ? "섹터 제목을 입력하세요."
                 : `${title}을(를) 입력하세요.`
           }
-          maxLength={200}
+          maxLength={maxLength ?? 200}
           disabled={dataList.length >= MAX_ITEMS}
         />
       </motion.div>

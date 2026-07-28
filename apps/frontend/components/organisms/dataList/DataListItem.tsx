@@ -27,6 +27,7 @@ function DataListItemComponent({
   onChangeDone,
   needCheckBox,
   needDisableButton,
+  maxLength,
 }: {
   title: string;
   item: DataListItemType;
@@ -41,6 +42,7 @@ function DataListItemComponent({
   onChangeDone: (index: number, isDone: boolean) => void;
   needCheckBox: boolean;
   needDisableButton: boolean;
+  maxLength?: number | undefined;
 }) {
   const setConfirmMgs = useSetAtom(confirmAtom);
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -142,7 +144,7 @@ function DataListItemComponent({
                 ? "섹터 제목을 입력하세요."
                 : `${title}을(를) 입력하세요.`
             }
-            maxLength={300}
+            maxLength={maxLength ?? 300}
           />
         </div>
       )}

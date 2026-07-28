@@ -57,14 +57,17 @@ export const AddNewCalorie = ({
         icon={FaPlus}
         size={12}
         onClick={() => {
-          if (!newFood || !newCalorie) {
-            return setError("음식명과 칼로리를 모두 입력해주세요.");
+          const calorie = Number(newCalorie);
+
+          if (!newFood.trim() || !Number.isFinite(calorie)) {
+            return setError("음식명과 올바른 칼로리를 입력해주세요.");
           }
+
           setEatenList((prev) => [
             ...prev,
             {
-              name: newFood,
-              cal: Number(newCalorie),
+              name: newFood.trim(),
+              cal: calorie,
               index: prev.length + 1,
             },
           ]);

@@ -35,10 +35,12 @@ export const Input = ({
   type?: string;
   icon?: React.ReactNode;
 } & React.InputHTMLAttributes<HTMLInputElement>) => {
+  const resolvedMaxLength = rest.maxLength ?? 100;
+
   const onHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (type === "number") {
       event.target.value = Number(
-        event.target.value.replace(NUMBER_REG_EXP, "")
+        event.target.value.replace(NUMBER_REG_EXP, ""),
       ).toString();
       if (rest?.min && Number(event.target.value) < (rest.min as number)) {
         event.target.value = String(rest.min);
@@ -50,7 +52,7 @@ export const Input = ({
       }
     }
     if (setValue) {
-      if (event.target.value.length > 100) return;
+      if (event.target.value.length > resolvedMaxLength) return;
       setValue(event.target.value as string & number);
     }
   };
@@ -113,7 +115,9 @@ export const Input = ({
           required={required}
           aria-invalid={required && !value && isFocused ? true : undefined}
           aria-describedby={
-            required && !value && isFocused ? `${id}-required-message` : undefined
+            required && !value && isFocused
+              ? `${id}-required-message`
+              : undefined
           }
           onFocus={() => {
             if (required) {

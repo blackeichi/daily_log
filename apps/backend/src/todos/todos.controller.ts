@@ -21,6 +21,7 @@ const TODO_LIST_NAMES = [
   'yearList',
   'breakLimitList',
 ] as const;
+const MAX_TODO_ITEM_LENGTH = 1000;
 
 type TodoListName = (typeof TODO_LIST_NAMES)[number];
 type TodoListsPayload = Record<TodoListName, any[]>;
@@ -38,9 +39,9 @@ export class TodosController {
       throw new BadRequestException('유효하지 않은 투두 항목입니다.');
     }
 
-    if (data.some((item: any) => item.text.length > 300)) {
+    if (data.some((item: any) => item.text.length > MAX_TODO_ITEM_LENGTH)) {
       throw new BadRequestException(
-        '투두 항목은 최대 300자까지 입력할 수 있습니다.',
+        `투두 항목은 최대 ${MAX_TODO_ITEM_LENGTH}자까지 입력할 수 있습니다.`,
       );
     }
 

@@ -58,12 +58,16 @@ export const EditCalorie = ({
           cancelText="취소"
           onCancel={() => setOpenEdit(null)}
           onSubmit={() => {
-            if (!name || !cal)
-              return setError("음식명과 칼로리를 모두 입력해주세요.");
+            const calorie = Number(cal);
+
+            if (!name.trim() || !Number.isFinite(calorie)) {
+              return setError("음식명과 올바른 칼로리를 입력해주세요.");
+            }
+
             setEatenList((prev) =>
               prev.map((item) =>
                 item.index === row.index
-                  ? { ...item, name, cal: Number(cal) }
+                  ? { ...item, name: name.trim(), cal: calorie }
                   : item,
               ),
             );

@@ -28,6 +28,7 @@ function DataListComponent({
   needDisableButton = false,
   emptyMessage = "조회할 목록이 없습니다.",
   titleAction,
+  maxLength,
 }: {
   loading?: boolean;
   title: string;
@@ -42,6 +43,7 @@ function DataListComponent({
   needDisableButton?: boolean;
   emptyMessage?: string;
   titleAction?: React.ReactNode;
+  maxLength?: number | undefined;
 }) {
   const {
     dataList,
@@ -90,6 +92,7 @@ function DataListComponent({
           onChangeDone={handleChangeDone}
           needCheckBox={needCheckBox}
           needDisableButton={needDisableButton}
+          maxLength={maxLength}
         />
       )),
     [
@@ -104,6 +107,7 @@ function DataListComponent({
       handleChangeDone,
       needCheckBox,
       needDisableButton,
+      maxLength,
     ],
   );
 
@@ -211,6 +215,7 @@ function DataListComponent({
           title={title}
           dataList={dataList}
           setDataList={setDataList}
+          maxLength={maxLength}
         />
       )}
     </div>
