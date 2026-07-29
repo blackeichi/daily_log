@@ -1,5 +1,12 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
 
 export type StockQuote = {
   currentPrice: number;
@@ -40,8 +47,17 @@ type QuoteAttempt = {
   rateLimited: boolean;
 };
 
+type PersistedToken = {
+  version: 1;
+  appKeyHash: string;
+  baseUrl: string;
+  value: string;
+  expiresAt: number;
+};
+
 @Injectable()
 export class KisMarketDataService {
+  private readonly logger = new Logger(KisMarketDataService.name);
   private accessToken: { value: string; expiresAt: number } | undefined;
   private tokenPromise: Promise<string> | undefined;
   private readonly quoteCache = new Map<string, CachedQuote>();
@@ -190,13 +206,41 @@ export class KisMarketDataService {
     }
 
     if (!this.tokenPromise) {
-      this.tokenPromise = this.issueAccessToken();
+      this.tokenPromise = this.loadOrIssueAccessToken();
     }
 
     try {
       return await this.tokenPromise;
     } finally {
       this.tokenPromise = undefined;
+    }
+  }
+
+  private async loadOrIssueAccessToken() {
+    const persistedToken = await this.readPersistedToken();
+    if (persistedToken) {
+      this.accessToken = persistedToken;
+      return persistedToken.value;
+    }
+    return this.issueAccessToken();
+  }
+
+  private async readPersistedToken() {
+    try {
+      const raw = await readFile(this.tokenCachePath, 'utf8');
+      const cached = JSON.parse(raw) as PersistedToken;
+      if (
+        cached.version !== 1 ||
+        cached.appKeyHash !== this.appKeyHash ||
+        cached.baseUrl !== this.baseUrl ||
+        typeof cached.value !== 'string' ||
+        cached.expiresAt <= Date.now()
+      ) {
+        return undefined;
+      }
+      return { value: cached.value, expiresAt: cached.expiresAt };
+    } catch {
+      return undefined;
     }
   }
 
@@ -225,7 +269,29 @@ export class KisMarketDataService {
       value: data.access_token,
       expiresAt: Date.now() + Math.max(expiresIn - 60, 60) * 1000,
     };
+    try {
+      await this.persistAccessToken(this.accessToken);
+    } catch {
+      this.logger.warn(
+        'KIS 접근 토큰 캐시 파일을 저장하지 못해 현재 프로세스에서만 재사용합니다.',
+      );
+    }
     return data.access_token;
+  }
+
+  private async persistAccessToken(token: { value: string; expiresAt: number }) {
+    const cached: PersistedToken = {
+      version: 1,
+      appKeyHash: this.appKeyHash,
+      baseUrl: this.baseUrl,
+      value: token.value,
+      expiresAt: token.expiresAt,
+    };
+    await mkdir(dirname(this.tokenCachePath), { recursive: true });
+    await writeFile(this.tokenCachePath, JSON.stringify(cached), {
+      encoding: 'utf8',
+      mode: 0o600,
+    });
   }
 
   private toNumber(value?: string) {
@@ -243,6 +309,10 @@ export class KisMarketDataService {
 
   private get appSecret() {
     return this.configService.get<string>('KIS_APP_SECRET', '').trim();
+  }
+
+  private get appKeyHash() {
+    return createHash('sha256').update(this.appKey).digest('hex');
   }
 
   private get baseUrl() {
@@ -265,5 +335,14 @@ export class KisMarketDataService {
 
   private get quoteRateLimitRetries() {
     return this.configService.get<number>('KIS_QUOTE_RATE_LIMIT_RETRIES', 3);
+  }
+
+  private get tokenCachePath() {
+    return resolve(
+      this.configService.get<string>(
+        'KIS_TOKEN_CACHE_PATH',
+        '.cache/kis-access-token.json',
+      ),
+    );
   }
 }
