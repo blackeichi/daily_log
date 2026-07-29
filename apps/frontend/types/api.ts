@@ -94,6 +94,41 @@ export type Routine = {
   monthlyRoutines: { id: number; text: string }[];
 };
 
+export type StockQuote = {
+  currentPrice: number;
+  changeAmount: number;
+  changePercent: number;
+  week52High: number;
+  week52HighDate: string;
+  drawdownPercent: number;
+};
+
+export type StockWatchlistItem = {
+  id: number;
+  symbol: string;
+  name: string;
+  market: string;
+  position: number;
+  quote: StockQuote | null;
+  quoteError?: string;
+};
+
+export type StockWatchlistResponse = {
+  items: StockWatchlistItem[];
+  marketDataStatus: "ready" | "partial" | "unconfigured";
+  updatedAt: string;
+};
+
+export type StockSearchResult = {
+  symbol: string;
+  name: string;
+  market: "KOSPI" | "KOSDAQ";
+};
+
+export type UpdateStockWatchlistRequest = {
+  symbols: string[];
+};
+
 // 인증 관련 타입
 export type LoginRequest = {
   email: string;

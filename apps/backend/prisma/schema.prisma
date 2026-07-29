@@ -28,9 +28,25 @@ model User {
   logs           Log[]
   calories       Calorie[]
   routines       Routine[]
+  stockWatchlistItems StockWatchlistItem[]
   successDates   SuccessDates[]
   failDates      FailDates[]
   aiHistories    AiHistory[]
+}
+
+model StockWatchlistItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String   @db.VarChar(6)
+  name      String   @db.VarChar(100)
+  market    String   @db.VarChar(10)
+  position  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, symbol])
+  @@index([userId, position])
 }
 
 model AiHistory {

@@ -11,6 +11,7 @@ import { CaloriesModule } from './calories/calories.module';
 import { LogModule } from './log/log.module';
 import { RoutineModule } from './routine/routine.module';
 import { CustomLogger } from './common/logger.service';
+import { StocksModule } from './stocks/stocks.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CustomLogger } from './common/logger.service';
     CaloriesModule,
     LogModule,
     RoutineModule,
+    StocksModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, CustomLogger],
