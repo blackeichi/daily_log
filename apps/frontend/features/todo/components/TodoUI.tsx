@@ -92,7 +92,7 @@ export default function TodoUI({
       {hasChanges && (
         <button
           type="button"
-          className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-stone-700 text-white shadow-lg shadow-stone-500 transition-colors hover:bg-stone-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-600 disabled:cursor-wait disabled:bg-stone-400 sm:bottom-8 sm:right-8"
+          className="fixed bottom-16 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-stone-700 text-white shadow-lg shadow-stone-500 transition-colors hover:bg-stone-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-600 disabled:cursor-wait disabled:bg-stone-400 sm:bottom-8 sm:right-8"
           onClick={handleSaveTodos}
           disabled={isSaving}
           aria-label="모든 Todo 변경사항 저장"
