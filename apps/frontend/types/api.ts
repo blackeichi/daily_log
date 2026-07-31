@@ -129,6 +129,27 @@ export type UpdateStockWatchlistRequest = {
   symbols: string[];
 };
 
+export type BudgetItem = {
+  id: string;
+  name: string;
+  amount: number;
+  day: number | null;
+  category?: string;
+};
+
+export type Budget = {
+  id: number;
+  salary: number;
+  fixedIncomes: BudgetItem[];
+  fixedExpenses: BudgetItem[];
+  updatedAt: string | null;
+};
+
+export type UpdateBudgetRequest = Pick<
+  Budget,
+  "salary" | "fixedIncomes" | "fixedExpenses"
+>;
+
 // 인증 관련 타입
 export type LoginRequest = {
   email: string;

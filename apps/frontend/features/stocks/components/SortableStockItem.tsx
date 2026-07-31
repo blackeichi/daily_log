@@ -32,7 +32,9 @@ export function SortableStockItem({
     >
       <button
         type="button"
-        className="flex h-9 w-9 shrink-0 cursor-grab items-center justify-center text-stone-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500"
+        className={`flex h-9 w-9 shrink-0 touch-none items-center justify-center text-stone-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-stone-500 ${
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        }`}
         aria-label={`${item.name} 순서 변경`}
         {...attributes}
         {...listeners}

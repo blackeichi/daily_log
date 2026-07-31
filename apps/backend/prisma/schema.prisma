@@ -29,9 +29,21 @@ model User {
   calories       Calorie[]
   routines       Routine[]
   stockWatchlistItems StockWatchlistItem[]
+  budget         Budget?
   successDates   SuccessDates[]
   failDates      FailDates[]
   aiHistories    AiHistory[]
+}
+
+model Budget {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  salary        Int      @default(0)
+  fixedIncomes  Json     @default("[]")
+  fixedExpenses Json     @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model StockWatchlistItem {

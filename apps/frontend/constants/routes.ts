@@ -8,6 +8,7 @@ export const ROUTE = {
   ROUTINE: "/routine",
   POMODORO: "/pomodoro",
   STOCKS: "/stocks",
+  BUDGET: "/budget",
   PROFILE: "/profile",
   // ENGLISH: "/english",
 };
@@ -20,6 +21,7 @@ export const MENU_LIST = [
   { id: "DIET", name: "📅 DIET", href: ROUTE.DIET },
   { id: "POMODORO", name: "⏱ 포모도로", href: ROUTE.POMODORO },
   { id: "STOCKS", name: "📈 주식", href: ROUTE.STOCKS },
+  { id: "BUDGET", name: "💰 고정지출", href: ROUTE.BUDGET },
   // { id: "ENGLISH", name: "🗽 ENGLISH", href: ROUTE.ENGLISH },
   { id: "PROFILE", name: "🪪 프로필", href: ROUTE.PROFILE },
 ];

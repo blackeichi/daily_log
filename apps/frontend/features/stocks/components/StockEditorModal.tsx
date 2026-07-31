@@ -4,7 +4,8 @@ import {
   closestCenter,
   DndContext,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -54,8 +55,11 @@ export default function StockEditorModal({
     [items],
   );
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: { distance: 5 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 8 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,

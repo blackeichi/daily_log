@@ -12,6 +12,7 @@ import { LogModule } from './log/log.module';
 import { RoutineModule } from './routine/routine.module';
 import { CustomLogger } from './common/logger.service';
 import { StocksModule } from './stocks/stocks.module';
+import { BudgetModule } from './budget/budget.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { StocksModule } from './stocks/stocks.module';
     LogModule,
     RoutineModule,
     StocksModule,
+    BudgetModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, CustomLogger],
