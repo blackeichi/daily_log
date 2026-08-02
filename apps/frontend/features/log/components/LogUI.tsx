@@ -71,7 +71,6 @@ export const LogUI = ({ initialData }: LogUIProps) => {
     handleEditLog,
     handleViewLog,
   } = useLogPage(initialData);
-
   return (
     <div
       className="flex h-full w-full flex-col gap-5 pt-2"

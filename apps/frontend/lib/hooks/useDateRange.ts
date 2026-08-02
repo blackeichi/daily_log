@@ -6,7 +6,7 @@ export const useDateRange = (
   defaultEndDate?: string,
 ) => {
   const [startDate, setStartDate] = useState(
-    defaultStartDate || moment().subtract(3, "months").format("YYYY-MM-DD"),
+    defaultStartDate || moment().subtract(1, "month").format("YYYY-MM-DD"),
   );
   const [endDate, setEndDate] = useState(
     defaultEndDate || moment().format("YYYY-MM-DD"),

@@ -24,7 +24,6 @@ function validateItems(value: unknown, label: string): BudgetItem[] {
     const item = raw as Partial<BudgetItem>;
     const name = typeof item.name === 'string' ? item.name.trim() : '';
     const amount = Number(item.amount);
-    const day = item.day === null ? null : Number(item.day);
 
     if (!name || name.length > 40) {
       throw new BadRequestException(`${label} 이름은 1~40자로 입력해주세요.`);
@@ -32,10 +31,6 @@ function validateItems(value: unknown, label: string): BudgetItem[] {
     if (!Number.isInteger(amount) || amount < 0 || amount > MAX_AMOUNT) {
       throw new BadRequestException(`${label} 금액을 확인해주세요.`);
     }
-    if (day !== null && (!Number.isInteger(day) || day < 1 || day > 31)) {
-      throw new BadRequestException(`${label} 날짜는 1~31 사이여야 합니다.`);
-    }
-
     return {
       id:
         typeof item.id === 'string' && item.id.length <= 80
@@ -43,7 +38,6 @@ function validateItems(value: unknown, label: string): BudgetItem[] {
           : crypto.randomUUID(),
       name,
       amount,
-      day,
       ...(typeof item.category === 'string' && item.category.trim()
         ? { category: item.category.trim().slice(0, 20) }
         : {}),

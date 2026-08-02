@@ -133,7 +133,6 @@ export type BudgetItem = {
   id: string;
   name: string;
   amount: number;
-  day: number | null;
   category?: string;
 };
 

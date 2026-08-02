@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function LogPage() {
   const endDate = moment().format("YYYY-MM-DD");
-  const startDate = moment().subtract(3, "months").format("YYYY-MM-DD");
+  const startDate = moment().subtract(1, "month").format("YYYY-MM-DD");
 
   let initialData: GetLogsType[] | undefined;
 

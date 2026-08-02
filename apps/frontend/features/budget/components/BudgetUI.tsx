@@ -5,7 +5,6 @@ import { useSetAtom } from "jotai";
 import {
   FiArrowDownLeft,
   FiArrowUpRight,
-  FiCalendar,
   FiCheck,
   FiDollarSign,
   FiPlus,
@@ -30,7 +29,6 @@ function newItem(): BudgetItem {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     name: "",
     amount: 0,
-    day: null,
   };
 }
 
@@ -123,7 +121,7 @@ function ItemList({
         {items.map((item, index) => (
           <div
             key={item.id}
-            className="grid grid-cols-[1fr_40px] gap-2 px-4 py-3 sm:grid-cols-[minmax(120px,1fr)_minmax(140px,0.8fr)_100px_36px] sm:items-center sm:px-5"
+            className="grid grid-cols-[1fr_40px] gap-2 px-4 py-3 sm:grid-cols-[minmax(120px,1fr)_minmax(140px,0.8fr)_36px] sm:items-center sm:px-5"
           >
             <input
               aria-label={`${title} ${index + 1} 이름`}
@@ -137,7 +135,7 @@ function ItemList({
               type="button"
               aria-label={`${item.name || `${index + 1}번째 항목`} 삭제`}
               onClick={() => onChange(items.filter((current) => current.id !== item.id))}
-              className="row-span-2 flex h-10 w-10 items-center justify-center rounded-xl text-stone-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500 sm:order-last sm:row-span-1 sm:h-9 sm:w-9"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-stone-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500 sm:order-last sm:h-9 sm:w-9"
             >
               <FiTrash2 size={16} />
             </button>
@@ -146,25 +144,6 @@ function ItemList({
               value={item.amount}
               onChange={(amount) => update(item.id, { amount })}
             />
-            <label className="relative flex h-10 items-center rounded-xl border border-stone-200 bg-white px-3 text-stone-500 focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-100">
-              <FiCalendar size={14} className="mr-2 shrink-0" aria-hidden="true" />
-              <input
-                type="number"
-                min={1}
-                max={31}
-                aria-label={`${title} ${item.name || index + 1} 입출금일`}
-                value={item.day ?? ""}
-                placeholder="날짜"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  update(item.id, {
-                    day: value ? Math.min(Math.max(Number(value), 1), 31) : null,
-                  });
-                }}
-                className="w-full min-w-0 bg-transparent text-xs text-stone-800 outline-none"
-              />
-              <span className="text-xs">일</span>
-            </label>
           </div>
         ))}
       </div>
@@ -244,7 +223,7 @@ export default function BudgetUI({ initialData }: { initialData?: Budget }) {
   }
 
   return (
-    <div className="flex w-full max-w-[900px] flex-col gap-4 pb-10 pt-4 sm:gap-5">
+    <div className="flex w-full max-w-[900px] flex-col gap-4 pb-24 pt-4 sm:gap-5 sm:pb-10">
       <header className="flex items-end justify-between border-b border-stone-300 pb-3">
         <div className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-700 text-white">
@@ -322,7 +301,7 @@ export default function BudgetUI({ initialData }: { initialData?: Budget }) {
         />
       </div>
 
-      <div className="sticky bottom-3 z-10 flex justify-end">
+      <div className="sticky bottom-16 z-10 flex justify-end sm:bottom-3">
         <button
           type="button"
           onClick={handleSave}
