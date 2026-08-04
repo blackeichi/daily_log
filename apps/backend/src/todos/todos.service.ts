@@ -15,6 +15,12 @@ export class TodosService {
   async getTodos(id: number) {
     return this.prisma.todo.findFirst({ where: { userId: id } });
   }
+  async getTodoVersion(id: number) {
+    return this.prisma.todo.findUnique({
+      where: { userId: id },
+      select: { id: true, updatedAt: true },
+    });
+  }
   async createTodos(id: number) {
     return this.prisma.todo.create({
       data: {
@@ -73,6 +79,14 @@ export class TodosService {
       where: { id: todoId },
       data,
       include: { user: true },
+    });
+  }
+
+  async syncTodos(id: number, data: TodoListsPayload) {
+    return this.prisma.todo.upsert({
+      where: { userId: id },
+      create: { userId: id, ...data },
+      update: data,
     });
   }
 }

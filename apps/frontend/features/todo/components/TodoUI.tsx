@@ -1,12 +1,11 @@
 "use client";
 
 import Button from "@/components/atoms/button";
-import QueryRetry from "@/components/molecules/QueryRetry";
-import type { GetTodosType, Todo } from "@/types/api";
+import type { Todo } from "@/types/api";
 import { useTodo } from "../hooks/useTodoPage";
 import { DataList } from "@/components/organisms/dataList";
 import { TodayMemoButton } from "./TodayMemoButton";
-import { FaSave, FaSpinner } from "react-icons/fa";
+import { FaCloudUploadAlt, FaSave, FaSpinner } from "react-icons/fa";
 
 const lists = [
   "todayList",
@@ -24,37 +23,20 @@ const LIST_NAMES: { [key in (typeof lists)[number]]: string } = {
   breakLimitList: "한계돌파, 정화의식",
 };
 
-export default function TodoUI({
-  initialData,
-}: {
-  initialData?: GetTodosType;
-}) {
+export default function TodoUI() {
   const {
     data,
-    loading,
-    isError,
-    isRetrying,
-    refetchTodos,
     isFirst,
     hasChanges,
     isSaving,
+    isUploading,
+    isDownloading,
     saveVersion,
     handleCreateTodos,
     handleUpdateList,
     handleSaveTodos,
-  } = useTodo(initialData);
-
-  if (isError) {
-    return (
-      <div className="w-full max-w-[800px] pt-4">
-        <QueryRetry
-          message="투두 조회에 실패했습니다."
-          onRetry={() => refetchTodos()}
-          isRetrying={isRetrying}
-        />
-      </div>
-    );
-  }
+    handleUploadTodos,
+  } = useTodo();
 
   if (isFirst)
     return (
@@ -71,7 +53,7 @@ export default function TodoUI({
       {lists.map((listName) => (
         <DataList
           key={listName}
-          loading={loading}
+          loading={false}
           title="Todo"
           name={LIST_NAMES[listName]}
           defaultDataList={data?.[listName] || []}
@@ -89,14 +71,14 @@ export default function TodoUI({
           }
         />
       ))}
-      {hasChanges && (
+      <div className="fixed bottom-16 right-5 z-50 flex items-center gap-2 sm:bottom-8 sm:right-8">
         <button
           type="button"
-          className="fixed bottom-16 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-stone-700 text-white shadow-lg shadow-stone-500 transition-colors hover:bg-stone-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-600 disabled:cursor-wait disabled:bg-stone-400 sm:bottom-8 sm:right-8"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-stone-700 text-white shadow-lg shadow-stone-500 transition-colors hover:bg-stone-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-600 disabled:cursor-default disabled:bg-stone-300"
           onClick={handleSaveTodos}
-          disabled={isSaving}
-          aria-label="모든 Todo 변경사항 저장"
-          title="모든 Todo 변경사항 저장"
+          disabled={!hasChanges || isSaving || isUploading || isDownloading}
+          aria-label="Todo를 이 기기에 저장"
+          title="이 기기에 저장"
         >
           {isSaving ? (
             <FaSpinner className="animate-spin" size={18} aria-hidden="true" />
@@ -104,7 +86,21 @@ export default function TodoUI({
             <FaSave size={18} aria-hidden="true" />
           )}
         </button>
-      )}
+        <button
+          type="button"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-700 text-white shadow-lg shadow-emerald-900/25 transition-colors hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-wait disabled:bg-stone-400"
+          onClick={handleUploadTodos}
+          disabled={isUploading || isDownloading}
+          aria-label="현재 Todo를 서버에 업로드"
+          title="서버에 업로드"
+        >
+          {isUploading || isDownloading ? (
+            <FaSpinner className="animate-spin" size={18} aria-hidden="true" />
+          ) : (
+            <FaCloudUploadAlt size={20} aria-hidden="true" />
+          )}
+        </button>
+      </div>
     </div>
   );
 }

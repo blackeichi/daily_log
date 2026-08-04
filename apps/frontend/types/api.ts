@@ -38,12 +38,18 @@ export type Todo = {
 
 export type GetTodosType = {
   id: number;
+  updatedAt: string;
   todayList: Todo[];
   weekList: Todo[];
   monthList: Todo[];
   yearList: Todo[];
   breakLimitList: Todo[];
 };
+
+export type TodoVersion = {
+  id: number;
+  updatedAt: string;
+} | null;
 
 export type GetLogsType = {
   id: number;

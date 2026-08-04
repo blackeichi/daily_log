@@ -35,11 +35,28 @@ export class TodosController {
       throw new BadRequestException('유효하지 않은 투두 목록입니다.');
     }
 
-    if (data.some((item: any) => typeof item?.text !== 'string')) {
+    if (
+      data.some(
+        (item: unknown) =>
+          typeof item !== 'object' ||
+          item === null ||
+          !('text' in item) ||
+          typeof item.text !== 'string',
+      )
+    ) {
       throw new BadRequestException('유효하지 않은 투두 항목입니다.');
     }
 
-    if (data.some((item: any) => item.text.length > MAX_TODO_ITEM_LENGTH)) {
+    if (
+      data.some(
+        (item: unknown) =>
+          typeof item === 'object' &&
+          item !== null &&
+          'text' in item &&
+          typeof item.text === 'string' &&
+          item.text.length > MAX_TODO_ITEM_LENGTH,
+      )
+    ) {
       throw new BadRequestException(
         `투두 항목은 최대 ${MAX_TODO_ITEM_LENGTH}자까지 입력할 수 있습니다.`,
       );
@@ -56,6 +73,23 @@ export class TodosController {
   @Get()
   async getTodos(@Req() req: AuthenticatedRequest) {
     return this.todosService.getTodos(req.user.sub);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get('version')
+  async getTodoVersion(@Req() req: AuthenticatedRequest) {
+    return this.todosService.getTodoVersion(req.user.sub);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Put('sync')
+  async syncTodos(
+    @Body() body: Partial<TodoListsPayload>,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    TODO_LIST_NAMES.forEach((listName) => {
+      this.validateTodoList(body[listName]);
+    });
+
+    return this.todosService.syncTodos(req.user.sub, body as TodoListsPayload);
   }
   @UseGuards(JwtAuthGuard)
   @Post()
