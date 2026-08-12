@@ -166,6 +166,18 @@ export function useDataList({
     [updateDataList],
   );
 
+  const handleUpdateItem = useCallback(
+    (index: number, item: DataListItemType) => {
+      const prev = dataListRef.current;
+      if (!prev[index]) return;
+
+      const next = [...prev];
+      next[index] = item;
+      updateDataList(next);
+    },
+    [updateDataList],
+  );
+
   const handleDeleteItem = useCallback(
     (index: number) => {
       const prev = dataListRef.current;
@@ -246,6 +258,7 @@ export function useDataList({
     handleCancelEdit,
     handleToggleOpen,
     handleChangeText,
+    handleUpdateItem,
     handleDeleteItem,
     handleToggleDisabled,
     handleChangeDone,

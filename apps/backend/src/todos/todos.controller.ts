@@ -22,6 +22,9 @@ const TODO_LIST_NAMES = [
   'breakLimitList',
 ] as const;
 const MAX_TODO_ITEM_LENGTH = 1000;
+const MAX_TODO_DESCRIPTION_LENGTH = 10000;
+const MAX_TODO_ITEMS = 100;
+const MAX_SUB_TODO_ITEMS = 50;
 
 type TodoListName = (typeof TODO_LIST_NAMES)[number];
 type TodoListsPayload = Record<TodoListName, any[]>;
@@ -62,9 +65,51 @@ export class TodosController {
       );
     }
 
-    if (data.length > 30) {
+    for (const item of data) {
+      if (typeof item !== 'object' || item === null) continue;
+
+      if (
+        'description' in item &&
+        item.description !== undefined &&
+        (typeof item.description !== 'string' ||
+          item.description.length > MAX_TODO_DESCRIPTION_LENGTH)
+      ) {
+        throw new BadRequestException(
+          `투두 설명은 최대 ${MAX_TODO_DESCRIPTION_LENGTH}자까지 입력할 수 있습니다.`,
+        );
+      }
+
+      if ('children' in item && item.children !== undefined) {
+        if (!Array.isArray(item.children)) {
+          throw new BadRequestException('하위 투두 목록이 올바르지 않습니다.');
+        }
+        if (item.children.length > MAX_SUB_TODO_ITEMS) {
+          throw new BadRequestException(
+            `하위 투두는 최대 ${MAX_SUB_TODO_ITEMS}개까지 추가할 수 있습니다.`,
+          );
+        }
+        if (
+          item.children.some(
+            (child: unknown) =>
+              typeof child !== 'object' ||
+              child === null ||
+              !('text' in child) ||
+              typeof child.text !== 'string' ||
+              child.text.length > MAX_TODO_ITEM_LENGTH ||
+              ('description' in child &&
+                child.description !== undefined &&
+                (typeof child.description !== 'string' ||
+                  child.description.length > MAX_TODO_DESCRIPTION_LENGTH)),
+          )
+        ) {
+          throw new BadRequestException('하위 투두 내용이 올바르지 않습니다.');
+        }
+      }
+    }
+
+    if (data.length > MAX_TODO_ITEMS) {
       throw new BadRequestException(
-        '각 리스트는 최대 30개까지 추가할 수 있습니다.',
+        `각 목록에는 최대 ${MAX_TODO_ITEMS}개까지 추가할 수 있습니다.`,
       );
     }
   }

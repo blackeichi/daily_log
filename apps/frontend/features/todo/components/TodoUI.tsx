@@ -64,6 +64,7 @@ export default function TodoUI() {
           needCheckBox
           needDisableButton
           maxLength={1000}
+          enableTodoDetails
           storageKey={`todo:${listName}`}
           emptyMessage="데이터가 없습니다. Todo를 추가해주세요."
           titleAction={

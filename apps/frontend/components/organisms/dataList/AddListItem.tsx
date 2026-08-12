@@ -8,7 +8,7 @@ import { errorAtom } from "@/lib/atom";
 import { COLOR_THEME } from "@/constants/system";
 import { DataListItemType } from "./dataList";
 
-const MAX_ITEMS = 30;
+const MAX_ITEMS = 100;
 
 export const AddListItem = ({
   title,

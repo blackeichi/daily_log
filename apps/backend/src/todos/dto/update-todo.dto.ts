@@ -6,6 +6,8 @@ import {
   IsString,
   IsBoolean,
   IsIn,
+  IsOptional,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -30,6 +32,19 @@ export class TodoItemDto {
   @IsString()
   @IsIn(['todo', 'section'])
   type: 'todo' | 'section' | undefined;
+
+  @ApiProperty({ description: '투두 설명', required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10000)
+  description?: string;
+
+  @ApiProperty({ description: '하위 투두 목록', required: false, type: [TodoItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TodoItemDto)
+  children?: TodoItemDto[];
 }
 
 export class UpdateTodoDto {

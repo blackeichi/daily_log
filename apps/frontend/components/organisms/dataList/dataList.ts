@@ -3,6 +3,8 @@ export type DataListItemType = {
   text: string;
   isDone?: boolean;
   isDisabled?: boolean;
+  description?: string;
+  children?: DataListItemType[];
   type?: "todo" | "section" | undefined;
 };
 

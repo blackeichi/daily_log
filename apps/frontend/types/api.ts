@@ -33,6 +33,8 @@ export type Todo = {
   text: string;
   isDone: boolean;
   isDisabled?: boolean;
+  description?: string;
+  children?: Todo[];
   type?: "todo" | "section";
 };
 

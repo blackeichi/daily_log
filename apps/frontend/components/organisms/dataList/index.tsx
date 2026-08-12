@@ -29,6 +29,7 @@ function DataListComponent({
   emptyMessage = "조회할 목록이 없습니다.",
   titleAction,
   maxLength,
+  enableTodoDetails = false,
 }: {
   loading?: boolean;
   title: string;
@@ -44,6 +45,7 @@ function DataListComponent({
   emptyMessage?: string;
   titleAction?: React.ReactNode;
   maxLength?: number | undefined;
+  enableTodoDetails?: boolean;
 }) {
   const {
     dataList,
@@ -61,6 +63,7 @@ function DataListComponent({
     handleCancelEdit,
     handleToggleOpen,
     handleChangeText,
+    handleUpdateItem,
     handleDeleteItem,
     handleToggleDisabled,
     handleChangeDone,
@@ -87,12 +90,14 @@ function DataListComponent({
           debounce={debounce}
           immediateTextChange={deferSave}
           onChangeText={handleChangeText}
+          onUpdateItem={handleUpdateItem}
           onDeleteItem={handleDeleteItem}
           onToggleDisabled={handleToggleDisabled}
           onChangeDone={handleChangeDone}
           needCheckBox={needCheckBox}
           needDisableButton={needDisableButton}
           maxLength={maxLength}
+          enableTodoDetails={enableTodoDetails}
         />
       )),
     [
@@ -100,14 +105,17 @@ function DataListComponent({
       title,
       isEditing,
       dragEnabled,
+      deferSave,
       debounce,
       handleChangeText,
+      handleUpdateItem,
       handleDeleteItem,
       handleToggleDisabled,
       handleChangeDone,
       needCheckBox,
       needDisableButton,
       maxLength,
+      enableTodoDetails,
     ],
   );
 
