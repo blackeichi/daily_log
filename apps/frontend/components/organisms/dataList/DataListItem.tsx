@@ -11,7 +11,7 @@ import { confirmAtom } from "@/lib/atom";
 import CheckBox from "@/components/atoms/checkBox";
 import IconButton from "@/components/molecules/iconButton";
 import { Input } from "@/components/atoms/input";
-import { DataListItemType } from "./dataList";
+import { DataListItemType, setChildTodoDone } from "./dataList";
 import Overlay from "@/components/atoms/overlay";
 import { TextArea } from "@/components/atoms/textArea";
 
@@ -29,8 +29,10 @@ function TodoDetailsModal({
   onClose: () => void;
   onSave: (item: DataListItemType) => void;
 }) {
-  const [description, setDescription] = useState(item.description ?? "");
   const [children, setChildren] = useState(item.children ?? []);
+  const [description, setDescription] = useState(
+    item.children?.length ? "" : (item.description ?? ""),
+  );
   const [newChild, setNewChild] = useState("");
 
   const updateChild = (childIndex: number, patch: Partial<DataListItemType>) => {
@@ -44,6 +46,7 @@ function TodoDetailsModal({
   const handleAddChild = () => {
     const text = newChild.trim();
     if (!text || children.length >= MAX_SUB_TODOS) return;
+    setDescription("");
     setChildren((prev) => [
       ...prev,
       { id: Date.now(), text, isDone: false, type: "todo" },
@@ -55,7 +58,9 @@ function TodoDetailsModal({
     const nextItem = { ...item };
     const trimmedDescription = description.trim();
 
-    if (trimmedDescription) nextItem.description = trimmedDescription;
+    if (children.length === 0 && trimmedDescription) {
+      nextItem.description = trimmedDescription;
+    }
     else delete nextItem.description;
 
     if (children.length > 0) nextItem.children = children;
@@ -100,7 +105,11 @@ function TodoDetailsModal({
               </span>
             )}
           </div>
-          {isEditing ? (
+          {children.length > 0 ? (
+            <p className="rounded-md bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+              하위 투두가 있는 상위 투두에는 설명을 입력할 수 없습니다.
+            </p>
+          ) : isEditing ? (
             <TextArea
               value={description}
               setValue={setDescription}
@@ -167,7 +176,13 @@ function TodoDetailsModal({
                             : current,
                         );
                         setChildren(next);
-                        onSave({ ...item, children: next });
+                        const nextItem = {
+                          ...item,
+                          isDone: next.length > 0 && next.every((child) => child.isDone),
+                          children: next,
+                        };
+                        delete nextItem.description;
+                        onSave(nextItem);
                       }}
                       aria-label={`${child.text} 완료 여부`}
                     />
@@ -288,6 +303,13 @@ function DataListItemComponent({
     [index, onChangeDone],
   );
 
+  const handleChildCheckboxChange = useCallback(
+    (childIndex: number, isDone: boolean) => {
+      onUpdateItem(index, setChildTodoDone(item, childIndex, isDone));
+    },
+    [index, item, onUpdateItem],
+  );
+
   const handleToggleDisabled = useCallback(() => {
     onToggleDisabled(index);
   }, [index, onToggleDisabled]);
@@ -317,14 +339,13 @@ function DataListItemComponent({
   }, [item.text, index, onDeleteItem, setConfirmMgs]);
 
   return (
-    <form
+    <div
       ref={dragEnabled ? setNodeRef : undefined}
       style={dragEnabled ? style : undefined}
       {...(dragEnabled ? attributes : {})}
-      className={`flex min-h-12 items-center shadow-xs shadow-stone-500 pl-3 pr-1 py-1 ${
+      className={`flex min-h-12 flex-wrap items-center shadow-xs shadow-stone-500 pl-3 pr-1 py-1 ${
         isSection ? "bg-stone-200 border-l-4 border-stone-600" : "bg-white"
-      } ${item.isDisabled ? "opacity-60" : ""}`}
-      onSubmit={(e) => e.preventDefault()}
+      } ${item.isDisabled && !isSection ? "border-l-4 border-amber-500 bg-amber-50/70" : ""}`}
     >
       {!isEditing && needCheckBox && !isSection && (
         <CheckBox
@@ -357,8 +378,15 @@ function DataListItemComponent({
           >
             {item.text}
           </span>
-          {!isSection && enableTodoDetails && (item.description || item.children?.length) ? (
-            <MdNotes className="shrink-0 text-stone-400" size={16} aria-hidden="true" />
+          {!isSection && item.isDisabled ? (
+            <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+              <FaLock size={10} aria-hidden="true" /> 잠금
+            </span>
+          ) : null}
+          {!isSection && enableTodoDetails && item.description && !item.children?.length ? (
+            <span className={`${item.isDisabled ? "ml-0" : "ml-auto"} flex shrink-0 items-center gap-1 rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-semibold text-stone-700`}>
+              <MdNotes size={12} aria-hidden="true" /> 설명
+            </span>
           ) : null}
         </button>
       ) : (
@@ -423,6 +451,32 @@ function DataListItemComponent({
           />
         </div>
       )}
+      {!isEditing && !isSection && enableTodoDetails && item.children?.length ? (
+        <div className="basis-full border-t border-stone-100 bg-stone-50 py-1 pl-10 pr-3">
+          {item.children.map((child, childIndex) => (
+            <div key={child.id} className="flex min-h-9 items-center gap-2 border-l-2 border-stone-300 px-3 py-1">
+              <CheckBox
+                id={`${item.id}-${child.id}`}
+                value={child.isDone ?? false}
+                setValue={(isDone) => handleChildCheckboxChange(childIndex, isDone)}
+                disabled={!!item.isDisabled}
+              />
+              <button
+                type="button"
+                onClick={() => setIsDetailsOpen(true)}
+                className={`min-w-0 flex-1 break-words text-left ${child.isDone ? "text-stone-400 line-through" : "text-stone-700"}`}
+              >
+                {child.text}
+              </button>
+              {child.description ? (
+                <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                  <MdNotes size={12} aria-hidden="true" /> 설명
+                </span>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
       {isDetailsOpen && !isSection && (
         <TodoDetailsModal
           item={item}
@@ -431,7 +485,7 @@ function DataListItemComponent({
           onSave={(nextItem) => onUpdateItem(index, nextItem)}
         />
       )}
-    </form>
+    </div>
   );
 }
 

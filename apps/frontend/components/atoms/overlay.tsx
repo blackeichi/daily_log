@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 const FOCUSABLE_SELECTOR = [
   "a[href]",
@@ -27,12 +28,27 @@ export default function Overlay({
   ariaLabel?: string;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && isMounted) {
       dialogRef.current?.focus();
     }
-  }, [isOpen]);
+  }, [isMounted, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !isMounted) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMounted, isOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Escape") {
@@ -80,9 +96,11 @@ export default function Overlay({
     }
   };
 
-  return (
+  if (!isMounted) return null;
+
+  return createPortal(
     <div
-      className={`fixed w-screen h-screen left-0 top-0 justify-center bg-[rgba(0,0,0,0.4)] items-center ${
+      className={`fixed inset-0 h-dvh w-screen justify-center bg-black/55 p-3 backdrop-blur-[1px] items-center ${
         isOpen ? "flex" : "hidden"
       }`}
       style={{ zIndex: zIndex || 50 }}
@@ -92,7 +110,7 @@ export default function Overlay({
     >
       <div
         ref={dialogRef}
-        className="p-1 bg-stone-100 rounded-md shadow-lg shadow-stone-600 max-h-[95vh] overflow-y-auto focus:outline-none"
+        className="max-h-[95vh] overflow-y-auto rounded-md bg-stone-100 p-1 shadow-2xl shadow-black/40 focus:outline-none"
         style={style}
         tabIndex={-1}
         role="dialog"
@@ -102,6 +120,7 @@ export default function Overlay({
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

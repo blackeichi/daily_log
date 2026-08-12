@@ -17,3 +17,29 @@ export type UseDataListParams = {
   saveVersion?: number | undefined;
   storageKey?: string | undefined;
 };
+
+export const setTodoTreeDone = (
+  item: DataListItemType,
+  isDone: boolean,
+): DataListItemType => {
+  const nextItem = { ...item, isDone };
+  if (item.children) {
+    nextItem.children = item.children.map((child) => ({ ...child, isDone }));
+  }
+  return nextItem;
+};
+
+export const setChildTodoDone = (
+  item: DataListItemType,
+  childIndex: number,
+  isDone: boolean,
+): DataListItemType => {
+  const children = (item.children ?? []).map((child, index) =>
+    index === childIndex ? { ...child, isDone } : child,
+  );
+  return {
+    ...item,
+    isDone: children.length > 0 && children.every((child) => child.isDone),
+    children,
+  };
+};

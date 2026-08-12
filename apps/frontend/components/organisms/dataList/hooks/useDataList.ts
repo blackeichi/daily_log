@@ -11,7 +11,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DEBOUNCE_DELAYS } from "@/constants/timing";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-import type { DataListItemType, UseDataListParams } from "../dataList";
+import {
+  setTodoTreeDone,
+  type DataListItemType,
+  type UseDataListParams,
+} from "../dataList";
 
 const DATA_LIST_OPEN_STORAGE_PREFIX = "DAILY_LOG_DATA_LIST_OPEN";
 
@@ -217,7 +221,7 @@ export function useDataList({
       if (!target || target.isDone === isDone) return;
 
       const next = [...prev];
-      next[index] = { ...target, isDone };
+      next[index] = setTodoTreeDone(target, isDone);
       updateDataList(next);
 
       if (!deferSave) {
