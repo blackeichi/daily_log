@@ -4,16 +4,17 @@ import { MdDelete, MdNotes } from "react-icons/md";
 import { IoIosMenu } from "react-icons/io";
 import { FaLock, FaUnlock } from "react-icons/fa";
 import { memo, useCallback, useMemo, useState } from "react";
-import { COLOR_THEME } from "@/constants/system";
-import { DEBOUNCE_DELAYS } from "@/constants/timing";
 import { useSetAtom } from "jotai";
-import { confirmAtom } from "@/lib/atom";
+
 import CheckBox from "@/components/atoms/checkBox";
-import IconButton from "@/components/molecules/iconButton";
 import { Input } from "@/components/atoms/input";
-import { DataListItemType, setChildTodoDone } from "./dataList";
 import Overlay from "@/components/atoms/overlay";
 import { TextArea } from "@/components/atoms/textArea";
+import IconButton from "@/components/molecules/iconButton";
+import { COLOR_THEME } from "@/constants/system";
+import { DEBOUNCE_DELAYS } from "@/constants/timing";
+import { confirmAtom, errorAtom } from "@/lib/atom";
+import { DataListItemType, setChildTodoDone } from "./dataList";
 
 const MAX_DESCRIPTION_LENGTH = 10000;
 const MAX_SUB_TODOS = 50;
@@ -23,66 +24,120 @@ export function TodoDetailsModal({
   isEditing,
   onClose,
   onSave,
+  onDelete,
 }: {
   item: DataListItemType;
   isEditing: boolean;
   onClose: () => void;
   onSave: (item: DataListItemType) => void;
+  onDelete?: () => void;
 }) {
+  const setError = useSetAtom(errorAtom);
+  const setConfirm = useSetAtom(confirmAtom);
+  const [text, setText] = useState(item.text);
   const [children, setChildren] = useState(item.children ?? []);
   const [description, setDescription] = useState(item.description ?? "");
   const [newChild, setNewChild] = useState("");
 
   const updateChild = (childIndex: number, patch: Partial<DataListItemType>) => {
-    setChildren((prev) =>
-      prev.map((child, index) =>
+    setChildren((previous) =>
+      previous.map((child, index) =>
         index === childIndex ? { ...child, ...patch } : child,
       ),
     );
   };
 
   const handleAddChild = () => {
-    const text = newChild.trim();
-    if (!text || children.length >= MAX_SUB_TODOS) return;
-    setChildren((prev) => [
-      ...prev,
-      { id: Date.now(), text, isDone: false, type: "todo" },
+    const childText = newChild.trim();
+    if (!childText || children.length >= MAX_SUB_TODOS) return;
+
+    setChildren((previous) => [
+      ...previous,
+      { id: Date.now(), text: childText, isDone: false, type: "todo" },
     ]);
     setNewChild("");
   };
 
+  const handleChildCheckboxChange = (childIndex: number, isDone: boolean) => {
+    const nextItem = setChildTodoDone(
+      { ...item, text, description, children },
+      childIndex,
+      isDone,
+    );
+    setChildren(nextItem.children ?? []);
+    if (!isEditing) onSave(nextItem);
+  };
+
   const handleSave = () => {
-    const nextItem = { ...item };
+    const trimmedText = text.trim();
+    if (!trimmedText) {
+      setError("투두 내용을 입력해주세요.");
+      return;
+    }
+
+    const nextItem: DataListItemType = {
+      ...item,
+      text: trimmedText,
+      isDone:
+        children.length > 0
+          ? children.every((child) => child.isDone)
+          : (item.isDone ?? false),
+      type: "todo",
+    };
     const trimmedDescription = description.trim();
 
-    if (trimmedDescription) {
-      nextItem.description = trimmedDescription;
-    } else delete nextItem.description;
+    if (trimmedDescription) nextItem.description = trimmedDescription;
+    else delete nextItem.description;
 
-    if (children.length > 0) {
-      nextItem.children = children;
-      nextItem.isDone = children.every((child) => child.isDone);
-    } else delete nextItem.children;
+    if (children.length > 0) nextItem.children = children;
+    else delete nextItem.children;
 
     onSave(nextItem);
     onClose();
+  };
+
+  const handleDelete = () => {
+    if (!onDelete) return;
+
+    setConfirm({
+      title: "투두 삭제",
+      message: `"${item.text}"을(를) 삭제하시겠습니까?`,
+      confirmEvent: () => {
+        onDelete();
+        onClose();
+      },
+    });
   };
 
   return (
     <Overlay
       isOpen
       onClick={onClose}
-      ariaLabel={`${item.text} 상세`}
+      ariaLabel={isEditing ? `${item.text || "새 투두"} 편집` : `${item.text} 상세`}
       style={{ width: "min(92vw, 640px)" }}
       zIndex={70}
     >
       <div className="flex max-h-[90vh] flex-col gap-4 bg-white p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 border-b border-stone-200 pb-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold text-stone-500">TODO 상세</p>
-            <h2 className="break-words text-base font-semibold text-stone-900">
-              {item.text}
-            </h2>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold text-stone-500">
+              {isEditing ? "TODO 편집" : "TODO 상세"}
+            </p>
+            {isEditing ? (
+              <Input
+                id={`todo-title-${item.id}`}
+                value={text}
+                setValue={setText}
+                width="100%"
+                maxLength={1000}
+                placeholder="투두를 입력하세요"
+                aria-label="투두 내용"
+              />
+            ) : (
+              <h2 className="break-words text-base font-semibold text-stone-900">
+                {item.text}
+              </h2>
+            )}
           </div>
           <button
             type="button"
@@ -90,7 +145,7 @@ export function TodoDetailsModal({
             onClick={onClose}
             aria-label="팝업 닫기"
           >
-            ✕
+            ×
           </button>
         </div>
 
@@ -140,7 +195,7 @@ export function TodoDetailsModal({
                 maxLength={1000}
                 disabled={children.length >= MAX_SUB_TODOS}
                 className="min-w-0 flex-1 rounded border border-stone-300 px-3 py-2 outline-none focus:border-stone-600"
-                placeholder="하위 투두를 입력하세요."
+                placeholder="하위 투두를 입력하세요"
               />
               <button
                 type="button"
@@ -154,7 +209,9 @@ export function TodoDetailsModal({
           )}
           <div className="max-h-56 space-y-2 overflow-y-auto">
             {children.length === 0 ? (
-              <p className="rounded-md bg-stone-50 p-3 text-stone-400">하위 투두가 없습니다.</p>
+              <p className="rounded-md bg-stone-50 p-3 text-stone-400">
+                하위 투두가 없습니다.
+              </p>
             ) : (
               children.map((child, childIndex) => (
                 <div key={child.id} className="rounded-md border border-stone-200 p-2">
@@ -162,34 +219,38 @@ export function TodoDetailsModal({
                     <input
                       type="checkbox"
                       checked={child.isDone ?? false}
-                      disabled={isEditing}
-                      onChange={(event) => {
-                        const nextItem = setChildTodoDone(
-                          { ...item, children },
-                          childIndex,
-                          event.target.checked,
-                        );
-                        setChildren(nextItem.children ?? []);
-                        onSave(nextItem);
-                      }}
+                      onChange={(event) =>
+                        handleChildCheckboxChange(childIndex, event.target.checked)
+                      }
                       aria-label={`${child.text} 완료 여부`}
                     />
                     {isEditing ? (
                       <input
                         value={child.text}
-                        onChange={(event) => updateChild(childIndex, { text: event.target.value })}
+                        onChange={(event) =>
+                          updateChild(childIndex, { text: event.target.value })
+                        }
                         maxLength={1000}
                         className="min-w-0 flex-1 rounded border border-stone-300 px-2 py-1.5 outline-none focus:border-stone-600"
+                        aria-label={`${child.text} 내용`}
                       />
                     ) : (
-                      <span className={`min-w-0 flex-1 break-words ${child.isDone ? "text-stone-400 line-through" : ""}`}>
+                      <span
+                        className={`min-w-0 flex-1 break-words ${
+                          child.isDone ? "text-stone-400 line-through" : ""
+                        }`}
+                      >
                         {child.text}
                       </span>
                     )}
                     {isEditing && (
                       <button
                         type="button"
-                        onClick={() => setChildren((prev) => prev.filter((_, index) => index !== childIndex))}
+                        onClick={() =>
+                          setChildren((previous) =>
+                            previous.filter((_, index) => index !== childIndex),
+                          )
+                        }
                         className="rounded p-1 text-stone-500 hover:bg-red-50 hover:text-red-700"
                         aria-label={`${child.text} 삭제`}
                       >
@@ -200,11 +261,14 @@ export function TodoDetailsModal({
                   {isEditing ? (
                     <textarea
                       value={child.description ?? ""}
-                      onChange={(event) => updateChild(childIndex, { description: event.target.value })}
+                      onChange={(event) =>
+                        updateChild(childIndex, { description: event.target.value })
+                      }
                       maxLength={MAX_DESCRIPTION_LENGTH}
                       rows={2}
                       className="mt-2 w-full resize-y rounded border border-stone-200 px-2 py-1.5 text-xs outline-none focus:border-stone-500"
                       placeholder="하위 투두 설명 (선택)"
+                      aria-label={`${child.text} 설명`}
                     />
                   ) : child.description ? (
                     <p className="mt-2 whitespace-pre-wrap break-words pl-6 text-xs leading-5 text-stone-500">
@@ -217,15 +281,36 @@ export function TodoDetailsModal({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-stone-200 pt-3">
-          <button type="button" onClick={onClose} className="rounded border border-stone-300 px-4 py-2">
-            {isEditing ? "취소" : "닫기"}
-          </button>
-          {isEditing && (
-            <button type="button" onClick={handleSave} className="rounded bg-stone-700 px-4 py-2 text-white">
-              적용
+        <div className="flex items-center justify-between border-t border-stone-200 pt-3">
+          <div>
+            {isEditing && onDelete ? (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="rounded border border-red-200 px-4 py-2 text-red-700 hover:bg-red-50"
+              >
+                삭제하기
+              </button>
+            ) : null}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded border border-stone-300 px-4 py-2"
+            >
+              {isEditing ? "취소" : "닫기"}
             </button>
-          )}
+            {isEditing && (
+              <button
+                type="button"
+                onClick={handleSave}
+                className="rounded bg-stone-700 px-4 py-2 text-white"
+              >
+                저장
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Overlay>
@@ -268,84 +353,65 @@ function DataListItemComponent({
   enableTodoDetails?: boolean;
 }) {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const setConfirmMgs = useSetAtom(confirmAtom);
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({
-      id: item.id,
-      disabled: !enableDrag || !isEditing,
-    });
+  const setConfirm = useSetAtom(confirmAtom);
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: item.id,
+    disabled: !enableDrag || !isEditing,
+  });
   const style = useMemo(
-    () => ({
-      transform: CSS.Transform.toString(transform),
-      transition,
-    }),
+    () => ({ transform: CSS.Transform.toString(transform), transition }),
     [transform, transition],
   );
-  const isSection = item?.type === "section";
+  const isSection = item.type === "section";
   const dragEnabled = isEditing && enableDrag;
 
-  const handleCheckboxChange = useCallback(
-    (val: boolean) => {
-      onChangeDone(index, val);
-    },
-    [index, onChangeDone],
-  );
-
-  const handleChildCheckboxChange = useCallback(
-    (childIndex: number, isDone: boolean) => {
-      onUpdateItem(index, setChildTodoDone(item, childIndex, isDone));
-    },
-    [index, item, onUpdateItem],
-  );
-
-  const handleToggleDisabled = useCallback(() => {
-    onToggleDisabled(index);
-  }, [index, onToggleDisabled]);
-
   const handleInputChange = useCallback(
-    (val: string) => {
+    (value: string) => {
       if (immediateTextChange) {
-        onChangeText(index, val);
+        onChangeText(index, value);
         return;
       }
-
-      debounce(() => {
-        onChangeText(index, val);
-      }, DEBOUNCE_DELAYS.INPUT);
+      debounce(() => onChangeText(index, value), DEBOUNCE_DELAYS.INPUT);
     },
     [debounce, immediateTextChange, index, onChangeText],
   );
 
   const handleDelete = useCallback(() => {
-    setConfirmMgs({
+    setConfirm({
       title: "항목 삭제",
-      message: `"${item.text}" 를 삭제하시겠습니까?`,
-      confirmEvent: () => {
-        onDeleteItem(index);
-      },
+      message: `"${item.text}"을(를) 삭제하시겠습니까?`,
+      confirmEvent: () => onDeleteItem(index),
     });
-  }, [item.text, index, onDeleteItem, setConfirmMgs]);
+  }, [index, item.text, onDeleteItem, setConfirm]);
 
   return (
     <div
       ref={dragEnabled ? setNodeRef : undefined}
       style={dragEnabled ? style : undefined}
       {...(dragEnabled ? attributes : {})}
-      className={`flex min-h-12 flex-wrap items-center shadow-xs shadow-stone-500 pl-3 pr-1 py-1 ${
-        isSection ? "bg-stone-200 border-l-4 border-stone-600" : "bg-white"
-      } ${item.isDisabled && !isSection ? "border-l-4 border-amber-500 bg-amber-50/70" : ""}`}
+      className={`flex min-h-12 flex-wrap items-center px-3 py-1 shadow-xs shadow-stone-500 ${
+        isSection
+          ? "border-l-4 border-stone-600 bg-stone-200"
+          : item.isDisabled
+            ? "border-l-4 border-amber-500 bg-white"
+            : "bg-white"
+      }`}
     >
       {!isEditing && needCheckBox && !isSection && (
         <CheckBox
           id={item.id.toString()}
-          value={item.isDone || false}
-          setValue={handleCheckboxChange}
+          value={item.isDone ?? false}
+          setValue={(isDone) => onChangeDone(index, isDone)}
         />
       )}
       {!isEditing ? (
         <button
           type="button"
-          className={`flex flex-1 items-center gap-2 pl-2 text-left ${!isSection && enableTodoDetails ? "cursor-pointer hover:text-stone-600" : "cursor-default"}`}
+          className={`flex flex-1 items-center gap-2 pl-2 text-left ${
+            !isSection && enableTodoDetails
+              ? "cursor-pointer hover:text-stone-600"
+              : "cursor-default"
+          }`}
           onClick={() => {
             if (!isSection && enableTodoDetails) setIsDetailsOpen(true);
           }}
@@ -366,13 +432,8 @@ function DataListItemComponent({
           >
             {item.text}
           </span>
-          {!isSection && item.isDisabled ? (
-            <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
-              <FaLock size={10} aria-hidden="true" /> 잠금
-            </span>
-          ) : null}
           {!isSection && enableTodoDetails && item.description ? (
-            <span className={`${item.isDisabled ? "ml-0" : "ml-auto"} flex shrink-0 items-center gap-1 rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-semibold text-stone-700`}>
+            <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-semibold text-stone-700">
               <MdNotes size={12} aria-hidden="true" /> 설명
             </span>
           ) : null}
@@ -385,11 +446,7 @@ function DataListItemComponent({
             setValue={handleInputChange}
             width="100%"
             disabled={!!item.isDisabled}
-            placeholder={
-              isSection
-                ? "섹터 제목을 입력하세요."
-                : `${title}을(를) 입력하세요.`
-            }
+            placeholder={isSection ? "섹션 제목을 입력하세요" : `${title}를 입력하세요`}
             maxLength={maxLength ?? 300}
           />
         </div>
@@ -397,31 +454,20 @@ function DataListItemComponent({
       {needDisableButton && !isEditing && !isSection && (
         <IconButton
           icon={item.isDisabled ? FaLock : FaUnlock}
-          className="w-7 h-7 rounded-full ml-2"
+          className="ml-2 h-7 w-7 rounded-full"
           bgColor="transparent"
-          color={item.isDisabled ? "#b91c1c" : COLOR_THEME.DARK_GRAY}
-          onClick={handleToggleDisabled}
+          color={COLOR_THEME.DARK_GRAY}
+          onClick={() => onToggleDisabled(index)}
           size={15}
-          tooltip={item.isDisabled ? "항목 활성화" : "항목 비활성화"}
-          ariaLabel={item.isDisabled ? "항목 활성화" : "항목 비활성화"}
+          tooltip={item.isDisabled ? "항목 활성화" : "항목 잠금"}
+          ariaLabel={item.isDisabled ? "항목 활성화" : "항목 잠금"}
         />
       )}
       {isEditing && (
-        <div className="flex gap-0.5 z-10 items-center ml-2">
-          {enableTodoDetails && !isSection && (
-            <IconButton
-              icon={MdNotes}
-              className="h-7 w-7 rounded-full"
-              bgColor="transparent"
-              color={COLOR_THEME.DARK_GRAY}
-              onClick={() => setIsDetailsOpen(true)}
-              size={18}
-              ariaLabel="설명 및 하위 투두 편집"
-            />
-          )}
+        <div className="z-10 ml-2 flex items-center gap-0.5">
           <IconButton
             icon={MdDelete}
-            className="w-7 h-7 rounded-full"
+            className="h-7 w-7 rounded-full"
             bgColor="transparent"
             color={COLOR_THEME.DARK_GRAY}
             onClick={handleDelete}
@@ -442,17 +488,23 @@ function DataListItemComponent({
       {!isEditing && !isSection && enableTodoDetails && item.children?.length ? (
         <div className="basis-full border-t border-stone-100 bg-stone-50 py-1 pl-10 pr-3">
           {item.children.map((child, childIndex) => (
-            <div key={child.id} className="flex min-h-9 items-center gap-2 border-l-2 border-stone-300 px-3 py-1">
+            <div
+              key={child.id}
+              className="flex min-h-9 items-center gap-2 border-l-2 border-stone-300 px-3 py-1"
+            >
               <CheckBox
                 id={`${item.id}-${child.id}`}
                 value={child.isDone ?? false}
-                setValue={(isDone) => handleChildCheckboxChange(childIndex, isDone)}
-                disabled={!!item.isDisabled}
+                setValue={(isDone) =>
+                  onUpdateItem(index, setChildTodoDone(item, childIndex, isDone))
+                }
               />
               <button
                 type="button"
                 onClick={() => setIsDetailsOpen(true)}
-                className={`min-w-0 flex-1 break-words text-left ${child.isDone ? "text-stone-400 line-through" : "text-stone-700"}`}
+                className={`min-w-0 flex-1 break-words text-left ${
+                  child.isDone ? "text-stone-400 line-through" : "text-stone-700"
+                }`}
               >
                 {child.text}
               </button>
@@ -468,9 +520,10 @@ function DataListItemComponent({
       {isDetailsOpen && !isSection && (
         <TodoDetailsModal
           item={item}
-          isEditing={isEditing}
+          isEditing={!item.isDisabled}
           onClose={() => setIsDetailsOpen(false)}
           onSave={(nextItem) => onUpdateItem(index, nextItem)}
+          onDelete={() => onDeleteItem(index)}
         />
       )}
     </div>

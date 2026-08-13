@@ -3,16 +3,19 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { memo, useMemo } from "react";
-import { EmptyState } from "@/components/atoms/EmptyState";
-import { FaCheck, FaChevronUp, FaSave } from "react-icons/fa";
+import { memo, useMemo, useState } from "react";
+import { FaCheck, FaChevronUp, FaPlus, FaSave } from "react-icons/fa";
+import { GiCancel } from "react-icons/gi";
 import { motion } from "framer-motion";
 import { MdEdit } from "react-icons/md";
-import { GiCancel } from "react-icons/gi";
-import { DataListItemType } from "./dataList";
+
+import { EmptyState } from "@/components/atoms/EmptyState";
 import { AddListItem } from "./AddListItem";
-import { DataListItem } from "./DataListItem";
+import { DataListItem, TodoDetailsModal } from "./DataListItem";
+import { DataListItemType } from "./dataList";
 import { useDataList } from "./hooks/useDataList";
+
+const MAX_TODO_ITEMS = 100;
 
 function DataListComponent({
   loading = false,
@@ -76,6 +79,8 @@ function DataListComponent({
     saveVersion,
     storageKey,
   });
+  const [isCreateTodoOpen, setIsCreateTodoOpen] = useState(false);
+  const canAddTodo = dataList.length < MAX_TODO_ITEMS;
 
   const renderedItems = useMemo(
     () =>
@@ -85,7 +90,7 @@ function DataListComponent({
           key={item.id}
           item={item}
           index={index}
-          isEditing={isEditing}
+          isEditing={enableTodoDetails ? false : isEditing}
           enableDrag={dragEnabled}
           debounce={debounce}
           immediateTextChange={deferSave}
@@ -102,64 +107,90 @@ function DataListComponent({
       )),
     [
       dataList,
-      title,
-      isEditing,
-      dragEnabled,
-      deferSave,
       debounce,
+      deferSave,
+      dragEnabled,
+      enableTodoDetails,
+      handleChangeDone,
       handleChangeText,
-      handleUpdateItem,
       handleDeleteItem,
       handleToggleDisabled,
-      handleChangeDone,
+      handleUpdateItem,
+      isEditing,
+      maxLength,
       needCheckBox,
       needDisableButton,
-      maxLength,
-      enableTodoDetails,
+      title,
     ],
   );
 
   return (
-    <div className="flex flex-col w-full shadow-lg shadow-stone-500 rounded-lg overflow-hidden text-xs sm:text-sm">
-      <div className="bg-stone-700 w-full h-14 mb-1 text-white flex justify-between items-center px-2 shadow-md shadow-stone-500 z-10">
+    <div className="flex w-full flex-col overflow-hidden rounded-lg text-xs shadow-lg shadow-stone-500 sm:text-sm">
+      <div className="z-10 mb-1 flex h-14 w-full items-center justify-between bg-stone-700 px-2 text-white shadow-md shadow-stone-500">
         <div className="flex min-w-0 items-center gap-1">
           <span>{name}</span>
           {titleAction}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className={`bg-white rounded-full justify-center items-center p-1 ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-            onClick={handleSaveOrEdit}
-            disabled={loading}
-            aria-label={
-              isEditing ? (deferSave ? "편집 완료" : "저장하기") : "편집하기"
-            }
-          >
-            {isEditing ? (
-              deferSave ? (
-                <FaCheck size={18} className="text-stone-700" />
-              ) : (
-                <FaSave size={18} className="text-stone-700" />
-              )
-            ) : (
-              <MdEdit size={18} className="text-stone-700" />
-            )}
-          </button>
-          {isEditing && (
+          {enableTodoDetails ? (
             <button
               type="button"
-              className="bg-white rounded-full justify-center items-center p-1 cursor-pointer"
-              onClick={handleCancelEdit}
-              aria-label="편집 취소"
+              className={`flex items-center gap-1 rounded-full bg-white px-2 py-1 text-stone-700 ${
+                loading || !canAddTodo
+                  ? "cursor-not-allowed opacity-50"
+                  : "cursor-pointer"
+              }`}
+              onClick={() => setIsCreateTodoOpen(true)}
+              disabled={loading || !canAddTodo}
+              aria-label="투두 추가"
             >
-              <GiCancel size={18} className="text-stone-700" />
+              <FaPlus size={14} aria-hidden="true" /> 추가하기
             </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={`rounded-full bg-white p-1 ${
+                  loading ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                }`}
+                onClick={handleSaveOrEdit}
+                disabled={loading}
+                aria-label={
+                  isEditing
+                    ? deferSave
+                      ? "편집 완료"
+                      : "저장하기"
+                    : "편집하기"
+                }
+              >
+                {isEditing ? (
+                  deferSave ? (
+                    <FaCheck size={18} className="text-stone-700" />
+                  ) : (
+                    <FaSave size={18} className="text-stone-700" />
+                  )
+                ) : (
+                  <MdEdit size={18} className="text-stone-700" />
+                )}
+              </button>
+              {isEditing && (
+                <button
+                  type="button"
+                  className="rounded-full bg-white p-1"
+                  onClick={handleCancelEdit}
+                  aria-label="편집 취소"
+                >
+                  <GiCancel size={18} className="text-stone-700" />
+                </button>
+              )}
+            </>
           )}
           {hasItems && (
             <button
               type="button"
-              className={`bg-white rounded-full justify-center items-center p-1 ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              className={`rounded-full bg-white p-1 ${
+                loading ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+              }`}
               onClick={handleToggleOpen}
               disabled={loading}
               aria-label={isOpen ? "목록 접기" : "목록 펼치기"}
@@ -177,14 +208,14 @@ function DataListComponent({
 
       {loading ? (
         <div className="flex flex-col gap-1">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map((item) => (
             <div
-              key={i}
-              className="bg-white h-12 sm:h-14 flex items-center px-4 shadow-sm shadow-stone-500 animate-pulse"
+              key={item}
+              className="flex h-12 items-center bg-white px-4 shadow-sm shadow-stone-500 sm:h-14"
             >
-              <div className="flex gap-3 items-center w-full">
-                <div className="h-4 bg-stone-300 rounded w-4"></div>
-                <div className="h-4 bg-stone-200 rounded flex-1"></div>
+              <div className="flex w-full items-center gap-3">
+                <div className="h-4 w-4 rounded bg-stone-300" />
+                <div className="h-4 flex-1 rounded bg-stone-200" />
               </div>
             </div>
           ))}
@@ -195,16 +226,13 @@ function DataListComponent({
           transition={collapseTransition}
           className="overflow-hidden"
         >
-          {dragEnabled ? (
+          {dragEnabled && !enableTodoDetails ? (
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <SortableContext
-                items={itemIds}
-                strategy={verticalListSortingStrategy}
-              >
+              <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
                 {renderedItems}
               </SortableContext>
             </DndContext>
@@ -218,12 +246,22 @@ function DataListComponent({
           className="min-h-12 rounded-none shadow-sm shadow-stone-500"
         />
       )}
-      {isEditing && !loading && (
+
+      {!enableTodoDetails && isEditing && !loading && (
         <AddListItem
           title={title}
           dataList={dataList}
           setDataList={setDataList}
           maxLength={maxLength}
+        />
+      )}
+
+      {isCreateTodoOpen && (
+        <TodoDetailsModal
+          item={{ id: Date.now(), text: "", isDone: false, type: "todo" }}
+          isEditing
+          onClose={() => setIsCreateTodoOpen(false)}
+          onSave={(item) => setDataList([...dataList, item])}
         />
       )}
     </div>

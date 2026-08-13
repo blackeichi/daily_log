@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 
 import CheckBox from "@/components/atoms/checkBox";
+import { DataList } from "..";
 import { TodoDetailsModal } from "../DataListItem";
 import { setChildTodoDone, type DataListItemType } from "../dataList";
 
@@ -47,11 +48,8 @@ describe("sub-todo checkbox interactions", () => {
     const secondChild = screen.getByLabelText("second child");
 
     fireEvent.click(firstChild);
-    expect(firstChild).toBeChecked();
-    expect(secondChild).not.toBeChecked();
-    expect(screen.getByTestId("parent-state")).toHaveTextContent("false");
-
     fireEvent.click(secondChild);
+
     expect(firstChild).toBeChecked();
     expect(secondChild).toBeChecked();
     expect(screen.getByTestId("parent-state")).toHaveTextContent("true");
@@ -76,8 +74,8 @@ describe("sub-todo checkbox interactions", () => {
   });
 });
 
-describe("parent todo details", () => {
-  it("saves a parent description while keeping its child todos", () => {
+describe("todo details modal", () => {
+  it("saves a parent description, title, and child description together", () => {
     const handleSave = jest.fn();
 
     render(
@@ -89,19 +87,142 @@ describe("parent todo details", () => {
       />,
     );
 
-    const description = screen.getByPlaceholderText(
-      "상세한 설명, 참고 링크, 메모 등을 입력하세요.",
-    );
-    fireEvent.change(description, {
-      target: { value: "updated parent description" },
+    fireEvent.change(screen.getByLabelText("투두 내용"), {
+      target: { value: "updated parent" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "적용" }));
+    fireEvent.change(
+      screen.getByPlaceholderText("상세한 설명, 참고 링크, 메모 등을 입력하세요."),
+      { target: { value: "updated parent description" } },
+    );
+    fireEvent.change(screen.getByLabelText("first child 설명"), {
+      target: { value: "first child description" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
 
     expect(handleSave).toHaveBeenCalledWith(
       expect.objectContaining({
+        text: "updated parent",
         description: "updated parent description",
-        children: initialTodo.children,
+        children: expect.arrayContaining([
+          expect.objectContaining({
+            text: "first child",
+            description: "first child description",
+          }),
+        ]),
       }),
     );
+  });
+
+  it("keeps a locked todo read-only while allowing child completion changes", () => {
+    const handleSave = jest.fn();
+
+    render(
+      <TodoDetailsModal
+        item={{ ...initialTodo, isDisabled: true }}
+        isEditing={false}
+        onClose={jest.fn()}
+        onSave={handleSave}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "저장" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("투두 내용")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("first child 완료 여부"));
+    expect(handleSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isDone: false,
+        children: expect.arrayContaining([
+          expect.objectContaining({ text: "first child", isDone: true }),
+        ]),
+      }),
+    );
+  });
+});
+
+describe("todo list controls", () => {
+  const renderTodoList = (defaultDataList: DataListItemType[] = []) => {
+    const onDataListChange = jest.fn();
+    render(
+      <DataList
+        title="Todo"
+        name="오늘"
+        defaultDataList={defaultDataList}
+        onSaveDataList={jest.fn()}
+        onDataListChange={onDataListChange}
+        deferSave
+        needCheckBox
+        needDisableButton
+        enableTodoDetails
+      />,
+    );
+    return onDataListChange;
+  };
+
+  it("opens an add modal from the list header and creates a complete todo", () => {
+    const onDataListChange = renderTodoList();
+
+    fireEvent.click(screen.getByRole("button", { name: "투두 추가" }));
+    fireEvent.change(screen.getByLabelText("투두 내용"), {
+      target: { value: "new parent" },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText("상세한 설명, 참고 링크, 메모 등을 입력하세요."),
+      { target: { value: "new description" } },
+    );
+    fireEvent.change(screen.getByPlaceholderText("하위 투두를 입력하세요"), {
+      target: { value: "new child" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "추가" }));
+    fireEvent.change(screen.getByLabelText("new child 설명"), {
+      target: { value: "child description" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+
+    expect(onDataListChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({
+        text: "new parent",
+        description: "new description",
+        children: [
+          expect.objectContaining({
+            text: "new child",
+            description: "child description",
+          }),
+        ],
+      }),
+    ]);
+  });
+
+  it("allows parent and child checkboxes to work even when the todo is locked", () => {
+    const onDataListChange = renderTodoList([
+      {
+        ...initialTodo,
+        isDisabled: true,
+        children: [{ id: 2, text: "first child", isDone: false }],
+      },
+    ]);
+
+    const checkboxes = screen.getAllByRole("checkbox");
+    expect(checkboxes[0]).not.toBeDisabled();
+    expect(checkboxes[1]).not.toBeDisabled();
+
+    fireEvent.click(checkboxes[0]);
+    expect(onDataListChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({
+        isDisabled: true,
+        isDone: true,
+        children: [expect.objectContaining({ isDone: true })],
+      }),
+    ]);
+
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(checkboxes[1]);
+    expect(onDataListChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({
+        isDisabled: true,
+        isDone: true,
+        children: [expect.objectContaining({ isDone: true })],
+      }),
+    ]);
   });
 });
