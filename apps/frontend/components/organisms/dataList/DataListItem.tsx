@@ -18,7 +18,7 @@ import { TextArea } from "@/components/atoms/textArea";
 const MAX_DESCRIPTION_LENGTH = 10000;
 const MAX_SUB_TODOS = 50;
 
-function TodoDetailsModal({
+export function TodoDetailsModal({
   item,
   isEditing,
   onClose,
@@ -30,9 +30,7 @@ function TodoDetailsModal({
   onSave: (item: DataListItemType) => void;
 }) {
   const [children, setChildren] = useState(item.children ?? []);
-  const [description, setDescription] = useState(
-    item.children?.length ? "" : (item.description ?? ""),
-  );
+  const [description, setDescription] = useState(item.description ?? "");
   const [newChild, setNewChild] = useState("");
 
   const updateChild = (childIndex: number, patch: Partial<DataListItemType>) => {
@@ -46,7 +44,6 @@ function TodoDetailsModal({
   const handleAddChild = () => {
     const text = newChild.trim();
     if (!text || children.length >= MAX_SUB_TODOS) return;
-    setDescription("");
     setChildren((prev) => [
       ...prev,
       { id: Date.now(), text, isDone: false, type: "todo" },
@@ -58,13 +55,14 @@ function TodoDetailsModal({
     const nextItem = { ...item };
     const trimmedDescription = description.trim();
 
-    if (children.length === 0 && trimmedDescription) {
+    if (trimmedDescription) {
       nextItem.description = trimmedDescription;
-    }
-    else delete nextItem.description;
+    } else delete nextItem.description;
 
-    if (children.length > 0) nextItem.children = children;
-    else delete nextItem.children;
+    if (children.length > 0) {
+      nextItem.children = children;
+      nextItem.isDone = children.every((child) => child.isDone);
+    } else delete nextItem.children;
 
     onSave(nextItem);
     onClose();
@@ -105,11 +103,7 @@ function TodoDetailsModal({
               </span>
             )}
           </div>
-          {children.length > 0 ? (
-            <p className="rounded-md bg-amber-50 p-3 text-xs leading-5 text-amber-800">
-              하위 투두가 있는 상위 투두에는 설명을 입력할 수 없습니다.
-            </p>
-          ) : isEditing ? (
+          {isEditing ? (
             <TextArea
               value={description}
               setValue={setDescription}
@@ -170,18 +164,12 @@ function TodoDetailsModal({
                       checked={child.isDone ?? false}
                       disabled={isEditing}
                       onChange={(event) => {
-                        const next = children.map((current, index) =>
-                          index === childIndex
-                            ? { ...current, isDone: event.target.checked }
-                            : current,
+                        const nextItem = setChildTodoDone(
+                          { ...item, children },
+                          childIndex,
+                          event.target.checked,
                         );
-                        setChildren(next);
-                        const nextItem = {
-                          ...item,
-                          isDone: next.length > 0 && next.every((child) => child.isDone),
-                          children: next,
-                        };
-                        delete nextItem.description;
+                        setChildren(nextItem.children ?? []);
                         onSave(nextItem);
                       }}
                       aria-label={`${child.text} 완료 여부`}
@@ -383,7 +371,7 @@ function DataListItemComponent({
               <FaLock size={10} aria-hidden="true" /> 잠금
             </span>
           ) : null}
-          {!isSection && enableTodoDetails && item.description && !item.children?.length ? (
+          {!isSection && enableTodoDetails && item.description ? (
             <span className={`${item.isDisabled ? "ml-0" : "ml-auto"} flex shrink-0 items-center gap-1 rounded-full bg-stone-200 px-2 py-0.5 text-[10px] font-semibold text-stone-700`}>
               <MdNotes size={12} aria-hidden="true" /> 설명
             </span>

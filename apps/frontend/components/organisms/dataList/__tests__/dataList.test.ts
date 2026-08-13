@@ -30,8 +30,12 @@ describe("todo completion synchronization", () => {
   });
 
   it("unchecks the parent when any child is unchecked", () => {
-    const checked = setTodoTreeDone(todo, true);
+    const checked = setTodoTreeDone(
+      { ...todo, description: "parent description" },
+      true,
+    );
     const oneUnchecked = setChildTodoDone(checked, 0, false);
     expect(oneUnchecked.isDone).toBe(false);
+    expect(oneUnchecked.description).toBe("parent description");
   });
 });

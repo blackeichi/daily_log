@@ -89,16 +89,6 @@ export class TodosController {
           );
         }
         if (
-          item.children.length > 0 &&
-          'description' in item &&
-          typeof item.description === 'string' &&
-          item.description.trim().length > 0
-        ) {
-          throw new BadRequestException(
-            '하위 투두가 있는 상위 투두에는 설명을 입력할 수 없습니다.',
-          );
-        }
-        if (
           item.children.some(
             (child: unknown) =>
               typeof child !== 'object' ||

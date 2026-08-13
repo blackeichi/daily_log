@@ -44,6 +44,8 @@ export default memo(CheckBox, (prevProps, nextProps) => {
   return (
     prevProps.value === nextProps.value &&
     prevProps.disabled === nextProps.disabled &&
-    prevProps.id === nextProps.id
+    prevProps.id === nextProps.id &&
+    prevProps.setValue === nextProps.setValue &&
+    prevProps.children === nextProps.children
   );
 });
