@@ -15,6 +15,7 @@ import { COLOR_THEME } from "@/constants/system";
 import { DEBOUNCE_DELAYS } from "@/constants/timing";
 import { confirmAtom, errorAtom } from "@/lib/atom";
 import { DataListItemType, setChildTodoDone } from "./dataList";
+import { type TodoPlacement } from "./todoSections";
 
 const MAX_DESCRIPTION_LENGTH = 10000;
 const MAX_SUB_TODOS = 50;
@@ -25,12 +26,18 @@ export function TodoDetailsModal({
   onClose,
   onSave,
   onDelete,
+  placementOptions = [],
+  defaultPlacement = "current",
+  allowTypeSelection = false,
 }: {
   item: DataListItemType;
   isEditing: boolean;
   onClose: () => void;
-  onSave: (item: DataListItemType) => void;
+  onSave: (item: DataListItemType, placement: TodoPlacement) => void;
   onDelete?: () => void;
+  placementOptions?: { value: TodoPlacement; label: string }[];
+  defaultPlacement?: TodoPlacement;
+  allowTypeSelection?: boolean;
 }) {
   const setError = useSetAtom(errorAtom);
   const setConfirm = useSetAtom(confirmAtom);
@@ -38,6 +45,10 @@ export function TodoDetailsModal({
   const [children, setChildren] = useState(item.children ?? []);
   const [description, setDescription] = useState(item.description ?? "");
   const [newChild, setNewChild] = useState("");
+  const [itemType, setItemType] = useState<"todo" | "section">(
+    item.type === "section" ? "section" : "todo",
+  );
+  const [placement, setPlacement] = useState<TodoPlacement>(defaultPlacement);
 
   const updateChild = (childIndex: number, patch: Partial<DataListItemType>) => {
     setChildren((previous) =>
@@ -65,7 +76,7 @@ export function TodoDetailsModal({
       isDone,
     );
     setChildren(nextItem.children ?? []);
-    if (!isEditing) onSave(nextItem);
+    if (!isEditing) onSave(nextItem, "current");
   };
 
   const handleSave = () => {
@@ -78,12 +89,23 @@ export function TodoDetailsModal({
     const nextItem: DataListItemType = {
       ...item,
       text: trimmedText,
-      isDone:
-        children.length > 0
-          ? children.every((child) => child.isDone)
-          : (item.isDone ?? false),
-      type: "todo",
+      type: itemType,
     };
+
+    if (itemType === "section") {
+      delete nextItem.isDone;
+      delete nextItem.isDisabled;
+      delete nextItem.description;
+      delete nextItem.children;
+      onSave(nextItem, placement);
+      onClose();
+      return;
+    }
+
+    nextItem.isDone =
+      children.length > 0
+        ? children.every((child) => child.isDone)
+        : (item.isDone ?? false);
     const trimmedDescription = description.trim();
 
     if (trimmedDescription) nextItem.description = trimmedDescription;
@@ -92,7 +114,7 @@ export function TodoDetailsModal({
     if (children.length > 0) nextItem.children = children;
     else delete nextItem.children;
 
-    onSave(nextItem);
+    onSave(nextItem, placement);
     onClose();
   };
 
@@ -121,7 +143,13 @@ export function TodoDetailsModal({
         <div className="flex items-start justify-between gap-3 border-b border-stone-200 pb-3">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold text-stone-500">
-              {isEditing ? "TODO 편집" : "TODO 상세"}
+              {itemType === "section"
+                ? isEditing
+                  ? "섹션 편집"
+                  : "섹션 상세"
+                : isEditing
+                  ? "TODO 편집"
+                  : "TODO 상세"}
             </p>
             {isEditing ? (
               <Input
@@ -130,8 +158,10 @@ export function TodoDetailsModal({
                 setValue={setText}
                 width="100%"
                 maxLength={1000}
-                placeholder="투두를 입력하세요"
-                aria-label="투두 내용"
+                placeholder={
+                  itemType === "section" ? "섹션 제목을 입력하세요" : "투두를 입력하세요"
+                }
+                aria-label={itemType === "section" ? "섹션 제목" : "투두 내용"}
               />
             ) : (
               <h2 className="break-words text-base font-semibold text-stone-900">
@@ -149,7 +179,48 @@ export function TodoDetailsModal({
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-col gap-2">
+        {isEditing && allowTypeSelection && (
+          <div className="flex rounded-md border border-stone-300 bg-stone-50 p-1">
+            <button
+              type="button"
+              onClick={() => setItemType("todo")}
+              className={`flex-1 rounded px-3 py-2 ${
+                itemType === "todo" ? "bg-stone-700 text-white" : "text-stone-600"
+              }`}
+            >
+              투두
+            </button>
+            <button
+              type="button"
+              onClick={() => setItemType("section")}
+              className={`flex-1 rounded px-3 py-2 ${
+                itemType === "section" ? "bg-stone-700 text-white" : "text-stone-600"
+              }`}
+            >
+              섹션
+            </button>
+          </div>
+        )}
+
+        {isEditing && placementOptions.length > 0 && (
+          <label className="flex flex-col gap-1 text-xs font-semibold text-stone-700">
+            {itemType === "section" ? "섹션 위치" : "투두 위치"}
+            <select
+              value={placement}
+              onChange={(event) => setPlacement(event.target.value as TodoPlacement)}
+              className="rounded border border-stone-300 bg-white px-3 py-2 font-normal outline-none focus:border-stone-600"
+              aria-label={itemType === "section" ? "섹션 위치" : "투두 위치"}
+            >
+              {placementOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {itemType === "todo" && <div className="flex min-h-0 flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-stone-700">설명</span>
             {isEditing && (
@@ -172,9 +243,9 @@ export function TodoDetailsModal({
               {description || "등록된 설명이 없습니다."}
             </p>
           )}
-        </div>
+        </div>}
 
-        <div className="flex min-h-0 flex-col gap-2">
+        {itemType === "todo" && <div className="flex min-h-0 flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-stone-700">하위 투두</span>
             <span className="text-[10px] text-stone-400">
@@ -194,7 +265,7 @@ export function TodoDetailsModal({
                 }}
                 maxLength={1000}
                 disabled={children.length >= MAX_SUB_TODOS}
-                className="min-w-0 flex-1 rounded border border-stone-300 px-3 py-2 outline-none focus:border-stone-600"
+                className="min-w-0 flex-1 rounded border border-stone-300 px-3 py-2 text-xs outline-none focus:border-stone-600"
                 placeholder="하위 투두를 입력하세요"
               />
               <button
@@ -231,7 +302,7 @@ export function TodoDetailsModal({
                           updateChild(childIndex, { text: event.target.value })
                         }
                         maxLength={1000}
-                        className="min-w-0 flex-1 rounded border border-stone-300 px-2 py-1.5 outline-none focus:border-stone-600"
+                        className="min-w-0 flex-1 rounded border border-stone-300 px-2 py-1.5 text-xs outline-none focus:border-stone-600"
                         aria-label={`${child.text} 내용`}
                       />
                     ) : (
@@ -279,7 +350,7 @@ export function TodoDetailsModal({
               ))
             )}
           </div>
-        </div>
+        </div>}
 
         <div className="flex items-center justify-between border-t border-stone-200 pt-3">
           <div>
@@ -330,6 +401,8 @@ function DataListItemComponent({
   onDeleteItem,
   onToggleDisabled,
   onChangeDone,
+  onSaveTodoItem,
+  placementOptions,
   needCheckBox,
   needDisableButton,
   maxLength,
@@ -347,6 +420,12 @@ function DataListItemComponent({
   onDeleteItem: (index: number) => void;
   onToggleDisabled: (index: number) => void;
   onChangeDone: (index: number, isDone: boolean) => void;
+  onSaveTodoItem?: (
+    index: number,
+    item: DataListItemType,
+    placement: TodoPlacement,
+  ) => void;
+  placementOptions?: { value: TodoPlacement; label: string }[];
   needCheckBox: boolean;
   needDisableButton: boolean;
   maxLength?: number | undefined;
@@ -364,6 +443,7 @@ function DataListItemComponent({
   );
   const isSection = item.type === "section";
   const dragEnabled = isEditing && enableDrag;
+  const canModifyDetails = isSection || !item.isDisabled;
 
   const handleInputChange = useCallback(
     (value: string) => {
@@ -413,7 +493,7 @@ function DataListItemComponent({
               : "cursor-default"
           }`}
           onClick={() => {
-            if (!isSection && enableTodoDetails) setIsDetailsOpen(true);
+            if (enableTodoDetails) setIsDetailsOpen(true);
           }}
         >
           {isSection && (
@@ -517,13 +597,26 @@ function DataListItemComponent({
           ))}
         </div>
       ) : null}
-      {isDetailsOpen && !isSection && (
+      {isDetailsOpen && enableTodoDetails && (
         <TodoDetailsModal
           item={item}
-          isEditing={!item.isDisabled}
+          isEditing={canModifyDetails}
           onClose={() => setIsDetailsOpen(false)}
-          onSave={(nextItem) => onUpdateItem(index, nextItem)}
-          onDelete={() => onDeleteItem(index)}
+          onSave={(nextItem, placement) =>
+            onSaveTodoItem
+              ? onSaveTodoItem(index, nextItem, placement)
+              : onUpdateItem(index, nextItem)
+          }
+          {...(canModifyDetails
+            ? { onDelete: () => onDeleteItem(index) }
+            : {})}
+          {...(placementOptions
+            ? {
+                placementOptions: placementOptions.filter(
+                  (option) => option.value !== `section:${item.id}`,
+                ),
+              }
+            : {})}
         />
       )}
     </div>

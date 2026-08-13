@@ -3,7 +3,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { memo, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { FaCheck, FaChevronUp, FaPlus, FaSave } from "react-icons/fa";
 import { GiCancel } from "react-icons/gi";
 import { motion } from "framer-motion";
@@ -14,6 +14,13 @@ import { AddListItem } from "./AddListItem";
 import { DataListItem, TodoDetailsModal } from "./DataListItem";
 import { DataListItemType } from "./dataList";
 import { useDataList } from "./hooks/useDataList";
+import {
+  getSections,
+  insertAtPlacement,
+  moveSectionToPlacement,
+  moveTodoToPlacement,
+  type TodoPlacement,
+} from "./todoSections";
 
 const MAX_TODO_ITEMS = 100;
 
@@ -81,6 +88,33 @@ function DataListComponent({
   });
   const [isCreateTodoOpen, setIsCreateTodoOpen] = useState(false);
   const canAddTodo = dataList.length < MAX_TODO_ITEMS;
+  const placementOptions = useMemo(
+    () => [
+      { value: "current" as TodoPlacement, label: "현재 위치" },
+      { value: "start" as TodoPlacement, label: "목록 맨 위" },
+      { value: "end" as TodoPlacement, label: "목록 맨 아래" },
+      ...getSections(dataList).map((section) => ({
+        value: `section:${section.id}` as TodoPlacement,
+        label: `“${section.text}” 섹션 아래`,
+      })),
+    ],
+    [dataList],
+  );
+
+  const handleSaveTodoItem = useCallback((
+    index: number,
+    item: DataListItemType,
+    placement: TodoPlacement,
+  ) => {
+    const currentItem = dataList[index];
+    if (!currentItem) return;
+
+    setDataList(
+      currentItem.type === "section"
+        ? moveSectionToPlacement(dataList, index, item, placement)
+        : moveTodoToPlacement(dataList, index, item, placement),
+    );
+  }, [dataList, setDataList]);
 
   const renderedItems = useMemo(
     () =>
@@ -99,6 +133,8 @@ function DataListComponent({
           onDeleteItem={handleDeleteItem}
           onToggleDisabled={handleToggleDisabled}
           onChangeDone={handleChangeDone}
+          onSaveTodoItem={handleSaveTodoItem}
+          placementOptions={placementOptions}
           needCheckBox={needCheckBox}
           needDisableButton={needDisableButton}
           maxLength={maxLength}
@@ -120,7 +156,9 @@ function DataListComponent({
       maxLength,
       needCheckBox,
       needDisableButton,
+      handleSaveTodoItem,
       title,
+      placementOptions,
     ],
   );
 
@@ -261,7 +299,20 @@ function DataListComponent({
           item={{ id: Date.now(), text: "", isDone: false, type: "todo" }}
           isEditing
           onClose={() => setIsCreateTodoOpen(false)}
-          onSave={(item) => setDataList([...dataList, item])}
+          onSave={(item, placement) =>
+            setDataList(
+              insertAtPlacement(
+                dataList,
+                item,
+                placement === "current" ? "end" : placement,
+              ),
+            )
+          }
+          placementOptions={placementOptions.filter(
+            (option) => option.value !== "current",
+          )}
+          defaultPlacement="end"
+          allowTypeSelection
         />
       )}
     </div>

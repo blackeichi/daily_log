@@ -110,6 +110,7 @@ describe("todo details modal", () => {
           }),
         ]),
       }),
+      "current",
     );
   });
 
@@ -136,6 +137,7 @@ describe("todo details modal", () => {
           expect.objectContaining({ text: "first child", isDone: true }),
         ]),
       }),
+      "current",
     );
   });
 });
@@ -190,6 +192,75 @@ describe("todo list controls", () => {
           }),
         ],
       }),
+    ]);
+  });
+
+  it("adds a section at the selected location", () => {
+    const onDataListChange = renderTodoList([
+      { id: 10, text: "morning", type: "section" },
+      { id: 11, text: "mail", isDone: false, type: "todo" },
+      { id: 12, text: "afternoon", type: "section" },
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "투두 추가" }));
+    fireEvent.click(screen.getByRole("button", { name: "섹션" }));
+    fireEvent.change(screen.getByLabelText("섹션 제목"), {
+      target: { value: "evening" },
+    });
+    fireEvent.change(screen.getByLabelText("섹션 위치"), {
+      target: { value: "section:10" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+
+    expect(onDataListChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ id: 10 }),
+      expect.objectContaining({ id: 11 }),
+      expect.objectContaining({ text: "evening", type: "section" }),
+      expect.objectContaining({ id: 12 }),
+    ]);
+  });
+
+  it("moves a section and its grouped todos together", () => {
+    const onDataListChange = renderTodoList([
+      { id: 10, text: "morning", type: "section" },
+      { id: 11, text: "mail", isDone: false, type: "todo" },
+      { id: 12, text: "afternoon", type: "section" },
+      { id: 13, text: "work", isDone: false, type: "todo" },
+    ]);
+
+    fireEvent.click(screen.getByText("morning"));
+    fireEvent.change(screen.getByLabelText("섹션 위치"), {
+      target: { value: "end" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+
+    expect(onDataListChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ id: 12 }),
+      expect.objectContaining({ id: 13 }),
+      expect.objectContaining({ id: 10 }),
+      expect.objectContaining({ id: 11 }),
+    ]);
+  });
+
+  it("moves a todo into the selected section from its detail modal", () => {
+    const onDataListChange = renderTodoList([
+      { id: 10, text: "morning", type: "section" },
+      { id: 11, text: "mail", isDone: false, type: "todo" },
+      { id: 12, text: "afternoon", type: "section" },
+      { id: 13, text: "work", isDone: false, type: "todo" },
+    ]);
+
+    fireEvent.click(screen.getByText("work"));
+    fireEvent.change(screen.getByLabelText("투두 위치"), {
+      target: { value: "section:10" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+
+    expect(onDataListChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ id: 10 }),
+      expect.objectContaining({ id: 11 }),
+      expect.objectContaining({ id: 13 }),
+      expect.objectContaining({ id: 12 }),
     ]);
   });
 
