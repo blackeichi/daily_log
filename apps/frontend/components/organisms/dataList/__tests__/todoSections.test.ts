@@ -1,5 +1,6 @@
 import type { DataListItemType } from "../dataList";
 import {
+  cloneTodoItem,
   insertAtPlacement,
   moveSectionToPlacement,
   moveTodoToPlacement,
@@ -36,6 +37,20 @@ describe("todo section placement", () => {
     ).toEqual([1, 2, 5, 3, 4]);
   });
 
+  it("places a todo at the selected order within a section", () => {
+    expect(
+      ids(
+        moveTodoToPlacement(
+          items,
+          4,
+          { ...items[4], text: "moved rest" },
+          "section:1",
+          0,
+        ),
+      ),
+    ).toEqual([1, 5, 2, 3, 4]);
+  });
+
   it("moves a section together with all items below it", () => {
     expect(
       ids(
@@ -48,5 +63,35 @@ describe("todo section placement", () => {
     expect(
       ids(insertAtPlacement(items, { id: 6, text: "first", type: "section" }, "start")),
     ).toEqual([6, 1, 2, 3, 4, 5]);
+  });
+
+  it("copies a todo with its descriptions and children without sharing IDs", () => {
+    const original: DataListItemType = {
+      id: 7,
+      text: "parent",
+      isDone: false,
+      description: "parent description",
+      children: [
+        {
+          id: 8,
+          text: "child",
+          isDone: true,
+          description: "child description",
+        },
+      ],
+    };
+
+    const copied = cloneTodoItem(original);
+
+    expect(copied).toEqual(expect.objectContaining({
+      text: original.text,
+      description: original.description,
+      children: [expect.objectContaining({
+        text: "child",
+        description: "child description",
+      })],
+    }));
+    expect(copied.id).not.toBe(original.id);
+    expect(copied.children?.[0]?.id).not.toBe(original.children?.[0]?.id);
   });
 });

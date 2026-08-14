@@ -15,7 +15,9 @@ import { DataListItem, TodoDetailsModal } from "./DataListItem";
 import { DataListItemType } from "./dataList";
 import { useDataList } from "./hooks/useDataList";
 import {
+  cloneTodoItem,
   getSections,
+  getSectionTodos,
   insertAtPlacement,
   moveSectionToPlacement,
   moveTodoToPlacement,
@@ -100,11 +102,22 @@ function DataListComponent({
     ],
     [dataList],
   );
+  const sectionItemCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        getSections(dataList).map((section) => [
+          section.id,
+          getSectionTodos(dataList, section.id).length,
+        ]),
+      ),
+    [dataList],
+  );
 
   const handleSaveTodoItem = useCallback((
     index: number,
     item: DataListItemType,
     placement: TodoPlacement,
+    sectionOrder?: number,
   ) => {
     const currentItem = dataList[index];
     if (!currentItem) return;
@@ -112,9 +125,24 @@ function DataListComponent({
     setDataList(
       currentItem.type === "section"
         ? moveSectionToPlacement(dataList, index, item, placement)
-        : moveTodoToPlacement(dataList, index, item, placement),
+        : moveTodoToPlacement(dataList, index, item, placement, sectionOrder),
     );
   }, [dataList, setDataList]);
+
+  const handleCopyTodoItem = useCallback(
+    (index: number) => {
+      const item = dataList[index];
+      if (!item || item.type === "section") return;
+
+      const copiedItem = cloneTodoItem(item);
+      setDataList([
+        ...dataList.slice(0, index + 1),
+        copiedItem,
+        ...dataList.slice(index + 1),
+      ]);
+    },
+    [dataList, setDataList],
+  );
 
   const renderedItems = useMemo(
     () =>
@@ -134,7 +162,9 @@ function DataListComponent({
           onToggleDisabled={handleToggleDisabled}
           onChangeDone={handleChangeDone}
           onSaveTodoItem={handleSaveTodoItem}
+          onCopyTodoItem={handleCopyTodoItem}
           placementOptions={placementOptions}
+          sectionItemCounts={sectionItemCounts}
           needCheckBox={needCheckBox}
           needDisableButton={needDisableButton}
           maxLength={maxLength}
@@ -157,8 +187,10 @@ function DataListComponent({
       needCheckBox,
       needDisableButton,
       handleSaveTodoItem,
+      handleCopyTodoItem,
       title,
       placementOptions,
+      sectionItemCounts,
     ],
   );
 
@@ -259,12 +291,15 @@ function DataListComponent({
           ))}
         </div>
       ) : hasItems ? (
-        <motion.div
-          animate={{ maxHeight: isOpen ? 2000 : 0 }}
-          transition={collapseTransition}
-          className="overflow-hidden"
-        >
-          {dragEnabled && !enableTodoDetails ? (
+        enableTodoDetails ? (
+          isOpen ? <div>{renderedItems}</div> : null
+        ) : (
+          <motion.div
+            animate={{ maxHeight: isOpen ? 2000 : 0 }}
+            transition={collapseTransition}
+            className="overflow-hidden"
+          >
+            {dragEnabled ? (
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -277,7 +312,8 @@ function DataListComponent({
           ) : (
             <div>{renderedItems}</div>
           )}
-        </motion.div>
+          </motion.div>
+        )
       ) : (
         <EmptyState
           title={emptyMessage}
@@ -299,12 +335,13 @@ function DataListComponent({
           item={{ id: Date.now(), text: "", isDone: false, type: "todo" }}
           isEditing
           onClose={() => setIsCreateTodoOpen(false)}
-          onSave={(item, placement) =>
+          onSave={(item, placement, sectionOrder) =>
             setDataList(
               insertAtPlacement(
                 dataList,
                 item,
                 placement === "current" ? "end" : placement,
+                sectionOrder,
               ),
             )
           }
@@ -313,6 +350,7 @@ function DataListComponent({
           )}
           defaultPlacement="end"
           allowTypeSelection
+          sectionItemCounts={sectionItemCounts}
         />
       )}
     </div>

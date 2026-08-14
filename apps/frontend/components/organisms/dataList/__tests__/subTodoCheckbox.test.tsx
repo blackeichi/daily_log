@@ -140,6 +140,32 @@ describe("todo details modal", () => {
       "current",
     );
   });
+
+  it("moves a child todo with the ordering controls before saving", () => {
+    const handleSave = jest.fn();
+
+    render(
+      <TodoDetailsModal
+        item={initialTodo}
+        isEditing
+        onClose={jest.fn()}
+        onSave={handleSave}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("second child 위로 이동"));
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+
+    expect(handleSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        children: [
+          expect.objectContaining({ text: "second child" }),
+          expect.objectContaining({ text: "first child" }),
+        ],
+      }),
+      "current",
+    );
+  });
 });
 
 describe("todo list controls", () => {
@@ -261,6 +287,24 @@ describe("todo list controls", () => {
       expect.objectContaining({ id: 11 }),
       expect.objectContaining({ id: 13 }),
       expect.objectContaining({ id: 12 }),
+    ]);
+  });
+
+  it("copies a todo with its description and children", () => {
+    const onDataListChange = renderTodoList([initialTodo]);
+
+    fireEvent.click(screen.getByText("parent"));
+    fireEvent.click(screen.getByRole("button", { name: "복사하기" }));
+
+    expect(onDataListChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ id: initialTodo.id }),
+      expect.objectContaining({
+        text: initialTodo.text,
+        description: initialTodo.description,
+        children: expect.arrayContaining([
+          expect.objectContaining({ text: "first child" }),
+        ]),
+      }),
     ]);
   });
 

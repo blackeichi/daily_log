@@ -4,8 +4,8 @@ import Button from "@/components/atoms/button";
 import type { Todo } from "@/types/api";
 import { useTodo } from "../hooks/useTodoPage";
 import { DataList } from "@/components/organisms/dataList";
-import { TodayMemoButton } from "./TodayMemoButton";
 import { FaCloudUploadAlt, FaSave, FaSpinner } from "react-icons/fa";
+import { setTodoTreeDone } from "@/components/organisms/dataList/dataList";
 
 const lists = [
   "todayList",
@@ -48,6 +48,21 @@ export default function TodoUI() {
         <Button text="시작하기" width={200} onClick={handleCreateTodos} />
       </div>
     );
+  const handleClearAllTodos = () => {
+    if (!data) return;
+
+    lists.forEach((listName) => {
+      handleUpdateList(
+        listName,
+        data[listName].map((item) =>
+          item.type === "section"
+            ? item
+            : (setTodoTreeDone(item, false) as Todo),
+        ),
+      );
+    });
+  };
+
   return (
     <div className="w-full max-w-[800px] flex flex-col text-xs gap-10 pt-4">
       {lists.map((listName) => (
@@ -68,7 +83,15 @@ export default function TodoUI() {
           storageKey={`todo:${listName}`}
           emptyMessage="데이터가 없습니다. Todo를 추가해주세요."
           titleAction={
-            listName === "todayList" ? <TodayMemoButton /> : undefined
+            listName === "todayList" ? (
+              <button
+                type="button"
+                onClick={handleClearAllTodos}
+                className="rounded border border-stone-400 px-1.5 py-0.5 text-[10px] text-stone-100 transition-colors hover:bg-stone-600"
+              >
+                전체 체크 해제
+              </button>
+            ) : undefined
           }
         />
       ))}

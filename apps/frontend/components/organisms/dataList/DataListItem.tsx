@@ -1,9 +1,15 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { MdDelete, MdNotes } from "react-icons/md";
+import {
+  MdContentCopy,
+  MdDelete,
+  MdKeyboardArrowDown,
+  MdKeyboardArrowUp,
+  MdNotes,
+} from "react-icons/md";
 import { IoIosMenu } from "react-icons/io";
 import { FaLock, FaUnlock } from "react-icons/fa";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useSetAtom } from "jotai";
 
 import CheckBox from "@/components/atoms/checkBox";
@@ -26,16 +32,24 @@ export function TodoDetailsModal({
   onClose,
   onSave,
   onDelete,
+  onCopy,
   placementOptions = [],
+  sectionItemCounts = {},
   defaultPlacement = "current",
   allowTypeSelection = false,
 }: {
   item: DataListItemType;
   isEditing: boolean;
   onClose: () => void;
-  onSave: (item: DataListItemType, placement: TodoPlacement) => void;
+  onSave: (
+    item: DataListItemType,
+    placement: TodoPlacement,
+    sectionOrder?: number,
+  ) => void;
   onDelete?: () => void;
+  onCopy?: () => void;
   placementOptions?: { value: TodoPlacement; label: string }[];
+  sectionItemCounts?: Record<number, number>;
   defaultPlacement?: TodoPlacement;
   allowTypeSelection?: boolean;
 }) {
@@ -49,6 +63,17 @@ export function TodoDetailsModal({
     item.type === "section" ? "section" : "todo",
   );
   const [placement, setPlacement] = useState<TodoPlacement>(defaultPlacement);
+  const [sectionOrder, setSectionOrder] = useState<number | undefined>();
+  const selectedSectionId = placement.startsWith("section:")
+    ? Number(placement.slice("section:".length))
+    : null;
+  const selectedSectionItemCount =
+    selectedSectionId === null ? 0 : (sectionItemCounts[selectedSectionId] ?? 0);
+
+  useEffect(() => {
+    if (selectedSectionId !== null) setSectionOrder(selectedSectionItemCount);
+    else setSectionOrder(undefined);
+  }, [selectedSectionId, selectedSectionItemCount]);
 
   const updateChild = (childIndex: number, patch: Partial<DataListItemType>) => {
     setChildren((previous) =>
@@ -56,6 +81,19 @@ export function TodoDetailsModal({
         index === childIndex ? { ...child, ...patch } : child,
       ),
     );
+  };
+
+  const moveChild = (childIndex: number, direction: -1 | 1) => {
+    const nextIndex = childIndex + direction;
+    if (nextIndex < 0 || nextIndex >= children.length) return;
+
+    setChildren((previous) => {
+      const nextChildren = [...previous];
+      const [child] = nextChildren.splice(childIndex, 1);
+      if (!child) return previous;
+      nextChildren.splice(nextIndex, 0, child);
+      return nextChildren;
+    });
   };
 
   const handleAddChild = () => {
@@ -114,7 +152,8 @@ export function TodoDetailsModal({
     if (children.length > 0) nextItem.children = children;
     else delete nextItem.children;
 
-    onSave(nextItem, placement);
+    if (sectionOrder === undefined) onSave(nextItem, placement);
+    else onSave(nextItem, placement, sectionOrder);
     onClose();
   };
 
@@ -139,9 +178,9 @@ export function TodoDetailsModal({
       style={{ width: "min(92vw, 640px)" }}
       zIndex={70}
     >
-      <div className="flex max-h-[90vh] flex-col gap-4 bg-white p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3 border-b border-stone-200 pb-3">
-          <div className="min-w-0 flex-1">
+      <div className="flex max-h-[78dvh] flex-col overflow-hidden bg-white p-4 text-xs sm:p-5">
+        <div className="shrink-0 border-b border-stone-200 pb-3">
+          <div className="w-full">
             <p className="text-[11px] font-semibold text-stone-500">
               {itemType === "section"
                 ? isEditing
@@ -164,27 +203,20 @@ export function TodoDetailsModal({
                 aria-label={itemType === "section" ? "섹션 제목" : "투두 내용"}
               />
             ) : (
-              <h2 className="break-words text-base font-semibold text-stone-900">
+              <h2 className="break-words text-sm font-semibold text-stone-900">
                 {item.text}
               </h2>
             )}
           </div>
-          <button
-            type="button"
-            className="shrink-0 rounded px-2 py-1 text-stone-500 hover:bg-stone-100"
-            onClick={onClose}
-            aria-label="팝업 닫기"
-          >
-            ×
-          </button>
         </div>
 
+        <div className="mt-3 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
         {isEditing && allowTypeSelection && (
-          <div className="flex rounded-md border border-stone-300 bg-stone-50 p-1">
+          <div className="flex rounded-md border border-stone-300 bg-stone-50 p-1 text-xs">
             <button
               type="button"
               onClick={() => setItemType("todo")}
-              className={`flex-1 rounded px-3 py-2 ${
+              className={`flex-1 rounded px-2 py-1 ${
                 itemType === "todo" ? "bg-stone-700 text-white" : "text-stone-600"
               }`}
             >
@@ -193,7 +225,7 @@ export function TodoDetailsModal({
             <button
               type="button"
               onClick={() => setItemType("section")}
-              className={`flex-1 rounded px-3 py-2 ${
+              className={`flex-1 rounded px-2 py-1 ${
                 itemType === "section" ? "bg-stone-700 text-white" : "text-stone-600"
               }`}
             >
@@ -208,7 +240,7 @@ export function TodoDetailsModal({
             <select
               value={placement}
               onChange={(event) => setPlacement(event.target.value as TodoPlacement)}
-              className="rounded border border-stone-300 bg-white px-3 py-2 font-normal outline-none focus:border-stone-600"
+              className="rounded border border-stone-300 bg-white px-2 py-1 font-normal text-xs outline-none focus:border-stone-600"
               aria-label={itemType === "section" ? "섹션 위치" : "투두 위치"}
             >
               {placementOptions.map((option) => (
@@ -220,9 +252,32 @@ export function TodoDetailsModal({
           </label>
         )}
 
+        {isEditing && itemType === "todo" && selectedSectionId !== null && (
+          <label className="flex flex-col gap-1 text-xs font-semibold text-stone-700">
+            섹션 내 차수
+            <select
+              value={sectionOrder ?? selectedSectionItemCount}
+              onChange={(event) => setSectionOrder(Number(event.target.value))}
+              className="rounded border border-stone-300 bg-white px-2 py-1 font-normal text-xs outline-none focus:border-stone-600"
+              aria-label="섹션 내 차수"
+            >
+              {Array.from(
+                { length: selectedSectionItemCount + 1 },
+                (_, index) => (
+                  <option key={index} value={index}>
+                    {index === selectedSectionItemCount
+                      ? "섹션 맨 아래"
+                      : `${index + 1}번째 앞`}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+        )}
+
         {itemType === "todo" && <div className="flex min-h-0 flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-stone-700">설명</span>
+            <span className="text-xs font-semibold text-stone-700">설명</span>
             {isEditing && (
               <span className="text-[10px] text-stone-400">
                 {description.length.toLocaleString()} / {MAX_DESCRIPTION_LENGTH.toLocaleString()}
@@ -234,12 +289,12 @@ export function TodoDetailsModal({
               value={description}
               setValue={setDescription}
               width="100%"
-              height={180}
+              height={120}
               maxLength={MAX_DESCRIPTION_LENGTH}
               placeholder="상세한 설명, 참고 링크, 메모 등을 입력하세요."
             />
           ) : (
-            <p className="max-h-52 min-h-20 overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-stone-50 p-3 text-sm leading-6 text-stone-700">
+            <p className="max-h-40 min-h-16 overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-stone-50 p-3 text-xs leading-5 text-stone-700">
               {description || "등록된 설명이 없습니다."}
             </p>
           )}
@@ -247,7 +302,7 @@ export function TodoDetailsModal({
 
         {itemType === "todo" && <div className="flex min-h-0 flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-stone-700">하위 투두</span>
+            <span className="text-xs font-semibold text-stone-700">하위 투두</span>
             <span className="text-[10px] text-stone-400">
               {children.length} / {MAX_SUB_TODOS}
             </span>
@@ -265,22 +320,22 @@ export function TodoDetailsModal({
                 }}
                 maxLength={1000}
                 disabled={children.length >= MAX_SUB_TODOS}
-                className="min-w-0 flex-1 rounded border border-stone-300 px-3 py-2 text-xs outline-none focus:border-stone-600"
+                className="min-w-0 flex-1 rounded border border-stone-300 px-2 py-1 text-xs outline-none focus:border-stone-600"
                 placeholder="하위 투두를 입력하세요"
               />
               <button
                 type="button"
                 onClick={handleAddChild}
                 disabled={!newChild.trim() || children.length >= MAX_SUB_TODOS}
-                className="rounded bg-stone-700 px-3 py-2 text-white disabled:bg-stone-300"
+                className="rounded bg-stone-700 px-2 py-1 text-xs text-white disabled:bg-stone-300"
               >
                 추가
               </button>
             </div>
           )}
-          <div className="max-h-56 space-y-2 overflow-y-auto">
+          <div className="space-y-2">
             {children.length === 0 ? (
-              <p className="rounded-md bg-stone-50 p-3 text-stone-400">
+              <p className="rounded-md bg-stone-50 p-3 text-xs text-stone-400">
                 하위 투두가 없습니다.
               </p>
             ) : (
@@ -315,18 +370,38 @@ export function TodoDetailsModal({
                       </span>
                     )}
                     {isEditing && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setChildren((previous) =>
-                            previous.filter((_, index) => index !== childIndex),
-                          )
-                        }
-                        className="rounded p-1 text-stone-500 hover:bg-red-50 hover:text-red-700"
-                        aria-label={`${child.text} 삭제`}
-                      >
-                        <MdDelete size={18} />
-                      </button>
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => moveChild(childIndex, -1)}
+                          disabled={childIndex === 0}
+                          className="rounded p-0.5 text-stone-500 hover:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300"
+                          aria-label={`${child.text} 위로 이동`}
+                        >
+                          <MdKeyboardArrowUp size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveChild(childIndex, 1)}
+                          disabled={childIndex === children.length - 1}
+                          className="rounded p-0.5 text-stone-500 hover:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300"
+                          aria-label={`${child.text} 아래로 이동`}
+                        >
+                          <MdKeyboardArrowDown size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setChildren((previous) =>
+                              previous.filter((_, index) => index !== childIndex),
+                            )
+                          }
+                          className="rounded p-0.5 text-stone-500 hover:bg-red-50 hover:text-red-700"
+                          aria-label={`${child.text} 삭제`}
+                        >
+                          <MdDelete size={16} />
+                        </button>
+                      </div>
                     )}
                   </div>
                   {isEditing ? (
@@ -352,23 +427,37 @@ export function TodoDetailsModal({
           </div>
         </div>}
 
-        <div className="flex items-center justify-between border-t border-stone-200 pt-3">
-          <div>
+        </div>
+
+        <div className="mt-3 flex shrink-0 items-center justify-between gap-2 border-t border-stone-200 pt-3">
+          <div className="flex shrink-0 gap-1">
+            {isEditing && onCopy ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onCopy();
+                  onClose();
+                }}
+                className="flex items-center gap-1 rounded border border-stone-300 px-2 py-1 text-xs text-stone-700 hover:bg-stone-50"
+              >
+                <MdContentCopy size={14} aria-hidden="true" /> 복사하기
+              </button>
+            ) : null}
             {isEditing && onDelete ? (
               <button
                 type="button"
                 onClick={handleDelete}
-                className="rounded border border-red-200 px-4 py-2 text-red-700 hover:bg-red-50"
+                className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
               >
                 삭제하기
               </button>
             ) : null}
           </div>
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-1">
             <button
               type="button"
               onClick={onClose}
-              className="rounded border border-stone-300 px-4 py-2"
+              className="rounded border border-stone-300 px-2 py-1 text-xs"
             >
               {isEditing ? "취소" : "닫기"}
             </button>
@@ -376,7 +465,7 @@ export function TodoDetailsModal({
               <button
                 type="button"
                 onClick={handleSave}
-                className="rounded bg-stone-700 px-4 py-2 text-white"
+                className="rounded bg-stone-700 px-2 py-1 text-xs text-white"
               >
                 저장
               </button>
@@ -402,7 +491,9 @@ function DataListItemComponent({
   onToggleDisabled,
   onChangeDone,
   onSaveTodoItem,
+  onCopyTodoItem,
   placementOptions,
+  sectionItemCounts,
   needCheckBox,
   needDisableButton,
   maxLength,
@@ -424,8 +515,11 @@ function DataListItemComponent({
     index: number,
     item: DataListItemType,
     placement: TodoPlacement,
+    sectionOrder?: number,
   ) => void;
+  onCopyTodoItem?: (index: number) => void;
   placementOptions?: { value: TodoPlacement; label: string }[];
+  sectionItemCounts?: Record<number, number>;
   needCheckBox: boolean;
   needDisableButton: boolean;
   maxLength?: number | undefined;
@@ -602,9 +696,9 @@ function DataListItemComponent({
           item={item}
           isEditing={canModifyDetails}
           onClose={() => setIsDetailsOpen(false)}
-          onSave={(nextItem, placement) =>
+          onSave={(nextItem, placement, sectionOrder) =>
             onSaveTodoItem
-              ? onSaveTodoItem(index, nextItem, placement)
+              ? onSaveTodoItem(index, nextItem, placement, sectionOrder)
               : onUpdateItem(index, nextItem)
           }
           {...(canModifyDetails
@@ -616,6 +710,10 @@ function DataListItemComponent({
                   (option) => option.value !== `section:${item.id}`,
                 ),
               }
+            : {})}
+          {...(sectionItemCounts ? { sectionItemCounts } : {})}
+          {...(!isSection && canModifyDetails && onCopyTodoItem
+            ? { onCopy: () => onCopyTodoItem(index) }
             : {})}
         />
       )}
