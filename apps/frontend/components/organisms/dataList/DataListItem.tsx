@@ -29,6 +29,7 @@ const MAX_SUB_TODOS = 50;
 export function TodoDetailsModal({
   item,
   isEditing,
+  canEditDescription = isEditing,
   onClose,
   onSave,
   onDelete,
@@ -40,6 +41,7 @@ export function TodoDetailsModal({
 }: {
   item: DataListItemType;
   isEditing: boolean;
+  canEditDescription?: boolean;
   onClose: () => void;
   onSave: (
     item: DataListItemType,
@@ -278,13 +280,13 @@ export function TodoDetailsModal({
         {itemType === "todo" && <div className="flex min-h-0 flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-stone-700">설명</span>
-            {isEditing && (
+            {canEditDescription && (
               <span className="text-[10px] text-stone-400">
                 {description.length.toLocaleString()} / {MAX_DESCRIPTION_LENGTH.toLocaleString()}
               </span>
             )}
           </div>
-          {isEditing ? (
+          {canEditDescription ? (
             <TextArea
               value={description}
               setValue={setDescription}
@@ -459,9 +461,9 @@ export function TodoDetailsModal({
               onClick={onClose}
               className="rounded border border-stone-300 px-2 py-1 text-xs"
             >
-              {isEditing ? "취소" : "닫기"}
+              {isEditing || canEditDescription ? "취소" : "닫기"}
             </button>
-            {isEditing && (
+            {(isEditing || canEditDescription) && (
               <button
                 type="button"
                 onClick={handleSave}
@@ -695,6 +697,7 @@ function DataListItemComponent({
         <TodoDetailsModal
           item={item}
           isEditing={canModifyDetails}
+          canEditDescription={!isSection}
           onClose={() => setIsDetailsOpen(false)}
           onSave={(nextItem, placement, sectionOrder) =>
             onSaveTodoItem

@@ -114,20 +114,38 @@ describe("todo details modal", () => {
     );
   });
 
-  it("keeps a locked todo read-only while allowing child completion changes", () => {
+  it("allows description and child completion changes while keeping a locked todo otherwise read-only", () => {
     const handleSave = jest.fn();
 
     render(
       <TodoDetailsModal
         item={{ ...initialTodo, isDisabled: true }}
         isEditing={false}
+        canEditDescription
         onClose={jest.fn()}
         onSave={handleSave}
       />,
     );
 
-    expect(screen.queryByRole("button", { name: "저장" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("투두 내용")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("하위 투두를 입력하세요")).not.toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByPlaceholderText("상세한 설명, 참고 링크, 메모 등을 입력하세요."),
+      { target: { value: "locked todo description" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "저장" }));
+
+    expect(handleSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: initialTodo.text,
+        description: "locked todo description",
+        children: initialTodo.children,
+      }),
+      "current",
+    );
+
+    handleSave.mockClear();
 
     fireEvent.click(screen.getByLabelText("first child 완료 여부"));
     expect(handleSave).toHaveBeenCalledWith(
