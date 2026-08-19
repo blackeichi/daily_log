@@ -134,13 +134,21 @@ describe("todo details modal", () => {
       screen.getByPlaceholderText("상세한 설명, 참고 링크, 메모 등을 입력하세요."),
       { target: { value: "locked todo description" } },
     );
+    fireEvent.change(screen.getByLabelText("first child 설명"), {
+      target: { value: "locked child description" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
 
     expect(handleSave).toHaveBeenCalledWith(
       expect.objectContaining({
         text: initialTodo.text,
         description: "locked todo description",
-        children: initialTodo.children,
+        children: expect.arrayContaining([
+          expect.objectContaining({
+            text: "first child",
+            description: "locked child description",
+          }),
+        ]),
       }),
       "current",
     );

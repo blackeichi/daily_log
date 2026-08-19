@@ -406,7 +406,7 @@ export function TodoDetailsModal({
                       </div>
                     )}
                   </div>
-                  {isEditing ? (
+                  {isEditing || canEditDescription ? (
                     <textarea
                       value={child.description ?? ""}
                       onChange={(event) =>
