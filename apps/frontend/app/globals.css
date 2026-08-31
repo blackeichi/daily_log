@@ -21,6 +21,10 @@
   z-index: 40 !important;
 }
 
+.snackbar-container {
+  top: 6vh !important;
+}
+
 input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0px 1000px #f4f5f3 inset; /* 배경 덮기 */
 }

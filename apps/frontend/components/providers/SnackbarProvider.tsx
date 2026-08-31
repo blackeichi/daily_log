@@ -19,7 +19,7 @@ export function SnackbarProvider({ children }: { children: React.ReactNode }) {
         vertical: "top",
         horizontal: "right",
       }}
-      style={{ marginTop: "6vh" }}
+      classes={{ containerRoot: "snackbar-container" }}
     >
       <SnackbarManager />
       {children}
