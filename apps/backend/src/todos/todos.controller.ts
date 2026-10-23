@@ -140,7 +140,13 @@ export class TodosController {
       this.validateTodoList(body[listName]);
     });
 
-    return this.todosService.syncTodos(req.user.sub, Object.fromEntries(TODO_LIST_NAMES.map(name => [name, body[name]])) as TodoListsPayload, body.expectedRevision);
+    return this.todosService.syncTodos(
+      req.user.sub,
+      Object.fromEntries(
+        TODO_LIST_NAMES.map((name) => [name, body[name]]),
+      ) as TodoListsPayload,
+      body.expectedRevision,
+    );
   }
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -165,7 +171,9 @@ export class TodosController {
     return this.todosService.updateAllTodos(
       id,
       req.user.sub,
-      Object.fromEntries(TODO_LIST_NAMES.map(name => [name, body[name]])) as TodoListsPayload,
+      Object.fromEntries(
+        TODO_LIST_NAMES.map((name) => [name, body[name]]),
+      ) as TodoListsPayload,
       body.expectedRevision,
     );
   }

@@ -453,3 +453,7 @@ pnpm build:backend
 - Demo: [서비스 바로가기](https://daily-log-frontend-piof.vercel.app/)
 
 ---
+
+## Android Todo 앱
+
+오늘 할 일과 홈 화면 위젯을 위한 Kotlin 앱은 [`apps/android`](./apps/android/README.md)에 있습니다. 서버 마이그레이션, 빌드/설치 방법과 첫 버전의 제한을 확인하세요.

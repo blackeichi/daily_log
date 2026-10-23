@@ -68,9 +68,25 @@ export default function TodoUI() {
   return (
     <div className="w-full max-w-[800px] flex flex-col text-xs gap-10 pt-4">
       <div className="flex flex-wrap gap-3">
-        <button type="button" onClick={handleDownloadTodos} disabled={isUploading || isDownloading} className="rounded border px-3 py-2">서버에서 불러오기</button>
-        <button type="button" onClick={handleExportTodos} className="rounded border px-3 py-2">기기 목록 백업 다운로드</button>
-        <p className="w-full text-stone-400">모바일 변경은 서버에서 불러온 뒤 확인할 수 있어요. 다른 기기와 충돌하면 업로드가 중단됩니다.</p>
+        <button
+          type="button"
+          onClick={handleDownloadTodos}
+          disabled={isUploading || isDownloading}
+          className="rounded border px-3 py-2"
+        >
+          서버에서 불러오기
+        </button>
+        <button
+          type="button"
+          onClick={handleExportTodos}
+          className="rounded border px-3 py-2"
+        >
+          기기 목록 백업 다운로드
+        </button>
+        <p className="w-full text-stone-400">
+          모바일 변경은 서버에서 불러온 뒤 확인할 수 있어요. 다른 기기와
+          충돌하면 업로드가 중단됩니다.
+        </p>
       </div>
       {lists.map((listName) => (
         <DataList

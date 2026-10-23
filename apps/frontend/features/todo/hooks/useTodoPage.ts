@@ -234,12 +234,26 @@ export const useTodo = () => {
 
   const handleExportTodos = useCallback(() => {
     if (!localData) return;
-    const url = URL.createObjectURL(new Blob([JSON.stringify(localData, null, 2)], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url; link.download = "daily-log-todos-backup.json"; link.click();
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(localData, null, 2)], {
+        type: "application/json",
+      }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "daily-log-todos-backup.json";
+    link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [localData]);
   const handleDownloadTodos = useCallback(() => {
-    setConfirm({ title: "서버 Todo 불러오기", message: "이 기기의 목록을 서버 목록으로 교체합니다. 보관할 변경이 있다면 먼저 백업 다운로드를 눌러 주세요.", confirmEvent: () => { void downloadServerTodos(); } });
+    setConfirm({
+      title: "서버 Todo 불러오기",
+      message:
+        "이 기기의 목록을 서버 목록으로 교체합니다. 보관할 변경이 있다면 먼저 백업 다운로드를 눌러 주세요.",
+      confirmEvent: () => {
+        void downloadServerTodos();
+      },
+    });
   }, [downloadServerTodos, setConfirm]);
   const handleUploadTodos = useCallback(() => {
     if (!localData || syncTodos.isPending) return;

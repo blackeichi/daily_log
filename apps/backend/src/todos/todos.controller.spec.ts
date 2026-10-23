@@ -28,6 +28,6 @@ describe('TodosController', () => {
     } as AuthenticatedRequest;
 
     await expect(controller.syncTodos(payload, request)).resolves.toBe(payload);
-    expect(syncTodos).toHaveBeenCalledWith(7, payload);
+    expect(syncTodos).toHaveBeenCalledWith(7, payload, undefined);
   });
 });
