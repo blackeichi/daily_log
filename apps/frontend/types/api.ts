@@ -39,6 +39,7 @@ export type Todo = {
 };
 
 export type GetTodosType = {
+  revision?: number;
   id: number;
   updatedAt: string;
   todayList: Todo[];
@@ -49,6 +50,7 @@ export type GetTodosType = {
 };
 
 export type TodoVersion = {
+  revision: number;
   id: number;
   updatedAt: string;
 } | null;
@@ -187,12 +189,13 @@ export type UpdateCaloriesRequest = {
 export type UpdateTodoRequest = {
   name: "todayList" | "weekList" | "monthList" | "yearList" | "breakLimitList";
   data: Todo[];
+  expectedRevision?: number | undefined;
 };
 
 export type UpdateAllTodosRequest = Pick<
   GetTodosType,
   "todayList" | "weekList" | "monthList" | "yearList" | "breakLimitList"
->;
+> & { expectedRevision?: number | undefined };
 
 export type UpdateRoutineRequest = {
   name: "dailyRoutines" | "weeklyRoutines" | "monthlyRoutines";

@@ -44,6 +44,7 @@ export function useSyncTodos() {
     onSuccess: (data) => {
       queryClient.setQueryData(todoKeys.all(), data);
       queryClient.setQueryData(todoKeys.version(), {
+        revision: data.revision,
         id: data.id,
         updatedAt: data.updatedAt,
       });

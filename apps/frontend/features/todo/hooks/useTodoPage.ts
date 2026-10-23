@@ -26,6 +26,7 @@ const UNSAVED_CHANGES_MESSAGE =
   "기기에 저장하지 않은 Todo 변경사항이 있습니다. 페이지를 나가시겠습니까?";
 
 const getTodoLists = (data: GetTodosType): UpdateAllTodosRequest => ({
+  expectedRevision: data.revision,
   todayList: data.todayList,
   weekList: data.weekList,
   monthList: data.monthList,
@@ -35,6 +36,7 @@ const getTodoLists = (data: GetTodosType): UpdateAllTodosRequest => ({
 
 const createEmptyTodos = (updatedAt: string): GetTodosType => ({
   id: 0,
+  revision: 0,
   updatedAt,
   todayList: [],
   weekList: [],
@@ -115,9 +117,7 @@ export const useTodo = () => {
     const serverVersion = versionQuery.data;
     if (!serverVersion) return;
 
-    const localTime = localUpdatedAt ? Date.parse(localUpdatedAt) : 0;
-    const serverTime = Date.parse(serverVersion.updatedAt);
-    if (!Number.isFinite(serverTime) || serverTime <= localTime) return;
+    if (initialSnapshot?.data.revision === serverVersion.revision) return;
 
     const formattedDate = new Date(serverVersion.updatedAt).toLocaleString(
       "ko-KR",
@@ -133,6 +133,7 @@ export const useTodo = () => {
   }, [
     downloadServerTodos,
     localUpdatedAt,
+    initialSnapshot,
     setConfirm,
     versionQuery.data,
     versionQuery.isFetchedAfterMount,
@@ -231,12 +232,21 @@ export const useTodo = () => {
     });
   }, [localData, saveLocalSnapshot, setAlert, setError, syncTodos]);
 
+  const handleExportTodos = useCallback(() => {
+    if (!localData) return;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(localData, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a"); link.href = url; link.download = "daily-log-todos-backup.json"; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, [localData]);
+  const handleDownloadTodos = useCallback(() => {
+    setConfirm({ title: "서버 Todo 불러오기", message: "이 기기의 목록을 서버 목록으로 교체합니다. 보관할 변경이 있다면 먼저 백업 다운로드를 눌러 주세요.", confirmEvent: () => { void downloadServerTodos(); } });
+  }, [downloadServerTodos, setConfirm]);
   const handleUploadTodos = useCallback(() => {
     if (!localData || syncTodos.isPending) return;
     setConfirm({
       title: "서버에 업로드",
       message:
-        "현재 기기의 Todo를 서버에 업로드하시겠습니까?\n기존 서버 데이터는 현재 목록으로 교체됩니다.",
+        "현재 기기의 Todo를 서버에 업로드하시겠습니까?\n다른 기기의 변경과 충돌하면 업로드가 중단됩니다.",
       confirmEvent: uploadLocalTodos,
     });
   }, [localData, setConfirm, syncTodos.isPending, uploadLocalTodos]);
@@ -258,5 +268,7 @@ export const useTodo = () => {
     handleUpdateList,
     handleSaveTodos,
     handleUploadTodos,
+    handleDownloadTodos,
+    handleExportTodos,
   };
 };

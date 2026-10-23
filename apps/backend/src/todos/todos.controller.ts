@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/guards/jwt.guard';
-import { TodosService } from './todos.service';
+import { TodosService, type Operation } from './todos.service';
 import type { AuthenticatedRequest } from 'src/common/interfaces/request.interface';
 
 const TODO_LIST_NAMES = [
@@ -125,16 +125,22 @@ export class TodosController {
     return this.todosService.getTodoVersion(req.user.sub);
   }
   @UseGuards(JwtAuthGuard)
+  @Post('operations')
+  applyOperation(@Body() body: Operation, @Req() req: AuthenticatedRequest) {
+    return this.todosService.applyOperation(req.user.sub, body);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Put('sync')
   async syncTodos(
-    @Body() body: Partial<TodoListsPayload>,
+    @Body() body: Partial<TodoListsPayload> & { expectedRevision?: number },
     @Req() req: AuthenticatedRequest,
   ) {
     TODO_LIST_NAMES.forEach((listName) => {
       this.validateTodoList(body[listName]);
     });
 
-    return this.todosService.syncTodos(req.user.sub, body as TodoListsPayload);
+    return this.todosService.syncTodos(req.user.sub, Object.fromEntries(TODO_LIST_NAMES.map(name => [name, body[name]])) as TodoListsPayload, body.expectedRevision);
   }
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -149,7 +155,7 @@ export class TodosController {
   @Put(':id/all')
   async updateAll(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: Partial<TodoListsPayload>,
+    @Body() body: Partial<TodoListsPayload> & { expectedRevision?: number },
     @Req() req: AuthenticatedRequest,
   ) {
     TODO_LIST_NAMES.forEach((listName) => {
@@ -159,14 +165,15 @@ export class TodosController {
     return this.todosService.updateAllTodos(
       id,
       req.user.sub,
-      body as TodoListsPayload,
+      Object.fromEntries(TODO_LIST_NAMES.map(name => [name, body[name]])) as TodoListsPayload,
+      body.expectedRevision,
     );
   }
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { name: string; data: any[] },
+    @Body() body: { name: string; data: any[]; expectedRevision?: number },
     @Req() req: AuthenticatedRequest,
   ) {
     // 데이터 검증
@@ -181,6 +188,7 @@ export class TodosController {
       req.user.sub,
       body.name as TodoListName,
       body.data,
+      body.expectedRevision,
     );
     return updatedTodo;
   }
