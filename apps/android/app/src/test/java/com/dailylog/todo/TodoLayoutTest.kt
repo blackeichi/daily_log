@@ -32,13 +32,13 @@ class TodoLayoutTest {
   {"id":7,"type":"section","text":"퇴근 후"},
   {"id":8,"text":"책 읽고 메모 남기기","children":[{"id":9,"text":"20분 읽기"}]}
  ]""")))
- @Test fun systemInsetsStayOnViewportWhenContentScrolls() {
+ @Test @Config(sdk = [29]) fun systemInsetsStayOnViewportWhenContentScrolls() {
   val controller = Robolectric.buildActivity(Activity::class.java).setup()
   val host = SafeAreaLayout(controller.get())
   val scroll = ScrollView(controller.get())
   scroll.addView(View(controller.get()), android.view.ViewGroup.LayoutParams(360, 1600))
   host.addView(scroll); controller.get().setContentView(host)
-  host.dispatchApplyWindowInsets(WindowInsets(Rect(0,24,0,32)))
+  host.dispatchApplyWindowInsets(WindowInsets.Builder().setSystemWindowInsets(android.graphics.Insets.of(0,24,0,32)).build())
   host.measure(View.MeasureSpec.makeMeasureSpec(360, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(800, View.MeasureSpec.EXACTLY)); host.layout(0,0,360,800)
   scroll.scrollTo(0,400)
   assertEquals(24, host.paddingTop); assertEquals(32, host.paddingBottom)
