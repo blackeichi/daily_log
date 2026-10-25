@@ -57,12 +57,33 @@ internal class TodoListView(
     if (done) paintFlags = paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
    })
    val children = item.optJSONArray("children")
-   val detail = listOfNotNull(item.optString("description").takeIf { it.isNotBlank() }, children?.takeIf { it.length() > 0 }?.let { "하위 항목 ${it.length()}개" }).joinToString(" · ")
+   val detail = item.optString("description")
    if (detail.isNotEmpty()) body.addView(AppStyle.text(context, detail, 12f).apply { setPadding(0, AppStyle.dp(context, 4), 0, 0); setTextColor(AppStyle.muted); maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END })
    row.addView(body, LayoutParams(0, -2, 1f))
    if (TodoState.canDelete(item)) row.addView(AppStyle.iconButton(context, R.drawable.ic_delete, "${item.optString("text")} 삭제") { onDelete(item) }.apply { isEnabled = enabled; alpha = if (enabled) 0.65f else 0.3f })
    else row.addView(ImageView(context).apply { setImageResource(R.drawable.ic_lock); alpha = 0.4f; contentDescription = "잠긴 항목"; setPadding(AppStyle.dp(context, 16), AppStyle.dp(context, 16), AppStyle.dp(context, 16), AppStyle.dp(context, 16)) }, LayoutParams(AppStyle.dp(context, 48), AppStyle.dp(context, 48)))
    group.addView(row)
+   if (children != null) for (index in 0 until children.length()) {
+    val child = children.getJSONObject(index)
+    val childDone = child.optBoolean("isDone")
+    val childRow = LinearLayout(context).apply {
+     tag = "subtodo"; gravity = Gravity.CENTER_VERTICAL
+     setPadding(AppStyle.dp(context, 48), AppStyle.dp(context, 5), AppStyle.dp(context, 16), AppStyle.dp(context, 8))
+     contentDescription = "하위 할 일: ${child.optString("text")}, ${if (childDone) "완료" else "미완료"}. 부모 항목에서 함께 변경합니다."
+     importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+    }
+    childRow.addView(ImageView(context).apply {
+     setImageResource(if (childDone) R.drawable.ic_checked else R.drawable.ic_child_pending)
+     alpha = 0.65f; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+    }, LayoutParams(AppStyle.dp(context, 16), AppStyle.dp(context, 16)))
+    childRow.addView(AppStyle.text(context, child.optString("text"), 13f).apply {
+     setPadding(AppStyle.dp(context, 8), 0, 0, 0)
+     setTextColor(AppStyle.muted)
+     importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+     if (childDone) paintFlags = paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+    }, LayoutParams(0, -2, 1f))
+    group.addView(childRow)
+   }
   }
  }
 }

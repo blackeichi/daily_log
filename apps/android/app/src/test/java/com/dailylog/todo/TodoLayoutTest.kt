@@ -30,7 +30,7 @@ class TodoLayoutTest {
   {"id":5,"text":"프로젝트 화면 정리하기","description":"작은 것부터 하나씩"},
   {"id":6,"text":"긴 항목도 두 줄에 자연스럽게 이어지는지 확인하기","isDisabled":true},
   {"id":7,"type":"section","text":"퇴근 후"},
-  {"id":8,"text":"책 읽고 메모 남기기","children":[{"id":9,"text":"20분 읽기"}]}
+  {"id":8,"text":"책 읽고 메모 남기기","children":[{"id":9,"text":"20분 읽기","isDone":true},{"id":10,"text":"인상 깊은 문장 기록하기","isDone":false}]}
  ]""")))
  @Test @Config(sdk = [29]) fun systemInsetsStayOnViewportWhenContentScrolls() {
   val controller = Robolectric.buildActivity(Activity::class.java).setup()

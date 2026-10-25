@@ -24,6 +24,7 @@ class TodoWidget : GlanceAppWidget() {
  @Composable private fun Content(state: JSONObject) {
   val entries = TodoState.items(state)
   val todos = entries.filter { it.optString("type") != "section" }
+  val displayRows = todoDisplayRows(state)
   val enabled = !state.has("pending") && !state.optBoolean("blocked")
   val ink = ColorProvider(Color(0xFF292524))
   val muted = ColorProvider(Color(0xFF78716C))
@@ -42,9 +43,16 @@ class TodoWidget : GlanceAppWidget() {
     if (!enabled) Text(state.optString("status", "동기화 대기"), GlanceModifier.clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 11.sp, color = muted), maxLines = 2)
     if (state.optJSONObject("pending")?.optString("action") == "delete" && !state.optBoolean("attempted")) Text("삭제 취소", GlanceModifier.fillMaxWidth().padding(vertical = 12.dp).clickable(actionRunCallback<UndoAction>()), style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = ink))
     androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxWidth().defaultWeight()) {
-     items(entries.size) { index ->
-      val item = entries[index]
-      if (item.optString("type") == "section") {
+     items(displayRows.size) { index ->
+      val display = displayRows[index]
+      val item = display.item
+      if (display.isChild) {
+       Row(GlanceModifier.fillMaxWidth().padding(start = 30.dp, end = 12.dp, top = 4.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Image(ImageProvider(if (item.optBoolean("isDone")) R.drawable.ic_checked else R.drawable.ic_child_pending), if (item.optBoolean("isDone")) "하위 항목 완료" else "하위 항목 미완료", GlanceModifier.size(14.dp))
+        Spacer(GlanceModifier.width(8.dp))
+        Text(item.optString("text"), GlanceModifier.defaultWeight(), style = TextStyle(fontSize = 12.sp, color = muted))
+       }
+      } else if (item.optString("type") == "section") {
        Text(item.optString("text"), GlanceModifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = muted), maxLines = 1)
       } else {
        Row(GlanceModifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
