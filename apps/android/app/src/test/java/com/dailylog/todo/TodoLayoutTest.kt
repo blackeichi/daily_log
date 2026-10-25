@@ -61,7 +61,7 @@ class TodoLayoutTest {
   host.measure(View.MeasureSpec.makeMeasureSpec(360, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(800, View.MeasureSpec.EXACTLY)); host.layout(0,0,360,800)
   val bitmap=Bitmap.createBitmap(360,800,Bitmap.Config.ARGB_8888)
   host.draw(Canvas(bitmap))
-  val output=File("build/ui-review/compact-list.png"); output.parentFile.mkdirs()
+  val output=File("build/ui-review/compact-list.png"); output.parentFile?.mkdirs()
   output.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG,100,it) }
   assertTrue(host.getChildAt(host.childCount-1).bottom <= 800)
   controller.destroy()
