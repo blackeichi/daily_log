@@ -6,8 +6,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.URI
 import java.net.URL
+
+private const val API_BASE_URL = "https://daily-log-szq5.onrender.com"
 
 class ApiException(val code: Int, message: String) : Exception(message)
 class TodoRepository(context: Context) {
@@ -42,10 +43,8 @@ class TodoRepository(context: Context) {
    return request(base, path, body, state.getString("accessToken"))
   }
  }
- suspend fun login(baseUrl: String, email: String, password: String) = withContext(Dispatchers.IO) { mutex.withLock {
-  val uri = URI(baseUrl.trim().trimEnd('/'))
-  require(uri.scheme == "https" && !uri.host.isNullOrEmpty() && uri.userInfo == null && uri.query == null && uri.fragment == null) { "HTTPS 백엔드 주소를 입력해 주세요." }
-  val base = uri.toString()
+ suspend fun login(email: String, password: String) = withContext(Dispatchers.IO) { mutex.withLock {
+  val base = API_BASE_URL
   val tokens = request(base, "/auth/mobile/login", JSONObject().put("email", email.trim()).put("password", password))
   store.write(JSONObject().put("baseUrl", base).put("email", email.trim()).put("accessToken", tokens.getString("accessToken")).put("refreshToken", tokens.getString("refreshToken")))
  } }

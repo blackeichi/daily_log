@@ -31,7 +31,7 @@ Kotlin 앱 + Jetpack Glance 홈 화면 위젯. 기존 NestJS 서버와 Todo 데�
 2. `apps/backend`에서 `pnpm exec prisma migrate deploy`, `pnpm exec prisma generate`를 실행합니다.
 3. 백엔드와 웹을 함께 배포하고 웹을 새로고침합니다. 서버 버전 없는 오래된 업로드는 409로 차단됩니다.
 4. 기존 로컬 목록을 먼저 백업하고 서버 목록을 불러옵니다. 이전 스냅샷에는 revision이 없어 바로 업로드할 수 없습니다.
-5. 앱에 **NestJS API의 HTTPS 기본 주소**와 기존 계정을 입력합니다. 예: `https://api.example.com`. Next.js 웹 URL이나 Swagger `/api` URL이 아닙니다. 비밀키를 앱에 넣지 않습니다.
+5. 앱은 `https://daily-log-szq5.onrender.com`에 자동으로 연결합니다. 로그인 화면에는 이메일과 비밀번호만 입력합니다. 서버 주소는 `TodoRepository.kt`의 `API_BASE_URL`에서 관리하며 비밀키를 앱에 넣지 않습니다.
 
 ## 빌드 및 설치
 

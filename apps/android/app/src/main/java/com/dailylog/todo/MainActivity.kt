@@ -48,13 +48,11 @@ class MainActivity : TaskActivity() {
   root.addView(label("오늘, 하나씩.", 30f).apply { setTypeface(null, Typeface.BOLD) })
   if (state.optString("refreshToken").isEmpty()) {
    root.addView(label("홈 화면에서 가볍게 시작하는 할 일"))
-   val base = input("HTTPS 백엔드 주소", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
    val email = input("이메일", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
    val password = input("비밀번호", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
-   root.addView(base); root.addView(email); root.addView(password)
-   root.addView(label("웹사이트 주소가 아닌 NestJS API 주소를 입력해 주세요.", 12f))
+   root.addView(email); root.addView(password)
    val login = button("로그인") {}
-   login.setOnClickListener { login.isEnabled = false; task { try { repo.login(base.text.toString(), email.text.toString(), password.text.toString()); SyncWorker.enqueue(this@MainActivity); rendered = "" } finally { login.isEnabled = true } } }
+   login.setOnClickListener { login.isEnabled = false; task { try { repo.login(email.text.toString(), password.text.toString()); SyncWorker.enqueue(this@MainActivity); rendered = "" } finally { login.isEnabled = true } } }
    root.addView(login); return
   }
   val todos = TodoState.items(state).filter { it.optString("type") != "section" }
