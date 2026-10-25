@@ -18,25 +18,25 @@ class TodoWidget : GlanceAppWidget() {
   val state = TodoRepository(context).read(); provideContent { Content(state) }
  }
  @Composable private fun Content(state: JSONObject) {
-  Column(GlanceModifier.fillMaxSize().background(Color(0xFFF5F7F3)).padding(12.dp)) {
+  Column(GlanceModifier.fillMaxSize().background(Color(0xFFF5F5F4)).padding(12.dp)) {
    Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-    Text("오늘 할 일", GlanceModifier.defaultWeight().clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ColorProvider(Color(0xFF174C39))))
+    Text("오늘 할 일", GlanceModifier.defaultWeight().clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ColorProvider(Color(0xFF292524))))
     Button("+", actionStartActivity<QuickAddActivity>())
     Button("↻", actionRunCallback<RefreshAction>())
    }
    if (state.optString("refreshToken").isEmpty()) {
     Text("앱에서 로그인해 주세요", GlanceModifier.padding(12.dp).clickable(actionStartActivity<MainActivity>()))
    } else {
-    Text(state.optString("status", "새로고침해 주세요"), style = TextStyle(fontSize = 11.sp), maxLines = 2)
+    Text(state.optString("status", "새로고침해 주세요"), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontSize = 11.sp), maxLines = 2)
     if (state.optJSONObject("pending")?.optString("action") == "delete" && !state.optBoolean("attempted")) Button("삭제 취소", actionRunCallback<UndoAction>())
     androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxWidth().defaultWeight()) {
      val entries = TodoState.items(state)
      items(entries.size) { index ->
       val item = entries[index]
       Row(GlanceModifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-       if (item.optString("type") == "section") Text(item.optString("text"), style = TextStyle(fontWeight = FontWeight.Bold))
+       if (item.optString("type") == "section") Text(item.optString("text"), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontWeight = FontWeight.Bold))
        else {
-        Text((if (item.optBoolean("isDone")) "☑  " else "☐  ") + item.optString("text"), GlanceModifier.defaultWeight().padding(6.dp).clickable(actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), Done to !item.optBoolean("isDone")))), maxLines = 2)
+        Text((if (item.optBoolean("isDone")) "☑  " else "☐  ") + item.optString("text"), GlanceModifier.defaultWeight().padding(6.dp).clickable(actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), Done to !item.optBoolean("isDone")))), style = TextStyle(color = ColorProvider(Color(0xFF292524))), maxLines = 2)
         if (TodoState.canDelete(item)) Button("×", actionRunCallback<DeleteAction>(actionParametersOf(ItemId to item.getLong("id"))))
         else Text("🔒", GlanceModifier.padding(6.dp))
        }
@@ -44,7 +44,7 @@ class TodoWidget : GlanceAppWidget() {
      }
      if (entries.isEmpty()) item { Text("+ 를 눌러 오늘 할 일을 추가하세요", GlanceModifier.padding(12.dp)) }
     }
-    if (state.optLong("lastSync") > 0) Text("최근 동기화 " + java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))), style = TextStyle(fontSize = 10.sp))
+    if (state.optLong("lastSync") > 0) Text("최근 동기화 " + java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontSize = 10.sp))
    }
   }
  }
@@ -70,3 +70,4 @@ class RefreshAction : ActionCallback {
 class UndoAction : ActionCallback {
  override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).undoDelete() }
 }
+
