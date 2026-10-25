@@ -1,6 +1,9 @@
 package com.dailylog.todo
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import java.net.UnknownHostException
+import java.io.IOException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -23,7 +26,7 @@ class TodoRepository internal constructor(
   requestOverride?.let { return it(base, path, body, token) }
   val connection = URL(base + path).openConnection() as HttpURLConnection
   try {
-   connection.connectTimeout = 15000; connection.readTimeout = 15000; connection.instanceFollowRedirects = false
+   connection.connectTimeout = 15000; connection.readTimeout = if (path == "/auth/mobile/login") 60000 else 15000; connection.instanceFollowRedirects = false
    connection.requestMethod = if (body == null) "GET" else "POST"
    connection.setRequestProperty("Accept", "application/json")
    if (token.isNotEmpty()) connection.setRequestProperty("Authorization", "Bearer $token")
@@ -48,20 +51,33 @@ class TodoRepository internal constructor(
    return request(base, path, body, state.getString("accessToken"))
   }
  }
+ private suspend fun loginTokens(base: String, email: String, password: String): JSONObject {
+  val body = JSONObject().put("email", email.trim()).put("password", password)
+  return try { request(base, "/auth/mobile/login", body) }
+  catch (e: UnknownHostException) {
+   // DNS failure happens before sending credentials. Retry once; never replay auth errors/timeouts.
+   delay(1000)
+   request(base, "/auth/mobile/login", body)
+  }
+ }
+ private fun validateSnapshot(snapshot: JSONObject) {
+  if (snapshot.optInt("revision") < 1 || snapshot.optJSONArray("todayList") == null)
+   throw IOException("서버 목록을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.")
+ }
  suspend fun login(email: String, password: String) = withContext(Dispatchers.IO) { mutex.withLock {
   val base = API_BASE_URL
-  val tokens = request(base, "/auth/mobile/login", JSONObject().put("email", email.trim()).put("password", password))
+  val tokens = loginTokens(base, email, password)
   store.write(JSONObject().put("baseUrl", base).put("email", email.trim()).put("accessToken", tokens.getString("accessToken")).put("refreshToken", tokens.getString("refreshToken")))
  } }
  suspend fun reauthenticate(password: String) = withContext(Dispatchers.IO) { mutex.withLock {
   val state = store.read()
-  val tokens = request(state.getString("baseUrl"), "/auth/mobile/login", JSONObject().put("email", state.getString("email")).put("password", password))
+  val tokens = loginTokens(state.getString("baseUrl"), state.getString("email"), password)
   state.put("accessToken", tokens.getString("accessToken")).put("refreshToken", tokens.getString("refreshToken")); state.remove("blocked"); store.write(state)
  } }
  suspend fun change(action: String, id: Long, text: String = "", done: Boolean = false) = withContext(Dispatchers.IO) {
   // Never take the network mutex for a checkbox tap, even while a request is slow/offline.
   if (action == "complete") {
-   checks.set(store.read(), id, done)
+   checks.set({ store.read() }, id, done)
    return@withContext
   }
   mutex.withLock {
@@ -78,7 +94,8 @@ class TodoRepository internal constructor(
  suspend fun discardConflict() = withContext(Dispatchers.IO) { mutex.withLock {
   val state = store.read(); require(state.optBoolean("blocked"))
   val snapshot = authenticated(state, "/todos")
-  clearPending(state); state.put("snapshot", snapshot).put("status", "서버의 최신 목록을 불러왔어요"); store.write(state)
+  validateSnapshot(snapshot)
+  clearPending(state); state.put("snapshot", snapshot).put("status", "서버의 최신 목록을 불러왔어요"); store.write(state); checks.prune(state)
  } }
  /** Retry transient failures; conflicts retain the user's pending action until explicitly discarded. */
  suspend fun sync(): Boolean = withContext(Dispatchers.IO) { mutex.withLock {
@@ -100,7 +117,8 @@ class TodoRepository internal constructor(
     val found = authenticated(state, "/todos")
     if (found.has("revision")) found else authenticated(state, "/todos", JSONObject())
    }
-   clearPending(state); state.put("snapshot", snapshot).put("lastSync", System.currentTimeMillis()).put("status", "동기화 완료"); store.write(state); true
+   validateSnapshot(snapshot)
+   clearPending(state); state.put("snapshot", snapshot).put("lastSync", System.currentTimeMillis()).put("status", "동기화 완료"); store.write(state); checks.prune(state); true
   } catch (e: Exception) {
    val permanent = e is ApiException && e.code in listOf(400, 401, 403, 409, 422)
    if (permanent) state.put("blocked", true)

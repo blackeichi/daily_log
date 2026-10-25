@@ -71,4 +71,32 @@ class LocalChecksTest {
   assertFalse(store.read().has("pending"))
   assertTrue(TodoState.items(repo.read())[0].getBoolean("isDone"))
  }
+ @Test fun successfulRefreshRemovesMissingChecksEvenIfIdReturnsLater() = runBlocking {
+  val store = MemoryStore(state()); var response = state().getJSONObject("snapshot")
+  val repo = TodoRepository(store,LocalChecks(context)) { _,_,_,_ -> response }
+  repo.change("complete",10,done=true)
+  response = JSONObject().put("revision",2).put("todayList",org.json.JSONArray())
+  assertTrue(repo.sync()); assertTrue(TodoState.items(repo.read()).isEmpty())
+  response = state().getJSONObject("snapshot").put("revision",3)
+  repo.sync()
+  assertFalse(TodoState.items(repo.read())[0].getBoolean("isDone"))
+ }
+ @Test fun failedOrMalformedRefreshKeepsExistingChecks() = runBlocking {
+  val store = MemoryStore(state()); var fail = true
+  val repo = TodoRepository(store,LocalChecks(context)) { _,_,_,_ ->
+   if (fail) throw java.net.UnknownHostException("test") else JSONObject().put("revision",2)
+  }
+  repo.change("complete",10,done=true)
+  assertFalse(repo.sync()); assertTrue(TodoState.items(repo.read())[0].getBoolean("isDone"))
+  fail = false
+  assertFalse(repo.sync()); assertTrue(TodoState.items(repo.read())[0].getBoolean("isDone"))
+ }
+ @Test fun undoBeforeSendingDeletionPreservesCheck() = runBlocking {
+  val store = MemoryStore(state())
+  val repo = TodoRepository(store,LocalChecks(context)) { _,_,_,_ -> error("No API expected") }
+  repo.change("complete",10,done=true)
+  repo.change("delete",10)
+  repo.undoDelete()
+  assertTrue(TodoState.items(repo.read())[0].getBoolean("isDone"))
+ }
 }

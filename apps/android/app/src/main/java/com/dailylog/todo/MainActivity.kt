@@ -24,7 +24,7 @@ open class TaskActivity : Activity() {
  protected fun button(text: String, action: () -> Unit) = AppStyle.button(this, text, text == "+ 할 일 추가" || text == "추가", action)
  protected fun input(hint: String, type: Int = InputType.TYPE_CLASS_TEXT) = AppStyle.input(this, hint, type)
  override fun onPause() { passwords.forEach { it.mask() }; super.onPause() }
- protected fun task(block: suspend () -> Unit) { scope.launch { try { block() } catch (e: Exception) { if (e is CancellationException) throw e; Toast.makeText(this@TaskActivity, e.message ?: "다시 시도해 주세요", Toast.LENGTH_LONG).show() } } }
+ protected fun task(block: suspend () -> Unit) { scope.launch { try { block() } catch (e: Exception) { if (e is CancellationException) throw e; Toast.makeText(this@TaskActivity, userFacingError(e), Toast.LENGTH_LONG).show() } } }
  override fun onDestroy() { scope.cancel(); super.onDestroy() }
 }
 class MainActivity : TaskActivity() {
@@ -69,7 +69,7 @@ class MainActivity : TaskActivity() {
     panel.busy(true)
     scope.launch {
      try { repo.login(email, password); panel.password.input.text.clear(); SyncWorker.enqueue(this@MainActivity); rendered = "" }
-     catch (e: Exception) { if (e is CancellationException) throw e; panel.showError(e.message ?: "로그인하지 못했어요. 다시 시도해주세요.") }
+     catch (e: Exception) { if (e is CancellationException) throw e; panel.showError(userFacingError(e)) }
      finally { panel.busy(false) }
     }
    }
