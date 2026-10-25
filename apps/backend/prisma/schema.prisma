@@ -24,6 +24,7 @@ model User {
   defaultLogObj  String[] 
   goalCalorie   Int @default(1800)
   maximumCalorie Int @default(2400)
+  mobileSessions MobileSession[]
   todos          Todo[]
   logs           Log[]
   calories       Calorie[]
@@ -88,7 +89,24 @@ model FailDates {
   @@index([userId])
 }
 
+model MobileSession {
+  id String @id @default(uuid())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique
+  expiresAt DateTime
+  @@index([userId])
+}
+
+model TodoMutation {
+  id String @id
+  userId Int
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+
 model Todo {
+  revision Int @default(1)
   id             Int      @id @default(autoincrement())
   userId         Int      @unique
   user           User     @relation(fields: [userId], references: [id])

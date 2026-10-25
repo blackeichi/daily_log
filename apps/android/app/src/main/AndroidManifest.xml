@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+ <uses-permission android:name="android.permission.INTERNET" />
+ <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+ <application android:label="Daily Log Todo" android:theme="@style/AppTheme" android:allowBackup="false" android:usesCleartextTraffic="false" android:icon="@drawable/ic_todo" android:supportsRtl="true">
+  <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
+   <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+  </activity>
+  <activity android:name=".QuickAddActivity" android:exported="false" android:theme="@style/QuickAddTheme" android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
+  <receiver android:name=".TodoWidgetReceiver" android:exported="false">
+   <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+   <meta-data android:name="android.appwidget.provider" android:resource="@xml/todo_widget" />
+  </receiver>
+ </application>
+</manifest>

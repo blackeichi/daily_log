@@ -1,3 +1,4 @@
+import { MobileAuthController } from './mobile-auth.controller';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -10,6 +11,6 @@ import { UsersService } from 'src/users/users.service';
 @Module({
   imports: [PassportModule, JwtModule.register({})],
   providers: [AuthService, JwtStrategy, PrismaService, UsersService],
-  controllers: [AuthController],
+  controllers: [AuthController, MobileAuthController],
 })
 export class AuthModule {}
