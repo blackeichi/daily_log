@@ -30,6 +30,7 @@ open class TaskActivity : Activity() {
 class MainActivity : TaskActivity() {
  private var rendered = ""
  private var poll: Job? = null
+ private var scroll: ScrollView? = null
  override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); SyncWorker.schedule(this) }
  override fun onResume() {
   super.onResume(); SyncWorker.enqueue(this)
@@ -42,12 +43,25 @@ class MainActivity : TaskActivity() {
   }
  }
  override fun onPause() { poll?.cancel(); super.onPause() }
- private fun render(state: JSONObject) {
+ internal fun render(state: JSONObject) {
   passwords.clear()
-  val root = column()
-  root.setOnApplyWindowInsetsListener { view, insets -> view.setPadding(dp(20) + insets.systemWindowInsetLeft, dp(24) + insets.systemWindowInsetTop, dp(20) + insets.systemWindowInsetRight, dp(24) + insets.systemWindowInsetBottom); insets }
-  setContentView(ScrollView(this).apply { addView(root) })
-  root.addView(label("daily-log", 24f).apply { setTypeface(null, Typeface.BOLD); letterSpacing = -0.03f })
+  val previousY = scroll?.scrollY ?: 0
+  val root = column().apply { setPadding(dp(16), dp(8), dp(16), dp(24)) }
+  val host = SafeAreaLayout(this)
+  val toolbar = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(20), 0, dp(12), 0) }
+  toolbar.addView(label("daily-log", 20f).apply { setTypeface(null, Typeface.BOLD); letterSpacing = -0.04f }, LinearLayout.LayoutParams(0, dp(56), 1f))
+  if (state.optString("refreshToken").isNotEmpty()) {
+   val menuButton = AppStyle.iconButton(this, R.drawable.ic_more, "더 보기") {}
+   menuButton.setOnClickListener { showMenu(menuButton) }
+   toolbar.addView(menuButton)
+  }
+  host.addView(toolbar)
+  scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = true; addView(root); isVerticalScrollBarEnabled = false }
+  host.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+  setContentView(host)
+  window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+  host.requestApplyInsets()
+  scroll?.post { scroll?.scrollTo(0, previousY) }
   if (state.optString("refreshToken").isEmpty()) {
    root.addView(label("기록하는 하루, 가벼워지는 할 일", 14f).apply { setTextColor(AppStyle.muted) })
    lateinit var panel: LoginPanel
@@ -64,11 +78,14 @@ class MainActivity : TaskActivity() {
    root.addView(label("홈 화면 위젯에서도 할 일을 확인하고 체크하세요.", 13f).apply { gravity = Gravity.CENTER; setTextColor(AppStyle.muted) })
    return
   }
-  root.addView(label("오늘 할 일", 26f).apply { setTypeface(null, Typeface.BOLD) })
   val todos = TodoState.items(state).filter { it.optString("type") != "section" }
-  root.addView(label("${todos.count { it.optBoolean("isDone") }} / ${todos.size} 완료", 18f))
-  root.addView(label(state.optString("status", "목록을 불러오는 중…"), 13f))
-  if (state.optLong("lastSync") > 0) root.addView(label("최근 동기화: " + java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))), 12f))
+  val heading = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+  heading.addView(label("오늘 할 일", 26f).apply { setTypeface(null, Typeface.BOLD) }, LinearLayout.LayoutParams(0, -2, 1f))
+  heading.addView(label("${todos.count { it.optBoolean("isDone") }} / ${todos.size}", 14f).apply { setTextColor(AppStyle.muted); contentDescription = "전체 ${todos.size}개 중 ${todos.count { it.optBoolean("isDone") }}개 완료" })
+  root.addView(heading)
+  root.addView(label(java.text.SimpleDateFormat("M월 d일 EEEE", java.util.Locale.KOREA).format(java.util.Date()), 13f).apply { setPadding(0, 0, 0, dp(12)); setTextColor(AppStyle.muted) })
+  val status = if (state.has("pending") || state.optBoolean("blocked")) state.optString("status") else if (state.optLong("lastSync") > 0) "동기화됨 · " + java.text.SimpleDateFormat("HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))) else state.optString("status", "목록을 불러오는 중…")
+  root.addView(label(status, 12f).apply { setTextColor(AppStyle.muted) })
   val pending = state.optJSONObject("pending")
   if (pending != null) root.addView(label("동기화 대기 · ${when (pending.optString("action")) { "add" -> "할 일 추가"; "delete" -> "할 일 삭제"; else -> "완료 상태 변경" }}", 12f).apply { setTextIsSelectable(true) })
   if (pending?.optString("action") == "delete" && !state.optBoolean("attempted")) root.addView(button("삭제 취소") { task { repo.undoDelete(); TodoWidget().updateAll(this@MainActivity) } })
@@ -83,40 +100,28 @@ class MainActivity : TaskActivity() {
     AlertDialog.Builder(this).setTitle("다시 로그인").setView(password).setNegativeButton("취소", null).setPositiveButton("로그인") { _, _ -> task { repo.reauthenticate(password.input.text.toString()); SyncWorker.enqueue(this@MainActivity) } }.show()
    })
   }
-  val actions = LinearLayout(this)
-  actions.addView(button("+ 할 일 추가") { startActivity(Intent(this, QuickAddActivity::class.java)) }, LinearLayout.LayoutParams(0, dp(52), 1f))
-  actions.addView(button("새로고침") { SyncWorker.enqueue(this) }, LinearLayout.LayoutParams(-2, dp(52)).apply { leftMargin = dp(8) }); root.addView(actions)
-  if (todos.isEmpty()) root.addView(label("오늘 해보고 싶은 일을 하나 적어보세요."))
-  for (item in TodoState.items(state)) {
-   if (item.optString("type") == "section") { root.addView(label(item.optString("text"), 18f).apply { setTypeface(null, Typeface.BOLD) }); continue }
-   val card = LinearLayout(this).apply {
-    orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(4), dp(12), dp(8)); background = AppStyle.surface(this@MainActivity)
-    layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) }
+  val actions = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(4), 0, dp(16)) }
+  actions.addView(button("+ 할 일 추가") { startActivity(Intent(this, QuickAddActivity::class.java)) }, LinearLayout.LayoutParams(0, dp(48), 1f))
+  actions.addView(AppStyle.iconButton(this, R.drawable.ic_refresh, "새로고침") { SyncWorker.enqueue(this) }.apply { background = AppStyle.surface(this@MainActivity) }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { leftMargin = dp(8) })
+  root.addView(actions)
+  root.addView(TodoListView(this, state,
+   onComplete = { item, done -> task { repo.change("complete", item.getLong("id"), done = done); TodoWidget().updateAll(this@MainActivity); SyncWorker.enqueue(this@MainActivity) } },
+   onDelete = { item -> task { repo.change("delete", item.getLong("id")); TodoWidget().updateAll(this@MainActivity); SyncWorker.enqueue(this@MainActivity, 8) } }
+  ))
+ }
+ private fun showMenu(anchor: android.view.View) {
+  PopupMenu(this, anchor).apply {
+   menu.add("홈 화면에 위젯 추가").setOnMenuItemClickListener {
+    val manager = getSystemService(AppWidgetManager::class.java)
+    if (manager.isRequestPinAppWidgetSupported) manager.requestPinAppWidget(ComponentName(this@MainActivity, TodoWidgetReceiver::class.java), null, null)
+    else Toast.makeText(this@MainActivity, "홈 화면을 길게 누르고 위젯에서 Daily Log Todo를 선택하세요.", Toast.LENGTH_LONG).show()
+    true
    }
-   val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-   val check = CheckBox(this).apply {
-    text = item.optString("text"); textSize = 16f
-    setTextColor(if (item.optBoolean("isDone")) AppStyle.muted else AppStyle.ink)
-    buttonTintList = android.content.res.ColorStateList.valueOf(AppStyle.primary)
-    if (item.optBoolean("isDone")) paintFlags = paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
-     minHeight = dp(56); isChecked = item.optBoolean("isDone"); isEnabled = pending == null && !state.optBoolean("blocked")
-    setOnCheckedChangeListener { _, done -> task { repo.change("complete", item.getLong("id"), done = done); TodoWidget().updateAll(this@MainActivity); SyncWorker.enqueue(this@MainActivity) } }
+   menu.add("로그아웃").setOnMenuItemClickListener {
+    task { repo.logout(); TodoWidget().updateAll(this@MainActivity); rendered = "" }; true
    }
-   row.addView(check, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-   if (TodoState.canDelete(item)) row.addView(button("삭제") { task { repo.change("delete", item.getLong("id")); TodoWidget().updateAll(this@MainActivity); SyncWorker.enqueue(this@MainActivity, 8) } }.apply { layoutParams = LinearLayout.LayoutParams(-2, -2); isEnabled = pending == null && !state.optBoolean("blocked") })
-   else row.addView(label("잠금", 12f).apply { setTextColor(AppStyle.muted); contentDescription = "잠긴 항목, 삭제할 수 없음" })
-   card.addView(row)
-   if (item.optString("description").isNotEmpty()) card.addView(label(item.optString("description"), 13f).apply { setTextIsSelectable(true) })
-   val children = item.optJSONArray("children")
-   if (children != null && children.length() > 0) card.addView(label("하위 항목 ${children.length()}개 · 상세 편집은 웹에서", 12f))
-   root.addView(card)
+   show()
   }
-  root.addView(button("홈 화면에 위젯 추가") {
-   val manager = getSystemService(AppWidgetManager::class.java)
-   if (manager.isRequestPinAppWidgetSupported) manager.requestPinAppWidget(ComponentName(this, TodoWidgetReceiver::class.java), null, null)
-   else Toast.makeText(this, "홈 화면을 길게 누르고 위젯에서 Daily Log Todo를 선택하세요.", Toast.LENGTH_LONG).show()
-  })
-  root.addView(button("로그아웃") { task { repo.logout(); TodoWidget().updateAll(this@MainActivity); rendered = "" } })
  }
 }
 class QuickAddActivity : TaskActivity() {

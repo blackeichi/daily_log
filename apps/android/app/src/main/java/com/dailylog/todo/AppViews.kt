@@ -44,6 +44,13 @@ internal object AppStyle {
    background = surface(context).apply { if (focused) setStroke(dp(context, 2), primary) }
   }
  }
+ fun iconButton(context: Context, icon: Int, description: String, action: () -> Unit) = ImageButton(context).apply {
+  setImageResource(icon); contentDescription = description
+  setPadding(dp(context, 14), dp(context, 14), dp(context, 14), dp(context, 14))
+  background = RippleDrawable(ColorStateList.valueOf(0x18000000), surface(context, Color.TRANSPARENT, false), null)
+  layoutParams = LinearLayout.LayoutParams(dp(context, 48), dp(context, 48))
+  setOnClickListener { action() }
+ }
  fun button(context: Context, value: String, primaryAction: Boolean = false, action: () -> Unit) = Button(context).apply {
   text = value; isAllCaps = false; textSize = 14f; minHeight = dp(context, 48)
   setPadding(dp(context, 14), dp(context, 8), dp(context, 14), dp(context, 8))

@@ -14,37 +14,57 @@ import androidx.glance.unit.ColorProvider
 import org.json.JSONObject
 
 class TodoWidget : GlanceAppWidget() {
+ override val sizeMode = SizeMode.Responsive(setOf(androidx.compose.ui.unit.DpSize(220.dp, 180.dp), androidx.compose.ui.unit.DpSize(300.dp, 280.dp)))
  override suspend fun provideGlance(context: Context, id: GlanceId) {
   val state = TodoRepository(context).read(); provideContent { Content(state) }
  }
+ @Composable private fun IconAction(icon: Int, label: String, action: Action) {
+  Image(ImageProvider(icon), label, GlanceModifier.size(48.dp).clickable(action).padding(14.dp))
+ }
  @Composable private fun Content(state: JSONObject) {
-  Column(GlanceModifier.fillMaxSize().background(Color(0xFFF5F5F4)).padding(12.dp)) {
+  val entries = TodoState.items(state)
+  val todos = entries.filter { it.optString("type") != "section" }
+  val enabled = !state.has("pending") && !state.optBoolean("blocked")
+  val ink = ColorProvider(Color(0xFF292524))
+  val muted = ColorProvider(Color(0xFF78716C))
+  Column(GlanceModifier.fillMaxSize().background(Color.White).cornerRadius(24.dp).padding(12.dp)) {
    Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-    Text("오늘 할 일", GlanceModifier.defaultWeight().clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ColorProvider(Color(0xFF292524))))
-    Button("+", actionStartActivity<QuickAddActivity>())
-    Button("↻", actionRunCallback<RefreshAction>())
+    Column(GlanceModifier.defaultWeight().clickable(actionStartActivity<MainActivity>())) {
+     Text("오늘 할 일", style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ink), maxLines = 1)
+     Text("${todos.count { it.optBoolean("isDone") }} / ${todos.size} 완료", style = TextStyle(fontSize = 11.sp, color = muted))
+    }
+    IconAction(R.drawable.ic_add, "할 일 추가", actionStartActivity<QuickAddActivity>())
+    IconAction(R.drawable.ic_refresh, "새로고침", actionRunCallback<RefreshAction>())
    }
    if (state.optString("refreshToken").isEmpty()) {
-    Text("앱에서 로그인해 주세요", GlanceModifier.padding(12.dp).clickable(actionStartActivity<MainActivity>()))
+    Text("앱에서 로그인하고\n오늘의 할 일을 이어가세요.", GlanceModifier.padding(vertical = 16.dp).clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 14.sp, color = muted))
    } else {
-    Text(state.optString("status", "새로고침해 주세요"), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontSize = 11.sp), maxLines = 2)
-    if (state.optJSONObject("pending")?.optString("action") == "delete" && !state.optBoolean("attempted")) Button("삭제 취소", actionRunCallback<UndoAction>())
+    if (!enabled) Text(state.optString("status", "동기화 대기"), GlanceModifier.clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 11.sp, color = muted), maxLines = 2)
+    if (state.optJSONObject("pending")?.optString("action") == "delete" && !state.optBoolean("attempted")) Text("삭제 취소", GlanceModifier.fillMaxWidth().padding(vertical = 12.dp).clickable(actionRunCallback<UndoAction>()), style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = ink))
     androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxWidth().defaultWeight()) {
-     val entries = TodoState.items(state)
      items(entries.size) { index ->
       val item = entries[index]
-      Row(GlanceModifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-       if (item.optString("type") == "section") Text(item.optString("text"), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontWeight = FontWeight.Bold))
-       else {
-        Text((if (item.optBoolean("isDone")) "☑  " else "☐  ") + item.optString("text"), GlanceModifier.defaultWeight().padding(6.dp).clickable(actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), Done to !item.optBoolean("isDone")))), style = TextStyle(color = ColorProvider(Color(0xFF292524))), maxLines = 2)
-        if (TodoState.canDelete(item)) Button("×", actionRunCallback<DeleteAction>(actionParametersOf(ItemId to item.getLong("id"))))
-        else Text("🔒", GlanceModifier.padding(6.dp))
+      if (item.optString("type") == "section") {
+       Text(item.optString("text"), GlanceModifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = muted), maxLines = 1)
+      } else {
+       Row(GlanceModifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+        val done = item.optBoolean("isDone")
+        val complete = actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), Done to !done))
+        Row(GlanceModifier.defaultWeight().height(48.dp).then(if (enabled) GlanceModifier.clickable(complete) else GlanceModifier), verticalAlignment = Alignment.CenterVertically) {
+         Image(ImageProvider(if (done) R.drawable.ic_checked else R.drawable.ic_unchecked), if (done) "완료됨" else "미완료", GlanceModifier.size(20.dp))
+         Spacer(GlanceModifier.width(10.dp))
+         Text(item.optString("text"), GlanceModifier.defaultWeight(), style = TextStyle(fontSize = 14.sp, color = if (done) muted else ink), maxLines = 2)
+        }
+        if (TodoState.canDelete(item)) {
+         if (enabled) IconAction(R.drawable.ic_delete, "${item.optString("text")} 삭제", actionRunCallback<DeleteAction>(actionParametersOf(ItemId to item.getLong("id"))))
+         else Image(ImageProvider(R.drawable.ic_delete), "동기화 대기 중", GlanceModifier.size(48.dp).padding(16.dp))
+        } else Image(ImageProvider(R.drawable.ic_lock), "잠긴 항목", GlanceModifier.size(48.dp).padding(17.dp))
        }
       }
      }
-     if (entries.isEmpty()) item { Text("+ 를 눌러 오늘 할 일을 추가하세요", GlanceModifier.padding(12.dp)) }
+     if (todos.isEmpty()) item { Text("+ 버튼으로 할 일을 추가하세요", GlanceModifier.padding(vertical = 16.dp), style = TextStyle(fontSize = 13.sp, color = muted)) }
     }
-    if (state.optLong("lastSync") > 0) Text("최근 동기화 " + java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontSize = 10.sp))
+    if (state.optLong("lastSync") > 0) Text("동기화 · " + java.text.SimpleDateFormat("HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))), GlanceModifier.padding(top = 6.dp), style = TextStyle(fontSize = 10.sp, color = muted))
    }
   }
  }
