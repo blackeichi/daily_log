@@ -27,6 +27,7 @@ internal class TodoListView(
 ) : LinearLayout(context) {
  init {
   orientation = VERTICAL
+  val canCheck = state.optString("refreshToken").isNotEmpty()
   val enabled = !state.has("pending") && !state.optBoolean("blocked")
   var group: LinearLayout? = null
   val entries = TodoState.items(state)
@@ -49,9 +50,9 @@ internal class TodoListView(
    } else group.addView(View(context).apply { setBackgroundColor(Color.rgb(245,245,244)) }, LayoutParams(-1, AppStyle.dp(context, 1)).apply { leftMargin = AppStyle.dp(context, 44); rightMargin = AppStyle.dp(context, 12) })
    val row = LinearLayout(context).apply { gravity = Gravity.CENTER_VERTICAL; minimumHeight = AppStyle.dp(context, 52) }
    val done = item.optBoolean("isDone")
-   val check = AppStyle.iconButton(context, if (done) R.drawable.ic_checked else R.drawable.ic_unchecked, "${item.optString("text")} · ${if (done) "완료 취소" else "완료하기"}") { onComplete(item, !done) }.apply { isEnabled = enabled; alpha = if (enabled) 1f else 0.45f }
+   val check = AppStyle.iconButton(context, if (done) R.drawable.ic_checked else R.drawable.ic_unchecked, "${item.optString("text")} · ${if (done) "완료 취소" else "완료하기"}") { onComplete(item, !done) }.apply { isEnabled = canCheck; alpha = if (canCheck) 1f else 0.45f }
    row.addView(check)
-   val body = LinearLayout(context).apply { orientation = VERTICAL; setPadding(0, AppStyle.dp(context, 10), 0, AppStyle.dp(context, 10)); isEnabled = enabled; setOnClickListener { if (enabled) onComplete(item, !done) } }
+   val body = LinearLayout(context).apply { orientation = VERTICAL; setPadding(0, AppStyle.dp(context, 10), 0, AppStyle.dp(context, 10)); isEnabled = canCheck; setOnClickListener { if (canCheck) onComplete(item, !done) } }
    body.addView(AppStyle.text(context, item.optString("text"), 15f).apply {
     setPadding(0, 0, 0, 0); setTextColor(if (done) AppStyle.muted else AppStyle.ink)
     if (done) paintFlags = paintFlags or Paint.STRIKE_THRU_TEXT_FLAG

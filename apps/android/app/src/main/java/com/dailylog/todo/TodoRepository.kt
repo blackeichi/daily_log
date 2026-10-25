@@ -11,11 +11,16 @@ import java.net.URL
 private const val API_BASE_URL = "https://daily-log-szq5.onrender.com"
 
 class ApiException(val code: Int, message: String) : Exception(message)
-class TodoRepository(context: Context) {
- private val store = SecureStore(context.applicationContext)
+class TodoRepository internal constructor(
+ private val store: StateStore,
+ private val checks: LocalChecks,
+ private val requestOverride: ((String, String, JSONObject?, String) -> JSONObject)? = null,
+) {
+ constructor(context: Context) : this(SecureStore(context.applicationContext), LocalChecks(context.applicationContext))
  companion object { private val mutex = Mutex() }
- suspend fun read(): JSONObject = withContext(Dispatchers.IO) { mutex.withLock { store.read() } }
+ suspend fun read(): JSONObject = withContext(Dispatchers.IO) { checks.apply(store.read()) }
  private fun request(base: String, path: String, body: JSONObject? = null, token: String = ""): JSONObject {
+  requestOverride?.let { return it(base, path, body, token) }
   val connection = URL(base + path).openConnection() as HttpURLConnection
   try {
    connection.connectTimeout = 15000; connection.readTimeout = 15000; connection.instanceFollowRedirects = false
@@ -53,7 +58,13 @@ class TodoRepository(context: Context) {
   val tokens = request(state.getString("baseUrl"), "/auth/mobile/login", JSONObject().put("email", state.getString("email")).put("password", password))
   state.put("accessToken", tokens.getString("accessToken")).put("refreshToken", tokens.getString("refreshToken")); state.remove("blocked"); store.write(state)
  } }
- suspend fun change(action: String, id: Long, text: String = "", done: Boolean = false) = withContext(Dispatchers.IO) { mutex.withLock {
+ suspend fun change(action: String, id: Long, text: String = "", done: Boolean = false) = withContext(Dispatchers.IO) {
+  // Never take the network mutex for a checkbox tap, even while a request is slow/offline.
+  if (action == "complete") {
+   checks.set(store.read(), id, done)
+   return@withContext
+  }
+  mutex.withLock {
   val state = TodoState.enqueue(store.read(), action, id, text, done)
   if (action == "delete") state.put("notBefore", System.currentTimeMillis() + 8000)
   store.write(state)
@@ -72,6 +83,13 @@ class TodoRepository(context: Context) {
  /** Retry transient failures; conflicts retain the user's pending action until explicitly discarded. */
  suspend fun sync(): Boolean = withContext(Dispatchers.IO) { mutex.withLock {
   val state = store.read()
+  // Convert a queued check left by an older APK instead of transmitting it on retry.
+  val legacyCheck = state.optJSONObject("pending")
+  if (legacyCheck?.optString("action") == "complete") {
+   checks.set(state, legacyCheck.getLong("itemId"), legacyCheck.getBoolean("isDone"))
+   state.optJSONObject("before")?.let { state.put("snapshot", it) }
+   clearPending(state); store.write(state)
+  }
   if (state.optString("refreshToken").isEmpty() || state.optBoolean("blocked")) return@withLock true
   if (state.optLong("notBefore") > System.currentTimeMillis()) return@withLock false
   try {
@@ -93,6 +111,7 @@ class TodoRepository(context: Context) {
  suspend fun logout() = withContext(Dispatchers.IO) { mutex.withLock {
   val state = store.read(); require(!state.has("pending")) { "대기 중인 변경을 처리한 후 로그아웃해 주세요." }
   if (state.optString("refreshToken").isNotEmpty()) request(state.getString("baseUrl"), "/auth/mobile/logout", JSONObject().put("refreshToken", state.getString("refreshToken")))
-  store.write(JSONObject())
+  checks.clear(state); store.write(JSONObject())
  } }
 }
+

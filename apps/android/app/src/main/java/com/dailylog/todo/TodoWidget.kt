@@ -58,7 +58,7 @@ class TodoWidget : GlanceAppWidget() {
        Row(GlanceModifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
         val done = item.optBoolean("isDone")
         val complete = actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), Done to !done))
-        Row(GlanceModifier.defaultWeight().height(48.dp).then(if (enabled) GlanceModifier.clickable(complete) else GlanceModifier), verticalAlignment = Alignment.CenterVertically) {
+        Row(GlanceModifier.defaultWeight().height(48.dp).clickable(complete), verticalAlignment = Alignment.CenterVertically) {
          Image(ImageProvider(if (done) R.drawable.ic_checked else R.drawable.ic_unchecked), if (done) "완료됨" else "미완료", GlanceModifier.size(20.dp))
          Spacer(GlanceModifier.width(10.dp))
          Text(item.optString("text"), GlanceModifier.defaultWeight(), style = TextStyle(fontSize = 14.sp, color = if (done) muted else ink), maxLines = 2)
@@ -72,7 +72,7 @@ class TodoWidget : GlanceAppWidget() {
      }
      if (todos.isEmpty()) item { Text("+ 버튼으로 할 일을 추가하세요", GlanceModifier.padding(vertical = 16.dp), style = TextStyle(fontSize = 13.sp, color = muted)) }
     }
-    if (state.optLong("lastSync") > 0) Text("동기화 · " + java.text.SimpleDateFormat("HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))), GlanceModifier.padding(top = 6.dp), style = TextStyle(fontSize = 10.sp, color = muted))
+    if (state.optLong("lastSync") > 0) Text("체크는 기기에 저장 · 목록 " + java.text.SimpleDateFormat("HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))), GlanceModifier.padding(top = 6.dp), style = TextStyle(fontSize = 10.sp, color = muted))
    }
   }
  }
@@ -87,7 +87,7 @@ private suspend fun perform(context: Context, block: suspend () -> Unit) {
  TodoWidget().updateAll(context)
 }
 class CompleteAction : ActionCallback {
- override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).change("complete", parameters[ItemId]!!, done = parameters[Done]!!); SyncWorker.enqueue(context) }
+ override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).change("complete", parameters[ItemId]!!, done = parameters[Done]!!) }
 }
 class DeleteAction : ActionCallback {
  override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).change("delete", parameters[ItemId]!!); SyncWorker.enqueue(context, 8) }

@@ -85,6 +85,7 @@ class MainActivity : TaskActivity() {
   root.addView(heading)
   root.addView(label(java.text.SimpleDateFormat("M월 d일 EEEE", java.util.Locale.KOREA).format(java.util.Date()), 13f).apply { setPadding(0, 0, 0, dp(12)); setTextColor(AppStyle.muted) })
   val status = if (state.has("pending") || state.optBoolean("blocked")) state.optString("status") else if (state.optLong("lastSync") > 0) "동기화됨 · " + java.text.SimpleDateFormat("HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))) else state.optString("status", "목록을 불러오는 중…")
+  root.addView(label("체크 상태는 이 기기에만 저장돼요", 12f).apply { setTextColor(AppStyle.muted) })
   root.addView(label(status, 12f).apply { setTextColor(AppStyle.muted) })
   val pending = state.optJSONObject("pending")
   if (pending != null) root.addView(label("동기화 대기 · ${when (pending.optString("action")) { "add" -> "할 일 추가"; "delete" -> "할 일 삭제"; else -> "완료 상태 변경" }}", 12f).apply { setTextIsSelectable(true) })
@@ -105,7 +106,11 @@ class MainActivity : TaskActivity() {
   actions.addView(AppStyle.iconButton(this, R.drawable.ic_refresh, "새로고침") { SyncWorker.enqueue(this) }.apply { background = AppStyle.surface(this@MainActivity) }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { leftMargin = dp(8) })
   root.addView(actions)
   root.addView(TodoListView(this, state,
-   onComplete = { item, done -> task { repo.change("complete", item.getLong("id"), done = done); TodoWidget().updateAll(this@MainActivity); SyncWorker.enqueue(this@MainActivity) } },
+   onComplete = { item, done -> task {
+    repo.change("complete", item.getLong("id"), done = done)
+    val local = repo.read(); rendered = local.toString(); render(local)
+    TodoWidget().updateAll(this@MainActivity)
+   } },
    onDelete = { item -> task { repo.change("delete", item.getLong("id")); TodoWidget().updateAll(this@MainActivity); SyncWorker.enqueue(this@MainActivity, 8) } }
   ))
  }
