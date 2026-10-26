@@ -70,8 +70,8 @@ internal class TodoListView(
     val child = children.getJSONObject(index)
     val childDone = child.optBoolean("isDone")
     val childRow = LinearLayout(context).apply {
-     tag = "subtodo"; gravity = Gravity.CENTER_VERTICAL
-     setPadding(AppStyle.dp(context, 48), AppStyle.dp(context, 5), AppStyle.dp(context, 16), AppStyle.dp(context, 8))
+     tag = "subtodo"; gravity = Gravity.CENTER_VERTICAL; minimumHeight = AppStyle.dp(context, 48)
+     setPadding(AppStyle.dp(context, 20), 0, AppStyle.dp(context, 12), 0)
      contentDescription = "하위 할 일: ${child.optString("text")}, ${if (childDone) "완료" else "미완료"}. 개별 체크할 수 있습니다."
      importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
     }

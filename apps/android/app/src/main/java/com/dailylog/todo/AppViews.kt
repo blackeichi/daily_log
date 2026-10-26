@@ -22,7 +22,7 @@ internal object AppStyle {
  val primary = Color.rgb(68, 64, 60)
  fun dp(context: Context, value: Int) = (value * context.resources.displayMetrics.density).toInt()
  fun surface(context: Context, color: Int = Color.WHITE, outline: Boolean = true) = GradientDrawable().apply {
-  setColor(color); cornerRadius = dp(context, 8).toFloat()
+  setColor(color); cornerRadius = dp(context, 14).toFloat()
   if (outline) setStroke(dp(context, 1), border)
  }
  fun text(context: Context, value: String, size: Float = 14f) = TextView(context).apply {
@@ -32,7 +32,7 @@ internal object AppStyle {
  fun input(context: Context, hint: String, type: Int = InputType.TYPE_CLASS_TEXT) = EditText(context).apply {
   this.hint = hint
   // setSingleLine changes the transformation; configure password masking AFTER it.
-  isSingleLine = true; inputType = type
+  isSingleLine = type and InputType.TYPE_TEXT_FLAG_MULTI_LINE == 0; inputType = type
   if (type and InputType.TYPE_MASK_VARIATION == InputType.TYPE_TEXT_VARIATION_PASSWORD) {
    transformationMethod = PasswordTransformationMethod.getInstance(); isSaveEnabled = false
   }
@@ -46,6 +46,8 @@ internal object AppStyle {
  }
  fun iconButton(context: Context, icon: Int, description: String, action: () -> Unit) = ImageButton(context).apply {
   setImageResource(icon); contentDescription = description
+  scaleType = ImageView.ScaleType.CENTER_INSIDE
+  adjustViewBounds = false
   setPadding(dp(context, 14), dp(context, 14), dp(context, 14), dp(context, 14))
   background = RippleDrawable(ColorStateList.valueOf(0x18000000), surface(context, Color.TRANSPARENT, false), null)
   layoutParams = LinearLayout.LayoutParams(dp(context, 48), dp(context, 48))

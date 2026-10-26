@@ -35,6 +35,7 @@ class TodoRepository internal constructor(
   sources.forEach { it.registerOnSharedPreferenceChangeListener(listener) }; trySend(Unit)
   awaitClose { sources.forEach { it.unregisterOnSharedPreferenceChangeListener(listener) } }
  }.conflate().map { read() }
+ suspend fun resetChecks() = withContext(Dispatchers.IO) { checks.reset { store.read() } }
  suspend fun toggle(id: Long, parentId: Long = 0) = withContext(Dispatchers.IO) { checks.set({ store.read() }, id, false, parentId, true) }
  suspend fun completeChild(id: Long, parentId: Long, done: Boolean) = withContext(Dispatchers.IO) { checks.set({ store.read() }, id, done, parentId) }
  suspend fun edit(id: Long, parentId: Long, action: String, text: String = "", description: String = "") = withContext(Dispatchers.IO) { mutex.withLock {

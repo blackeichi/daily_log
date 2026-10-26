@@ -45,6 +45,23 @@ class WidgetChecksTest {
    assertTrue(TodoState.items(received[1])[0].getBoolean("isDone"))
   }
  }
+ @Test fun resetUnchecksParentsAndChildrenWithoutNetworkOrLosingPendingEdits() = runBlocking {
+  val context = RuntimeEnvironment.getApplication() as Context
+  val initial = JSONObject("""{"email":"reset-test","refreshToken":"yes","pending":{"action":"replace"},"blocked":true,"snapshot":{"revision":4,"todayList":[{"id":1,"text":"parent","isDone":true,"children":[{"id":2,"isDone":true}]}]}}""")
+  val checks = LocalChecks(context)
+  val store = object : StateStore {
+   override fun read() = TodoState.copy(initial)
+   override fun write(state: JSONObject) = error("Reset must not change server snapshot or pending edits")
+  }
+  val repo = TodoRepository(store,checks) { _,_,_,_ -> error("Reset must not call API") }
+  checks.set({initial},1,true)
+  repo.resetChecks()
+  val view = repo.read(); val parent = TodoState.items(view)[0]
+  assertFalse(parent.getBoolean("isDone"))
+  assertFalse(parent.getJSONArray("children").getJSONObject(0).getBoolean("isDone"))
+  assertTrue(view.has("pending")); assertTrue(view.getBoolean("blocked"))
+  assertTrue(TodoState.items(store.read())[0].getBoolean("isDone"))
+ }
  @Test fun editsPreserveUnknownFieldsAndServerChecks() {
   val root = org.json.JSONArray("""[{"id":1,"text":"old","isDone":true,"custom":"keep","children":[{"id":2,"text":"child","isDone":true}]},{"id":3,"text":"next"}]""")
   TodoEdits.apply(root,2,1,"edit","new child","long description")

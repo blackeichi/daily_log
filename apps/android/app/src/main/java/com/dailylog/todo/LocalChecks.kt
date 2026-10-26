@@ -60,6 +60,18 @@ internal class LocalChecks(context: Context) {
    check(prefs.edit().putString(key, values.toString()).commit()) { "이전 체크 기록을 정리하지 못했습니다." }
   }
  }
+ fun reset(readState: () -> JSONObject) = synchronized(lock) {
+  val state = readState()
+  require(state.optString("refreshToken").isNotEmpty()) { "먼저 로그인해 주세요." }
+  val values = JSONObject()
+  for (item in TodoState.items(state)) {
+   if (item.optString("type") == "section") continue
+   val id = item.getLong("id"); values.put(id.toString(), false)
+   val children = item.optJSONArray("children") ?: continue
+   for (i in 0 until children.length()) values.put("$id/${children.getJSONObject(i).getLong("id")}", false)
+  }
+  check(prefs.edit().putString(key(state), values.toString()).commit()) { "체크 상태를 저장하지 못했습니다." }
+ }
  fun clear(state: JSONObject) = synchronized(lock) { check(prefs.edit().remove(key(state)).commit()) }
 }
 
