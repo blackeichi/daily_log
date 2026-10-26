@@ -24,6 +24,7 @@ internal class TodoListView(
  state: JSONObject,
  onComplete: (JSONObject, Boolean) -> Unit,
  onDelete: (JSONObject) -> Unit,
+ onDetails: (JSONObject, Long) -> Unit = { _, _ -> },
 ) : LinearLayout(context) {
  init {
   orientation = VERTICAL
@@ -52,7 +53,7 @@ internal class TodoListView(
    val done = item.optBoolean("isDone")
    val check = AppStyle.iconButton(context, if (done) R.drawable.ic_checked else R.drawable.ic_unchecked, "${item.optString("text")} · ${if (done) "완료 취소" else "완료하기"}") { onComplete(item, !done) }.apply { isEnabled = canCheck; alpha = if (canCheck) 1f else 0.45f }
    row.addView(check)
-   val body = LinearLayout(context).apply { orientation = VERTICAL; setPadding(0, AppStyle.dp(context, 10), 0, AppStyle.dp(context, 10)); isEnabled = canCheck; setOnClickListener { if (canCheck) onComplete(item, !done) } }
+   val body = LinearLayout(context).apply { orientation = VERTICAL; setPadding(0, AppStyle.dp(context, 10), 0, AppStyle.dp(context, 10)); isEnabled = canCheck; setOnClickListener { onDetails(item, 0) } }
    body.addView(AppStyle.text(context, item.optString("text"), 15f).apply {
     setPadding(0, 0, 0, 0); setTextColor(if (done) AppStyle.muted else AppStyle.ink)
     if (done) paintFlags = paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
@@ -61,6 +62,7 @@ internal class TodoListView(
    val detail = item.optString("description")
    if (detail.isNotEmpty()) body.addView(AppStyle.text(context, detail, 12f).apply { setPadding(0, AppStyle.dp(context, 4), 0, 0); setTextColor(AppStyle.muted); maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END })
    row.addView(body, LayoutParams(0, -2, 1f))
+   row.addView(AppStyle.iconButton(context, R.drawable.ic_more, "상세 및 수정") { onDetails(item, 0) })
    if (TodoState.canDelete(item)) row.addView(AppStyle.iconButton(context, R.drawable.ic_delete, "${item.optString("text")} 삭제") { onDelete(item) }.apply { isEnabled = enabled; alpha = if (enabled) 0.65f else 0.3f })
    else row.addView(ImageView(context).apply { setImageResource(R.drawable.ic_lock); alpha = 0.4f; contentDescription = "잠긴 항목"; setPadding(AppStyle.dp(context, 16), AppStyle.dp(context, 16), AppStyle.dp(context, 16), AppStyle.dp(context, 16)) }, LayoutParams(AppStyle.dp(context, 48), AppStyle.dp(context, 48)))
    group.addView(row)
@@ -70,9 +72,13 @@ internal class TodoListView(
     val childRow = LinearLayout(context).apply {
      tag = "subtodo"; gravity = Gravity.CENTER_VERTICAL
      setPadding(AppStyle.dp(context, 48), AppStyle.dp(context, 5), AppStyle.dp(context, 16), AppStyle.dp(context, 8))
-     contentDescription = "하위 할 일: ${child.optString("text")}, ${if (childDone) "완료" else "미완료"}. 부모 항목에서 함께 변경합니다."
+     contentDescription = "하위 할 일: ${child.optString("text")}, ${if (childDone) "완료" else "미완료"}. 개별 체크할 수 있습니다."
      importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
     }
+    childRow.setOnClickListener { onDetails(child, item.getLong("id")) }
+    childRow.addView(AppStyle.iconButton(context, if (childDone) R.drawable.ic_checked else R.drawable.ic_unchecked, "하위 할 일 체크") {
+     onComplete(TodoState.copy(child).put("_parentId", item.getLong("id")), !childDone)
+    })
     childRow.addView(ImageView(context).apply {
      setImageResource(if (childDone) R.drawable.ic_checked else R.drawable.ic_child_pending)
      alpha = 0.65f; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO

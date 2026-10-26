@@ -1,6 +1,9 @@
 package com.dailylog.todo
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -16,7 +19,7 @@ import org.json.JSONObject
 class TodoWidget : GlanceAppWidget() {
  override val sizeMode = SizeMode.Responsive(setOf(androidx.compose.ui.unit.DpSize(220.dp, 180.dp), androidx.compose.ui.unit.DpSize(300.dp, 280.dp)))
  override suspend fun provideGlance(context: Context, id: GlanceId) {
-  val state = TodoRepository(context).read(); provideContent { Content(state) }
+  val repo = TodoRepository(context); val initial = repo.read(); provideContent { val updates = remember { repo.observe() }; val state by updates.collectAsState(initial); Content(state) }
  }
  @Composable private fun IconAction(icon: Int, label: String, action: Action) {
   Image(ImageProvider(icon), label, GlanceModifier.size(48.dp).clickable(action).padding(14.dp))
@@ -47,7 +50,7 @@ class TodoWidget : GlanceAppWidget() {
       val display = displayRows[index]
       val item = display.item
       if (display.isChild) {
-       Row(GlanceModifier.fillMaxWidth().padding(start = 30.dp, end = 12.dp, top = 4.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+       Row(GlanceModifier.fillMaxWidth().height(48.dp).clickable(actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), ParentId to display.parentId!!))).padding(start = 30.dp, end = 12.dp, top = 4.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Image(ImageProvider(if (item.optBoolean("isDone")) R.drawable.ic_checked else R.drawable.ic_child_pending), if (item.optBoolean("isDone")) "하위 항목 완료" else "하위 항목 미완료", GlanceModifier.size(14.dp))
         Spacer(GlanceModifier.width(8.dp))
         Text(item.optString("text"), GlanceModifier.defaultWeight(), style = TextStyle(fontSize = 12.sp, color = muted))
@@ -78,6 +81,7 @@ class TodoWidget : GlanceAppWidget() {
  }
 }
 val ItemId = ActionParameters.Key<Long>("itemId")
+val ParentId = ActionParameters.Key<Long>("parentId")
 val Done = ActionParameters.Key<Boolean>("done")
 class TodoWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget: GlanceAppWidget = TodoWidget() }
 private suspend fun perform(context: Context, block: suspend () -> Unit) {
@@ -87,7 +91,7 @@ private suspend fun perform(context: Context, block: suspend () -> Unit) {
  TodoWidget().updateAll(context)
 }
 class CompleteAction : ActionCallback {
- override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).change("complete", parameters[ItemId]!!, done = parameters[Done]!!) }
+ override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).toggle(parameters[ItemId]!!, parameters[ParentId] ?: 0) }
 }
 class DeleteAction : ActionCallback {
  override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).change("delete", parameters[ItemId]!!); SyncWorker.enqueue(context, 8) }

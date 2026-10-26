@@ -6,7 +6,7 @@ plugins {
 android {
  namespace = "com.dailylog.todo"
  compileSdk = 35
- defaultConfig { applicationId = "com.dailylog.todo"; minSdk = 26; targetSdk = 35; versionCode = 6; versionName = "0.1.5" }
+ defaultConfig { applicationId = "com.dailylog.todo"; minSdk = 26; targetSdk = 35; versionCode = 7; versionName = "0.1.6" }
  testOptions { unitTests.isIncludeAndroidResources = true }
  buildFeatures { compose = true }
  compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }

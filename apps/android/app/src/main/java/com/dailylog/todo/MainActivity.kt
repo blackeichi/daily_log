@@ -88,7 +88,7 @@ class MainActivity : TaskActivity() {
   root.addView(label("체크 상태는 이 기기에만 저장돼요", 12f).apply { setTextColor(AppStyle.muted) })
   root.addView(label(status, 12f).apply { setTextColor(AppStyle.muted) })
   val pending = state.optJSONObject("pending")
-  if (pending != null) root.addView(label("동기화 대기 · ${when (pending.optString("action")) { "add" -> "할 일 추가"; "delete" -> "할 일 삭제"; else -> "완료 상태 변경" }}", 12f).apply { setTextIsSelectable(true) })
+  if (pending != null) root.addView(label("동기화 대기 · ${when (pending.optString("action")) { "add" -> "할 일 추가"; "delete" -> "할 일 삭제"; else -> "할 일 수정" }}", 12f).apply { setTextIsSelectable(true) })
   if (pending?.optString("action") == "delete" && !state.optBoolean("attempted")) root.addView(button("삭제 취소") { task { repo.undoDelete(); TodoWidget().updateAll(this@MainActivity) } })
   if (state.optBoolean("blocked")) {
    root.addView(label("서버 변경 또는 인증 문제로 동기화가 중단됐어요. 기기의 변경 내용을 확인한 뒤 서버 목록을 불러와 주세요.", 13f))
@@ -107,12 +107,38 @@ class MainActivity : TaskActivity() {
   root.addView(actions)
   root.addView(TodoListView(this, state,
    onComplete = { item, done -> task {
-    repo.change("complete", item.getLong("id"), done = done)
+    if (item.has("_parentId")) repo.completeChild(item.getLong("id"), item.getLong("_parentId"), done)
+    else repo.change("complete", item.getLong("id"), done = done)
     val local = repo.read(); rendered = local.toString(); render(local)
     TodoWidget().updateAll(this@MainActivity)
    } },
+   onDetails = { item, parentId -> showDetails(item, parentId) },
    onDelete = { item -> task { repo.change("delete", item.getLong("id")); TodoWidget().updateAll(this@MainActivity); SyncWorker.enqueue(this@MainActivity, 8) } }
   ))
+ }
+ private fun saveEdit(item: JSONObject, parentId: Long, action: String, text: String = "", description: String = "") {
+  task { repo.edit(item.getLong("id"), parentId, action, text, description); val local = repo.read(); rendered = local.toString(); render(local); TodoWidget().updateAll(this@MainActivity); SyncWorker.enqueue(this@MainActivity) }
+ }
+ private fun showDetails(item: JSONObject, parentId: Long) {
+  val root = column()
+  val title = input("할 일").apply { setText(item.optString("text")) }
+  val description = input("설명", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE).apply { setText(item.optString("description")); minLines = 3 }
+  root.addView(title); root.addView(description)
+  lateinit var dialog: AlertDialog
+  root.addView(button("수정 저장") { saveEdit(item, parentId, "edit", title.text.toString(), description.text.toString()); dialog.dismiss() })
+  root.addView(button("위로 이동") { saveEdit(item, parentId, "up"); dialog.dismiss() })
+  root.addView(button("아래로 이동") { saveEdit(item, parentId, "down"); dialog.dismiss() })
+  if (parentId == 0L && item.optString("type") != "section") root.addView(button("하위 할 일 추가") {
+   val field = input("하위 할 일")
+   AlertDialog.Builder(this).setTitle("하위 할 일 추가").setView(field).setNegativeButton("취소", null).setPositiveButton("추가") { _, _ ->
+    val child = JSONObject().put("id", java.security.SecureRandom().nextLong().ushr(11).coerceAtLeast(1))
+    saveEdit(child, item.getLong("id"), "addChild", field.text.toString()); dialog.dismiss()
+   }.show()
+  })
+  if (TodoState.canDelete(item)) root.addView(button("삭제") {
+   AlertDialog.Builder(this).setTitle("이 할 일을 삭제할까요?").setNegativeButton("취소", null).setPositiveButton("삭제") { _, _ -> saveEdit(item, parentId, "delete"); dialog.dismiss() }.show()
+  })
+  dialog = AlertDialog.Builder(this).setTitle("할 일 상세").setView(ScrollView(this).apply { addView(root) }).setNegativeButton("닫기", null).create(); dialog.show()
  }
  private fun showMenu(anchor: android.view.View) {
   PopupMenu(this, anchor).apply {

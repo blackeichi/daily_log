@@ -2,6 +2,10 @@ package com.dailylog.todo
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.map
 import java.net.UnknownHostException
 import java.io.IOException
 import kotlinx.coroutines.sync.Mutex
@@ -19,15 +23,35 @@ class TodoRepository internal constructor(
  private val checks: LocalChecks,
  private val requestOverride: ((String, String, JSONObject?, String) -> JSONObject)? = null,
 ) {
- constructor(context: Context) : this(SecureStore(context.applicationContext), LocalChecks(context.applicationContext))
+ internal var appContext: Context? = null
+ constructor(context: Context) : this(SecureStore(context.applicationContext), LocalChecks(context.applicationContext)) { appContext = context.applicationContext }
  companion object { private val mutex = Mutex() }
  suspend fun read(): JSONObject = withContext(Dispatchers.IO) { checks.apply(store.read()) }
- private fun request(base: String, path: String, body: JSONObject? = null, token: String = ""): JSONObject {
+ @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+ fun observe() = callbackFlow {
+  val context = requireNotNull(appContext)
+  val sources = listOf("daily_log_secure_v1", "daily_log_local_checks_v1").map { context.getSharedPreferences(it, Context.MODE_PRIVATE) }
+  val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> trySend(Unit) }
+  sources.forEach { it.registerOnSharedPreferenceChangeListener(listener) }; trySend(Unit)
+  awaitClose { sources.forEach { it.unregisterOnSharedPreferenceChangeListener(listener) } }
+ }.conflate().map { read() }
+ suspend fun toggle(id: Long, parentId: Long = 0) = withContext(Dispatchers.IO) { checks.set({ store.read() }, id, false, parentId, true) }
+ suspend fun completeChild(id: Long, parentId: Long, done: Boolean) = withContext(Dispatchers.IO) { checks.set({ store.read() }, id, done, parentId) }
+ suspend fun edit(id: Long, parentId: Long, action: String, text: String = "", description: String = "") = withContext(Dispatchers.IO) { mutex.withLock {
+  val state = store.read(); require(!state.has("pending") && !state.optBoolean("blocked")) { "이전 변경을 동기화한 뒤 다시 시도해 주세요." }
+  val before = state.getJSONObject("snapshot"); val snapshot = TodoState.copy(before)
+  TodoEdits.apply(snapshot.getJSONArray("todayList"), id, parentId, action, text, description)
+  state.put("before", before).put("snapshot", snapshot).put("attempted", false)
+   .put("pending", JSONObject().put("action", "replace").put("todoId", snapshot.getLong("id")).put("expectedRevision", before.getInt("revision")).put("data", snapshot.getJSONArray("todayList")))
+   .put("status", "변경 저장 · 동기화 대기")
+  store.write(state)
+ } }
+ private fun request(base: String, path: String, body: JSONObject? = null, token: String = "", method: String? = null): JSONObject {
   requestOverride?.let { return it(base, path, body, token) }
   val connection = URL(base + path).openConnection() as HttpURLConnection
   try {
    connection.connectTimeout = 15000; connection.readTimeout = if (path == "/auth/mobile/login") 60000 else 15000; connection.instanceFollowRedirects = false
-   connection.requestMethod = if (body == null) "GET" else "POST"
+   connection.requestMethod = method ?: if (body == null) "GET" else "POST"
    connection.setRequestProperty("Accept", "application/json")
    if (token.isNotEmpty()) connection.setRequestProperty("Authorization", "Bearer $token")
    if (body != null) {
@@ -41,14 +65,14 @@ class TodoRepository internal constructor(
    return if (result.has("data")) result.optJSONObject("data") ?: JSONObject() else result
   } finally { connection.disconnect() }
  }
- private fun authenticated(state: JSONObject, path: String, body: JSONObject? = null): JSONObject {
+ private fun authenticated(state: JSONObject, path: String, body: JSONObject? = null, method: String? = null): JSONObject {
   val base = state.getString("baseUrl")
-  try { return request(base, path, body, state.optString("accessToken")) }
+  try { return request(base, path, body, state.optString("accessToken"), method) }
   catch (e: ApiException) {
    if (e.code != 401) throw e
    val refreshed = request(base, "/auth/mobile/refresh", JSONObject().put("refreshToken", state.getString("refreshToken")))
    state.put("accessToken", refreshed.getString("accessToken")); store.write(state)
-   return request(base, path, body, state.getString("accessToken"))
+   return request(base, path, body, state.getString("accessToken"), method)
   }
  }
  private suspend fun loginTokens(base: String, email: String, password: String): JSONObject {
@@ -112,7 +136,9 @@ class TodoRepository internal constructor(
   try {
    val pending = state.optJSONObject("pending")
    val snapshot = if (pending != null) {
-    state.put("attempted", true); store.write(state); authenticated(state, "/todos/operations", pending)
+    state.put("attempted", true); store.write(state)
+    if (pending.optString("action") == "replace") authenticated(state, "/todos/${pending.getLong("todoId")}", JSONObject().put("name", "todayList").put("data", pending.getJSONArray("data")).put("expectedRevision", pending.getInt("expectedRevision")), "PUT")
+    else authenticated(state, "/todos/operations", pending)
    } else {
     val found = authenticated(state, "/todos")
     if (found.has("revision")) found else authenticated(state, "/todos", JSONObject())

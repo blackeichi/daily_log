@@ -13,12 +13,19 @@ internal class LocalChecks(context: Context) {
   return MessageDigest.getInstance("SHA-256").digest(identity.toByteArray()).joinToString("") { "%02x".format(it) }
  }
  fun set(state: JSONObject, id: Long, done: Boolean) = set({ state }, id, done)
- fun set(readState: () -> JSONObject, id: Long, done: Boolean) = synchronized(lock) {
+ fun set(readState: () -> JSONObject, id: Long, done: Boolean, parentId: Long = 0, toggle: Boolean = false) = synchronized(lock) {
   val state = readState()
   require(state.optString("refreshToken").isNotEmpty()) { "먼저 로그인해 주세요." }
-  require(TodoState.items(state).any { it.optLong("id") == id && it.optString("type") != "section" }) { "목록을 새로고침해 주세요." }
+  val parent = TodoState.items(state).find { it.optLong("id") == (if (parentId == 0L) id else parentId) } ?: error("목록을 새로고침해 주세요.")
+  val children = parent.optJSONArray("children")
+  val item = if (parentId == 0L) parent else (0 until (children?.length() ?: 0)).map { children!!.getJSONObject(it) }.find { it.optLong("id") == id } ?: error("하위 항목이 없습니다.")
+  require(item.optString("type") != "section")
   val key = key(state)
-  val values = JSONObject(prefs.getString(key, "{}")!!).put(id.toString(), done)
+  val values = JSONObject(prefs.getString(key, "{}")!!)
+  val itemKey = if (parentId == 0L) id.toString() else "$parentId/$id"
+  val value = if (toggle) !values.optBoolean(itemKey, if (parentId == 0L) false else values.optBoolean(parentId.toString(), false)) else done
+  values.put(itemKey, value)
+  if (parentId == 0L && children != null) for (i in 0 until children.length()) values.put("$id/${children.getJSONObject(i).getLong("id")}", value)
   check(prefs.edit().putString(key, values.toString()).commit()) { "체크 상태를 저장하지 못했습니다." }
  }
  fun apply(state: JSONObject): JSONObject = synchronized(lock) {
@@ -26,11 +33,12 @@ internal class LocalChecks(context: Context) {
   val values = JSONObject(prefs.getString(key(state), "{}")!!)
   for (item in TodoState.items(result)) {
    val id = item.optLong("id").toString()
-   if (!values.has(id)) continue
-   val done = values.getBoolean(id)
-   item.put("isDone", done)
+   item.put("isDone", values.optBoolean(id, false))
    val children = item.optJSONArray("children")
-   if (children != null) for (index in 0 until children.length()) children.getJSONObject(index).put("isDone", done)
+   if (children != null) for (index in 0 until children.length()) {
+    val child = children.getJSONObject(index)
+    child.put("isDone", values.optBoolean("$id/${child.getLong("id")}", values.optBoolean(id, false)))
+   }
   }
   result
  }
@@ -40,7 +48,10 @@ internal class LocalChecks(context: Context) {
   val items = snapshot.optJSONArray("todayList") ?: return@synchronized
   if (snapshot.optInt("revision") < 1) return@synchronized
   val ids = (0 until items.length()).map { items.getJSONObject(it) }
-   .filter { it.optString("type") != "section" }.map { it.getLong("id").toString() }.toSet()
+   .filter { it.optString("type") != "section" }.flatMap { item ->
+    val id = item.getLong("id").toString(); val children = item.optJSONArray("children")
+    listOf(id) + (0 until (children?.length() ?: 0)).map { "$id/${children!!.getJSONObject(it).getLong("id")}" }
+   }.toSet()
   val key = key(state)
   val values = JSONObject(prefs.getString(key, "{}")!!)
   val removed = values.keys().asSequence().filter { it !in ids }.toList()
