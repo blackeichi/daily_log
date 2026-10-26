@@ -54,6 +54,7 @@ class TodoWidget : GlanceAppWidget() {
         Image(ImageProvider(if (item.optBoolean("isDone")) R.drawable.ic_checked else R.drawable.ic_child_pending), if (item.optBoolean("isDone")) "하위 항목 완료" else "하위 항목 미완료", GlanceModifier.size(14.dp))
         Spacer(GlanceModifier.width(8.dp))
         Text(item.optString("text"), GlanceModifier.defaultWeight(), style = TextStyle(fontSize = 12.sp, color = muted))
+        if (enabled && TodoState.canDelete(item)) IconAction(R.drawable.ic_delete, "하위 할 일 삭제", actionRunCallback<DeleteAction>(actionParametersOf(ItemId to item.getLong("id"), ParentId to display.parentId!!)))
        }
       } else if (item.optString("type") == "section") {
        Text(item.optString("text"), GlanceModifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = muted), maxLines = 1)
@@ -94,7 +95,7 @@ class CompleteAction : ActionCallback {
  override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).toggle(parameters[ItemId]!!, parameters[ParentId] ?: 0) }
 }
 class DeleteAction : ActionCallback {
- override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).change("delete", parameters[ItemId]!!); SyncWorker.enqueue(context, 8) }
+ override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { if (parameters[ParentId] != null) { TodoRepository(context).edit(parameters[ItemId]!!, parameters[ParentId]!!, "delete"); SyncWorker.enqueue(context) } else { TodoRepository(context).change("delete", parameters[ItemId]!!); SyncWorker.enqueue(context, 8) } }
 }
 class RefreshAction : ActionCallback {
  override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { SyncWorker.enqueue(context) }

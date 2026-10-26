@@ -79,10 +79,6 @@ internal class TodoListView(
     childRow.addView(AppStyle.iconButton(context, if (childDone) R.drawable.ic_checked else R.drawable.ic_unchecked, "하위 할 일 체크") {
      onComplete(TodoState.copy(child).put("_parentId", item.getLong("id")), !childDone)
     })
-    childRow.addView(ImageView(context).apply {
-     setImageResource(if (childDone) R.drawable.ic_checked else R.drawable.ic_child_pending)
-     alpha = 0.65f; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-    }, LayoutParams(AppStyle.dp(context, 16), AppStyle.dp(context, 16)))
     childRow.addView(AppStyle.text(context, child.optString("text"), 13f).apply {
      setPadding(AppStyle.dp(context, 8), 0, 0, 0)
      setTextColor(AppStyle.muted)

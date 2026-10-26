@@ -1,6 +1,7 @@
 package com.dailylog.todo
 import android.content.Context
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
@@ -23,6 +24,26 @@ class WidgetChecksTest {
   assertFalse(parent.getJSONArray("children").getJSONObject(1).getBoolean("isDone"))
   checks.set({state},2,false,1,true)
   assertFalse(TodoState.items(checks.apply(state))[0].getJSONArray("children").getJSONObject(0).getBoolean("isDone"))
+ }
+ @Test fun activeObserverReceivesLocalChangesWithoutRestartOrApi() = runBlocking {
+  val context = RuntimeEnvironment.getApplication() as Context
+  context.getSharedPreferences("daily_log_local_checks_v1",0).edit().clear().commit()
+  val state = JSONObject("""{"email":"observer","refreshToken":"yes","snapshot":{"revision":1,"todayList":[{"id":1,"isDone":false}]}}""")
+  val store = object : StateStore {
+   override fun read() = TodoState.copy(state)
+   override fun write(state: JSONObject) = error("No server writes")
+  }
+  val checks = LocalChecks(context)
+  val repo = TodoRepository(store, checks) { _,_,_,_ -> error("No API") }.also { it.appContext = context }
+  withTimeout(5000) {
+   val ready = CompletableDeferred<Unit>()
+   val updates = async { repo.observe().onEach { ready.complete(Unit) }.take(2).toList() }
+   ready.await()
+   checks.set({state},1,true)
+   val received = updates.await()
+   assertFalse(TodoState.items(received[0])[0].getBoolean("isDone"))
+   assertTrue(TodoState.items(received[1])[0].getBoolean("isDone"))
+  }
  }
  @Test fun editsPreserveUnknownFieldsAndServerChecks() {
   val root = org.json.JSONArray("""[{"id":1,"text":"old","isDone":true,"custom":"keep","children":[{"id":2,"text":"child","isDone":true}]},{"id":3,"text":"next"}]""")
