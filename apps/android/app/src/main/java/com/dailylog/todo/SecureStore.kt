@@ -11,7 +11,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /** Atomic encrypted snapshot includes credentials and an outstanding idempotent operation. */
-class SecureStore(context: Context) {
+internal class SecureStore(context: Context) : StateStore {
  private val prefs = context.getSharedPreferences("daily_log_secure_v1", Context.MODE_PRIVATE)
  private fun key(): SecretKey {
   val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
@@ -19,16 +19,17 @@ class SecureStore(context: Context) {
    init(KeyGenParameterSpec.Builder("daily_log_state", KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
   }.generateKey()
  }
- fun read(): JSONObject {
+ override fun read(): JSONObject {
   val raw = prefs.getString("state", null) ?: return JSONObject()
   val parts = raw.split(":")
   val cipher = Cipher.getInstance("AES/GCM/NoPadding")
   cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, Base64.decode(parts[0], Base64.NO_WRAP)))
   return JSONObject(String(cipher.doFinal(Base64.decode(parts[1], Base64.NO_WRAP)), Charsets.UTF_8))
  }
- fun write(state: JSONObject) {
+ override fun write(state: JSONObject) {
   val cipher = Cipher.getInstance("AES/GCM/NoPadding"); cipher.init(Cipher.ENCRYPT_MODE, key())
   val raw = Base64.encodeToString(cipher.iv, Base64.NO_WRAP) + ":" + Base64.encodeToString(cipher.doFinal(state.toString().toByteArray(Charsets.UTF_8)), Base64.NO_WRAP)
   check(prefs.edit().putString("state", raw).commit()) { "기기에 저장하지 못했습니다." }
  }
 }
+

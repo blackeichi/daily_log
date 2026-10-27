@@ -1,6 +1,9 @@
 package com.dailylog.todo
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -14,42 +17,69 @@ import androidx.glance.unit.ColorProvider
 import org.json.JSONObject
 
 class TodoWidget : GlanceAppWidget() {
+ override val sizeMode = SizeMode.Responsive(setOf(androidx.compose.ui.unit.DpSize(220.dp, 180.dp), androidx.compose.ui.unit.DpSize(300.dp, 280.dp)))
  override suspend fun provideGlance(context: Context, id: GlanceId) {
-  val state = TodoRepository(context).read(); provideContent { Content(state) }
+  val repo = TodoRepository(context); val initial = repo.read(); provideContent { val updates = remember { repo.observe() }; val state by updates.collectAsState(initial); Content(state) }
+ }
+ @Composable private fun IconAction(icon: Int, label: String, action: Action) {
+  Box(GlanceModifier.size(48.dp).cornerRadius(12.dp).background(Color(0xFFE7E5E4)).clickable(action), contentAlignment = Alignment.Center) {
+   Image(ImageProvider(icon), label, GlanceModifier.size(22.dp))
+  }
  }
  @Composable private fun Content(state: JSONObject) {
-  Column(GlanceModifier.fillMaxSize().background(Color(0xFFF5F5F4)).padding(12.dp)) {
-   Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-    Text("오늘 할 일", GlanceModifier.defaultWeight().clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ColorProvider(Color(0xFF292524))))
-    Button("+", actionStartActivity<QuickAddActivity>())
-    Button("↻", actionRunCallback<RefreshAction>())
+  val entries = TodoState.items(state)
+  val todos = entries.filter { it.optString("type") != "section" }
+  val displayRows = todoDisplayRows(state)
+  val enabled = !state.has("pending") && !state.optBoolean("blocked")
+  val ink = ColorProvider(Color(0xFF292524))
+  val muted = ColorProvider(Color(0xFF78716C))
+  Column(GlanceModifier.fillMaxSize().background(Color(0xFFF5F5F4)).cornerRadius(20.dp).padding(12.dp)) {
+   Row(GlanceModifier.fillMaxWidth().padding(bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column(GlanceModifier.defaultWeight().clickable(actionStartActivity<MainActivity>())) {
+     Text("오늘 할 일", style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = ink), maxLines = 1)
+     Text("${todos.count { it.optBoolean("isDone") }} / ${todos.size} 완료", style = TextStyle(fontSize = 11.sp, color = muted), maxLines = 1)
+    }
+    IconAction(R.drawable.ic_refresh, "새로고침", actionRunCallback<RefreshAction>())
+    Spacer(GlanceModifier.width(4.dp))
+    IconAction(R.drawable.ic_reset_checks, "전체 체크 해제", actionRunCallback<ResetChecksAction>())
    }
    if (state.optString("refreshToken").isEmpty()) {
-    Text("앱에서 로그인해 주세요", GlanceModifier.padding(12.dp).clickable(actionStartActivity<MainActivity>()))
+    Text("앱에서 로그인하고\n오늘의 할 일을 이어가세요.", GlanceModifier.padding(vertical = 16.dp).clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 14.sp, color = muted))
    } else {
-    Text(state.optString("status", "새로고침해 주세요"), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontSize = 11.sp), maxLines = 2)
-    if (state.optJSONObject("pending")?.optString("action") == "delete" && !state.optBoolean("attempted")) Button("삭제 취소", actionRunCallback<UndoAction>())
+    if (!enabled) Text(state.optString("status", "동기화 대기"), GlanceModifier.clickable(actionStartActivity<MainActivity>()), style = TextStyle(fontSize = 11.sp, color = muted), maxLines = 2)
     androidx.glance.appwidget.lazy.LazyColumn(GlanceModifier.fillMaxWidth().defaultWeight()) {
-     val entries = TodoState.items(state)
-     items(entries.size) { index ->
-      val item = entries[index]
-      Row(GlanceModifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-       if (item.optString("type") == "section") Text(item.optString("text"), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontWeight = FontWeight.Bold))
-       else {
-        Text((if (item.optBoolean("isDone")) "☑  " else "☐  ") + item.optString("text"), GlanceModifier.defaultWeight().padding(6.dp).clickable(actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), Done to !item.optBoolean("isDone")))), style = TextStyle(color = ColorProvider(Color(0xFF292524))), maxLines = 2)
-        if (TodoState.canDelete(item)) Button("×", actionRunCallback<DeleteAction>(actionParametersOf(ItemId to item.getLong("id"))))
-        else Text("🔒", GlanceModifier.padding(6.dp))
+     items(displayRows.size) { index ->
+      val display = displayRows[index]
+      val item = display.item
+      if (display.isChild) {
+       Row(GlanceModifier.fillMaxWidth().height(48.dp).clickable(actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), ParentId to display.parentId!!))).padding(start = 26.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Image(ImageProvider(if (item.optBoolean("isDone")) R.drawable.ic_checked else R.drawable.ic_unchecked), if (item.optBoolean("isDone")) "하위 항목 완료" else "하위 항목 미완료", GlanceModifier.size(18.dp))
+        Spacer(GlanceModifier.width(8.dp))
+        Text(item.optString("text"), GlanceModifier.defaultWeight(), style = TextStyle(fontSize = 13.sp, color = muted), maxLines = 2)
+       }
+      } else if (item.optString("type") == "section") {
+       Text(item.optString("text"), GlanceModifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = muted), maxLines = 1)
+      } else {
+       Row(GlanceModifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+        val done = item.optBoolean("isDone")
+        val complete = actionRunCallback<CompleteAction>(actionParametersOf(ItemId to item.getLong("id"), Done to !done))
+        Row(GlanceModifier.defaultWeight().height(48.dp).clickable(complete).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+         Image(ImageProvider(if (done) R.drawable.ic_checked else R.drawable.ic_unchecked), if (done) "완료됨" else "미완료", GlanceModifier.size(20.dp))
+         Spacer(GlanceModifier.width(10.dp))
+         Text(item.optString("text"), GlanceModifier.defaultWeight(), style = TextStyle(fontSize = 14.sp, color = if (done) muted else ink), maxLines = 2)
+        }
+
        }
       }
      }
-     if (entries.isEmpty()) item { Text("+ 를 눌러 오늘 할 일을 추가하세요", GlanceModifier.padding(12.dp)) }
+     if (todos.isEmpty()) item { Text("앱에서 할 일을 추가해 주세요", GlanceModifier.padding(vertical = 16.dp), style = TextStyle(fontSize = 13.sp, color = muted)) }
     }
-    if (state.optLong("lastSync") > 0) Text("최근 동기화 " + java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.KOREA).format(java.util.Date(state.getLong("lastSync"))), style = TextStyle(color = ColorProvider(Color(0xFF44403B)), fontSize = 10.sp))
    }
   }
  }
 }
 val ItemId = ActionParameters.Key<Long>("itemId")
+val ParentId = ActionParameters.Key<Long>("parentId")
 val Done = ActionParameters.Key<Boolean>("done")
 class TodoWidgetReceiver : GlanceAppWidgetReceiver() { override val glanceAppWidget: GlanceAppWidget = TodoWidget() }
 private suspend fun perform(context: Context, block: suspend () -> Unit) {
@@ -59,15 +89,11 @@ private suspend fun perform(context: Context, block: suspend () -> Unit) {
  TodoWidget().updateAll(context)
 }
 class CompleteAction : ActionCallback {
- override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).change("complete", parameters[ItemId]!!, done = parameters[Done]!!); SyncWorker.enqueue(context) }
-}
-class DeleteAction : ActionCallback {
- override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).change("delete", parameters[ItemId]!!); SyncWorker.enqueue(context, 8) }
+ override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).toggle(parameters[ItemId]!!, parameters[ParentId] ?: 0) }
 }
 class RefreshAction : ActionCallback {
  override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { SyncWorker.enqueue(context) }
 }
-class UndoAction : ActionCallback {
- override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).undoDelete() }
+class ResetChecksAction : ActionCallback {
+ override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) = perform(context) { TodoRepository(context).resetChecks() }
 }
-
