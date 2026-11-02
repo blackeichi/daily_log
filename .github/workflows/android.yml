@@ -25,3 +25,9 @@ jobs:
         with:
           name: daily-log-android-debug
           path: apps/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: daily-log-ui-review
+          path: apps/android/app/build/ui-review/*.png
+
