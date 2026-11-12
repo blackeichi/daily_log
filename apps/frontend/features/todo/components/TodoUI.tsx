@@ -36,6 +36,8 @@ export default function TodoUI() {
     handleUpdateList,
     handleSaveTodos,
     handleUploadTodos,
+    handleDownloadTodos,
+    handleRestoreLocalTodos,
   } = useTodo();
 
   if (isFirst)
@@ -65,36 +67,61 @@ export default function TodoUI() {
 
   return (
     <div className="w-full max-w-[800px] flex flex-col text-xs gap-10 pt-4">
-      {lists.map((listName) => (
-        <DataList
-          key={listName}
-          loading={false}
-          title="Todo"
-          name={LIST_NAMES[listName]}
-          defaultDataList={data?.[listName] || []}
-          onSaveDataList={(val) => handleUpdateList(listName, val as Todo[])}
-          onDataListChange={(val) => handleUpdateList(listName, val as Todo[])}
-          deferSave
-          saveVersion={saveVersion}
-          needCheckBox
-          needDisableButton
-          maxLength={1000}
-          enableTodoDetails
-          storageKey={`todo:${listName}`}
-          emptyMessage="데이터가 없습니다. Todo를 추가해주세요."
-          titleAction={
-            listName === "todayList" ? (
-              <button
-                type="button"
-                onClick={handleClearAllTodos}
-                className="rounded border border-stone-400 px-1.5 py-0.5 text-[10px] text-stone-100 transition-colors hover:bg-stone-600"
-              >
-                전체 체크 해제
-              </button>
-            ) : undefined
-          }
-        />
-      ))}
+      <fieldset
+        disabled={isUploading || isDownloading}
+        className="flex min-w-0 flex-col gap-10"
+      >
+        {lists.map((listName) => (
+          <DataList
+            key={listName}
+            loading={false}
+            title="Todo"
+            name={LIST_NAMES[listName]}
+            defaultDataList={data?.[listName] || []}
+            onSaveDataList={(val) => handleUpdateList(listName, val as Todo[])}
+            onDataListChange={(val) =>
+              handleUpdateList(listName, val as Todo[])
+            }
+            deferSave
+            saveVersion={saveVersion}
+            needCheckBox
+            needDisableButton
+            maxLength={1000}
+            enableTodoDetails
+            storageKey={`todo:${listName}`}
+            emptyMessage="데이터가 없습니다. Todo를 추가해주세요."
+            titleAction={
+              listName === "todayList" ? (
+                <button
+                  type="button"
+                  onClick={handleClearAllTodos}
+                  className="rounded border border-stone-400 px-1.5 py-0.5 text-[10px] text-stone-100 transition-colors hover:bg-stone-600"
+                >
+                  전체 체크 해제
+                </button>
+              ) : undefined
+            }
+          />
+        ))}
+      </fieldset>
+      <div className="flex gap-4">
+        <button
+          type="button"
+          disabled={isUploading || isDownloading}
+          onClick={handleDownloadTodos}
+          className="underline"
+        >
+          서버 목록으로 복구
+        </button>
+        <button
+          type="button"
+          disabled={isUploading || isDownloading}
+          onClick={handleRestoreLocalTodos}
+          className="underline"
+        >
+          불러오기 전 로컬 목록 복구
+        </button>
+      </div>
       <div className="fixed bottom-16 right-5 z-50 flex items-center gap-2 sm:bottom-8 sm:right-8">
         <button
           type="button"

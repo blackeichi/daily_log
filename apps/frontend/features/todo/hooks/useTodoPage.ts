@@ -67,6 +67,9 @@ export const useTodo = () => {
   const [localUpdatedAt, setLocalUpdatedAt] = useState<string | null>(
     initialSnapshot?.updatedAt ?? null,
   );
+  const localDataRef = useRef(localData);
+  localDataRef.current = localData;
+  const busyRef = useRef(false);
   const [saveVersion, setSaveVersion] = useState(0);
   const hasChangesRef = useRef(false);
   const hasCheckedServerVersionRef = useRef(false);
@@ -89,10 +92,20 @@ export const useTodo = () => {
   );
 
   const downloadServerTodos = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     try {
       const result = await serverTodosQuery.refetch();
+      if (result.isError) throw result.error;
       if (!result.data) {
         throw new Error("서버에 저장된 Todo가 없습니다.");
+      }
+      // Preserve the current local list before replacing it with server data.
+      if (localDataRef.current) {
+        localStorage.setItem(
+          "DAILY_LOG_TODOS_RECOVERY",
+          JSON.stringify(localDataRef.current),
+        );
       }
       saveLocalSnapshot(result.data, result.data.updatedAt);
       setAlert("서버의 최신 Todo를 이 기기에 동기화했습니다.");
@@ -102,6 +115,8 @@ export const useTodo = () => {
           ? error.message
           : "Todo 동기화 중 오류가 발생했습니다.",
       );
+    } finally {
+      busyRef.current = false;
     }
   }, [saveLocalSnapshot, serverTodosQuery, setAlert, setError]);
 
@@ -201,6 +216,7 @@ export const useTodo = () => {
 
   const handleUpdateList = useCallback(
     (listName: ListName, newData: Todo[]) => {
+      if (busyRef.current) return;
       setLocalData((previous) =>
         previous ? { ...previous, [listName]: newData } : previous,
       );
@@ -210,16 +226,41 @@ export const useTodo = () => {
 
   const handleSaveTodos = useCallback(() => {
     if (!localData || !hasChanges) return;
-    saveLocalSnapshot(localData, new Date().toISOString());
-    setAlert("Todo를 이 기기에 저장했습니다.");
-  }, [hasChanges, localData, saveLocalSnapshot, setAlert]);
+    try {
+      saveLocalSnapshot(localData, new Date().toISOString());
+      setAlert("Todo를 이 기기에 저장했습니다.");
+    } catch {
+      setError("기기 저장에 실패했습니다. 저장 공간을 확인해 주세요.");
+    }
+  }, [hasChanges, localData, saveLocalSnapshot, setAlert, setError]);
 
   const uploadLocalTodos = useCallback(() => {
-    if (!localData || syncTodos.isPending) return;
+    const currentData = localDataRef.current;
+    if (!currentData || busyRef.current) return;
+    try {
+      // Persist first: a failed request or reload must not lose the pending edit.
+      saveLocalSnapshot(currentData, new Date().toISOString());
+    } catch {
+      setError(
+        "기기에 변경사항을 저장하지 못했습니다. 저장 공간을 확인해 주세요.",
+      );
+      return;
+    }
+    busyRef.current = true;
 
-    syncTodos.mutate(getTodoLists(localData), {
+    syncTodos.mutate(getTodoLists(currentData), {
+      onSettled: () => {
+        busyRef.current = false;
+      },
       onSuccess: (serverData) => {
-        saveLocalSnapshot(serverData, serverData.updatedAt);
+        try {
+          saveLocalSnapshot(serverData, serverData.updatedAt);
+        } catch {
+          setError(
+            "서버 업로드는 완료됐지만 기기 저장에 실패했습니다. 서버에서 다시 불러와 주세요.",
+          );
+          return;
+        }
         setAlert("이 기기의 Todo를 서버에 업로드했습니다.");
       },
       onError: (error) => {
@@ -230,7 +271,7 @@ export const useTodo = () => {
         );
       },
     });
-  }, [localData, saveLocalSnapshot, setAlert, setError, syncTodos]);
+  }, [saveLocalSnapshot, setAlert, setError, syncTodos]);
 
   const handleUploadTodos = useCallback(() => {
     if (!localData || syncTodos.isPending) return;
@@ -241,6 +282,43 @@ export const useTodo = () => {
       confirmEvent: uploadLocalTodos,
     });
   }, [localData, setConfirm, syncTodos.isPending, uploadLocalTodos]);
+
+  const handleDownloadTodos = useCallback(() => {
+    if (busyRef.current) return;
+    setConfirm({
+      title: "서버 목록으로 복구",
+      message:
+        "현재 목록을 서버에 저장된 목록으로 바꿉니다. 로컬 변경은 복구용으로 보관합니다. 계속하시겠습니까?",
+      confirmEvent: () => {
+        void downloadServerTodos();
+      },
+    });
+  }, [downloadServerTodos, setConfirm]);
+
+  const handleRestoreLocalTodos = useCallback(() => {
+    if (busyRef.current) return;
+    try {
+      const raw = localStorage.getItem("DAILY_LOG_TODOS_RECOVERY");
+      if (!raw) {
+        setAlert("복구할 로컬 목록이 없습니다.");
+        return;
+      }
+      const backup = JSON.parse(raw) as GetTodosType;
+      if (!LIST_NAMES.every((name) => Array.isArray(backup[name])))
+        throw new Error();
+      // Keep the backup's revision: restoring must not bypass server conflicts.
+      const current = localDataRef.current;
+      saveLocalSnapshot(backup, new Date().toISOString());
+      if (current)
+        localStorage.setItem(
+          "DAILY_LOG_TODOS_RECOVERY",
+          JSON.stringify(current),
+        );
+      setAlert("서버에서 불러오기 전의 로컬 목록을 복구했습니다.");
+    } catch {
+      setError("로컬 목록을 복구하지 못했습니다.");
+    }
+  }, [saveLocalSnapshot, setAlert, setError]);
 
   const handleCreateTodos = useCallback(() => {
     const updatedAt = new Date().toISOString();
@@ -259,5 +337,7 @@ export const useTodo = () => {
     handleUpdateList,
     handleSaveTodos,
     handleUploadTodos,
+    handleDownloadTodos,
+    handleRestoreLocalTodos,
   };
 };

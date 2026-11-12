@@ -86,8 +86,9 @@ export class TodosService {
         current.revision !== expectedRevision
       )
         throw conflict();
-      for (const name of names)
-        if (data[name]) protectLocked(current[name] as any[], data[name]!);
+      // A revision-checked snapshot includes local unlocks, deletes and moves.
+      // Historical locks cannot describe those intermediate edits. Per-item
+      // operations still enforce the current server lock in applyOperation.
       const updatedAt = new Date();
       const result = await tx.todo.updateMany({
         where: { id: current.id, userId, revision: expectedRevision },

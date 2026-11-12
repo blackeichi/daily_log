@@ -84,11 +84,18 @@ describe('Todo concurrency and widget operations', () => {
       setup([item]).service.applyOperation(7, op({ action: 'delete' })),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
-  it('also enforces locks on bulk writes', async () => {
+  it('accepts an unlock then delete in a revision-checked snapshot', async () => {
     const { service } = setup([{ id: 10, text: 'locked', isDisabled: true }]);
     await expect(
       service.syncTodos(7, { todayList: [], ...empty }, 1),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    ).resolves.toMatchObject({ todayList: [], revision: 2 });
+  });
+  it('accepts moving a locked item between lists in one snapshot', async () => {
+    const item = { id: 10, text: 'locked', isDisabled: true };
+    const { service } = setup([item]);
+    await expect(
+      service.syncTodos(7, { ...empty, todayList: [], weekList: [item] }, 1),
+    ).resolves.toMatchObject({ todayList: [], weekList: [item], revision: 2 });
   });
   it('checks children with parent without losing descriptions', async () => {
     const { service, row } = setup([
